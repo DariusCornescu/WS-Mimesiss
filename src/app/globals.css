@@ -3,51 +3,42 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Single source of truth for MIMESISS brand colour.
+   *
+   * Values are bare `H S% L%` triplets with no hsl() wrapper, because
+   * tailwind.config.js injects alpha via `hsl(var(--x) / <alpha-value>)`.
+   * Wrapping them here would break every `/nn` opacity modifier
+   * (bg-card/80, bg-primary/90, border-border/50, ...) — roughly 220 sites.
+   *
+   * The app is dark-only: <html class="dark"> is hardcoded in layout.tsx and
+   * there is no theme toggle, so there is no `.dark` override block. The class
+   * itself stays, because 12 `dark:` variants on stock palette colours use it.
+   *
+   * Fractional values are deliberate. `6 100% 50%` renders #FF1900 and
+   * `218 11% 65%` renders #9CA3B0 — each one 8-bit level off the brand hex.
+   */
   :root {
-    /* MIMESISS Light Theme */
-    --background: 0 0% 100%;
-    --foreground: 16 100% 4%; /* Almost black #0F0F10 */
-    --card: 0 0% 100%;
-    --card-foreground: 16 100% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 16 100% 4%;
-    --primary: 13 76% 50%; /* MIMESISS Orange - restored brightness */
-    --primary-foreground: 0 0% 0%; /* Black text for better contrast */
-    --secondary: 0 100% 47%; /* MIMESISS Purple #790000 */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 13 76% 55%; /* MIMESISS Orange */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 7 100% 50%; /* MIMESISS Red #FF1800 */
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89%;
-    --input: 0 0% 89%;
-    --ring: 13 76% 55%; /* MIMESISS Orange */
+    --background: 240 3% 6%;               /* #0F0F10 */
+    --foreground: 0 0% 100%;               /* #FFFFFF */
+    --card: 240 3% 6%;                     /* #0F0F10 */
+    --card-foreground: 0 0% 100%;          /* #FFFFFF */
+    --popover: 240 3% 6%;                  /* #0F0F10 */
+    --popover-foreground: 0 0% 100%;       /* #FFFFFF */
+    --primary: 220 100% 70%;               /* #6699FF - brand blue */
+    --primary-foreground: 0 0% 100%;       /* #FFFFFF */
+    --secondary: 270 100% 40%;             /* #6600CC - brand purple */
+    --secondary-foreground: 0 0% 100%;     /* #FFFFFF */
+    --muted: 240 3% 6%;                    /* #0F0F10 */
+    --muted-foreground: 217.9 10.6% 64.9%; /* #9CA3AF */
+    --accent: 220 100% 70%;                /* #6699FF - same as primary */
+    --accent-foreground: 0 0% 0%;          /* #000000 - 7.57:1 on primary */
+    --destructive: 5.6 100% 50%;           /* #FF1800 */
+    --destructive-foreground: 0 0% 100%;   /* #FFFFFF */
+    --border: 220 100% 70%;                /* #6699FF */
+    --input: 270 100% 40%;                 /* #6600CC */
+    --ring: 220 100% 70%;                  /* #6699FF */
     --radius: 0.5rem;
-  }
-
-  .dark {
-    /* MIMESISS Dark Theme */
-    --background: 16 100% 4%; /* MIMESISS Black #0F0F10 */
-    --foreground: 0 0% 98%;
-    --card: 0 0% 8%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 13 76% 50%; /* MIMESISS Orange - restored brightness */
-    --primary-foreground: 0 0% 0%; /* Black text for better contrast */
-    --secondary: 0 100% 47%; /* MIMESISS Purple #790000 */
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 12%;
-    --muted-foreground: 0 0% 64%;
-    --accent: 13 76% 55%; /* MIMESISS Orange */
-    --accent-foreground: 0 0% 98%;
-    --destructive: 7 100% 50%; /* MIMESISS Red #FF1800 */
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 12%;
-    --input: 0 0% 12%;
-    --ring: 13 76% 55%; /* MIMESISS Orange */
   }
 }
 

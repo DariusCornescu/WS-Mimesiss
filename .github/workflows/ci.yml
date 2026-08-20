@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  quality:
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      # `!cancelled()` so a lint failure still reports type errors in the same
+      # run, rather than costing a second round trip to discover them.
+      - name: TypeScript
+        if: ${{ !cancelled() }}
+        run: npm run typecheck
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 }).ok'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 20s
+
+    env:
+      # Every value below is fake and public on purpose. They only need to be
+      # format-valid, because src/lib/mongodb.ts and src/lib/stripe.ts throw at
+      # import time when their variable is missing. Using fakes rather than
+      # repository secrets keeps this job working for pull requests from forks.
+      #
+      # 127.0.0.1 rather than localhost: Node 18+ resolves localhost to ::1
+      # first, and the service container only publishes the port on IPv4.
+      MONGODB_URI: mongodb://127.0.0.1:27017/mimesiss_ci
+
+      # base64("ci-placeholder.clerk.accounts.dev$"). This must be pk_live_ and
+      # not pk_test_: a development-instance key makes Clerk issue a handshake
+      # redirect that navigates the smoke test off-host. The secret key has to
+      # match the same instance type or Clerk throws on mismatch.
+      NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_live_Y2ktcGxhY2Vob2xkZXIuY2xlcmsuYWNjb3VudHMuZGV2JA==
+      CLERK_SECRET_KEY: sk_live_ciplaceholdernotarealkey
+
+      STRIPE_SECRET_KEY: sk_test_ciplaceholdernotarealkey
+      STRIPE_WEBHOOK_SECRET: whsec_ciplaceholdernotarealsecret
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_ciplaceholdernotarealkey
+
+      NEXT_PUBLIC_BASE_URL: http://127.0.0.1:3000
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Restore Next.js build cache
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'tailwind.config.js', 'next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-
+
+      - name: Build
+        run: npm run build
+
+      # A green build does not prove the app boots. The root layout queries
+      # MongoDB on every request, so this catches runtime-only regressions that
+      # compilation cannot. All five paths are public in src/proxy.ts, so Clerk
+      # middleware returns early and the fake key is never sent to Clerk's API.
+      - name: Smoke test
+        run: |
+          npm start &
+          SERVER_PID=$!
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null http://127.0.0.1:3000/ && break
+            sleep 1
+          done
+          FAILED=0
+          for path in / /program /contact /reg /info; do
+            CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${path}")
+            echo "${path} -> ${CODE}"
+            [ "$CODE" = "200" ] || FAILED=1
+          done
+          kill "$SERVER_PID" 2>/dev/null || true
+          exit "$FAILED"

@@ -20,8 +20,8 @@ export async function GET(
 	const userData = await syncUserWithDatabase(currentUserData);
 
 	if (!userData) {
-		// If user not found, redirect sign-in
-		redirect('/auth/sign-in');
+		// If user not found, redirect to sign-in
+		redirect('/auth/login');
 	}
 
 	const isModerator = userData.role === 'moderator';

@@ -5,43 +5,46 @@ module.exports = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
+  // Kept because 12 `dark:` variants across 6 files rely on <html class="dark">.
   darkMode: 'class',
   theme: {
     extend: {
+      // Colour values live in src/app/globals.css (:root) so there is one
+      // source of truth. The `/ <alpha-value>` suffix is required for opacity
+      // modifiers such as bg-card/80 and border-border/50 to work at all.
       colors: {
-        // MIMESISS Brand Colors mapped to design system
-        border: '#6699FF',  // MIMESISS orange for ALL borders
-        input: '#6600CC',   // Muted gray for input borders (visible but subtle)
-        ring: '#6699FF',    // Orange for focus rings
-        background: '#0F0F10', // MIMESISS black for backgrounds
-        foreground: '#ffffff', // White for text on dark backgrounds
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
+        background: 'hsl(var(--background) / <alpha-value>)',
+        foreground: 'hsl(var(--foreground) / <alpha-value>)',
         primary: {
-          DEFAULT: '#6699FF',  // Orange as primary
-          foreground: '#ffffff',
+          DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
         },
         secondary: {
-          DEFAULT: '#6600CC',  // MIMESISS purple as secondary
-          foreground: '#ffffff',
+          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)',
         },
         destructive: {
-          DEFAULT: '#FF1800',  // MIMESISS red for destructive actions only
-          foreground: '#ffffff',
+          DEFAULT: 'hsl(var(--destructive) / <alpha-value>)',
+          foreground: 'hsl(var(--destructive-foreground) / <alpha-value>)',
         },
         muted: {
-          DEFAULT: '#0F0F10',  // MIMESISS black for muted elements
-          foreground: '#9ca3af', // Gray for muted text
+          DEFAULT: 'hsl(var(--muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground) / <alpha-value>)',
         },
         accent: {
-          DEFAULT: '##6600CC',  // Yellow for accents
-          foreground: '#000000',
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
         },
         popover: {
-          DEFAULT: '#0F0F10',  // MIMESISS black for popovers
-          foreground: '#ffffff',
+          DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
+          foreground: 'hsl(var(--popover-foreground) / <alpha-value>)',
         },
         card: {
-          DEFAULT: '#0F0F10',  // MIMESISS black for cards
-          foreground: '#ffffff',
+          DEFAULT: 'hsl(var(--card) / <alpha-value>)',
+          foreground: 'hsl(var(--card-foreground) / <alpha-value>)',
         },
       },
       borderRadius: {

@@ -34,21 +34,13 @@ This is a modern workshop management application built with Next.js, TypeScript,
 
 3.  **Set up environment variables**
 
-    Copy `.env.local.example` to `.env.local` and fill in your Clerk and MongoDB credentials:
+    Copy `.env.example` to `.env.local` and fill in your credentials:
     ```bash
-    cp .env.local.example .env.local
+    cp .env.example .env.local
     ```
 
-    Update the following variables in `.env.local`:
-    ```
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-    CLERK_SECRET_KEY=your_clerk_secret_key
-    NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-    NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-    NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
-    NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
-    MONGODB_URI=your_mongodb_connection_string
-    ```
+    See `.env.example` for the full list. Auth pages live at `/auth/login` and
+    `/auth/signup`, so no Clerk URL overrides are needed.
 
 4.  **Run the development server**
     ```bash
@@ -62,14 +54,16 @@ This is a modern workshop management application built with Next.js, TypeScript,
 ## Available Scripts
 
 *   `npm run dev`: Start development server with Turbopack.
-*   `npm run build`: Build for production.
+*   `npm run build`: Build for production (webpack).
 *   `npm run start`: Start production server.
 *   `npm run lint`: Run ESLint.
+*   `npm run typecheck`: Run `tsc --noEmit`.
 
 # Development Conventions
 
-*   **Styling:** The project uses Tailwind CSS for styling.
-*   **Authentication:** Authentication is handled by Clerk.
-*   **Database:** The project uses MongoDB as the database.
-*   **Linting:** ESLint is used for linting.
-*   **Code Formatting:** Biome is used for code formatting.
+*   **Styling:** Tailwind CSS. Colour tokens resolve to the CSS variables in
+    `src/app/globals.css`; use semantic tokens rather than raw hex.
+*   **Authentication:** Clerk, with roles stored on the Mongo user document.
+*   **Database:** MongoDB via Mongoose.
+*   **Payments:** Stripe. See `STRIPE_SETUP.md`.
+*   **Linting:** ESLint flat config. There is no separate formatter.

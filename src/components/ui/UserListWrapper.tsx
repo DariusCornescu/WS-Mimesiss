@@ -7,6 +7,7 @@ import QRCode from 'qrcode';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { FaDownload, FaSpinner } from 'react-icons/fa';
+import { BRAND } from '@/lib/brand';
 
 interface UserListWrapperProps {
   initialUsers: User[];
@@ -27,7 +28,7 @@ export default function UserListWrapper({ initialUsers, currentUserId }: UserLis
         width: 300,
         margin: 2,
         color: {
-          dark: '#DF5739',
+          dark: BRAND.primaryDeep,
           light: '#FFFFFF'
         },
         errorCorrectionLevel: 'M'

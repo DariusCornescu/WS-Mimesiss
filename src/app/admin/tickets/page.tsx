@@ -34,7 +34,7 @@ export default async function AdminSettingsPage() {
 		</div>
 		<Link 
 		  href="/admin/tickets/new" 
-		  className="mimesiss-button-primary inline-flex items-center justify-center whitespace-nowrap"
+		  className="mimesiss-btn-primary inline-flex items-center justify-center whitespace-nowrap"
 		>
 		  <FaTicketAlt className="w-5 h-5 mr-2" />
 		  Adaugă bilet

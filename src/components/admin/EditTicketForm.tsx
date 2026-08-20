@@ -188,7 +188,7 @@ export default function EditTicketForm({ ticket }: EditTicketFormProps) {
 					<button
 						type="submit"
 						disabled={isPending}
-						className="mimesiss-button-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+						className="mimesiss-btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
 					>
 						{isPending ? 'Se salvează...' : 'Salvează modificările'}
 					</button>
@@ -196,7 +196,7 @@ export default function EditTicketForm({ ticket }: EditTicketFormProps) {
 						type="button"
 						disabled={isPending}
 						onClick={() => router.back()}
-						className="mimesiss-button-secondary px-6 disabled:opacity-50"
+						className="mimesiss-btn-secondary px-6 disabled:opacity-50"
 					>
 						Anulează
 					</button>

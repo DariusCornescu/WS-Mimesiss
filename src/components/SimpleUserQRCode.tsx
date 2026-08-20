@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { FaDownload, FaShare } from 'react-icons/fa';
 import Image from 'next/image';
 import QRCode from 'qrcode';
+import { BRAND } from '@/lib/brand';
 
 interface SimpleUserQRCodeProps {
 	userId: string;
@@ -21,7 +22,7 @@ export default function SimpleUserQRCode({ userId, userName }: SimpleUserQRCodeP
 				width: 300,
 				margin: 2,
 				color: {
-					dark: '#DF5739',
+					dark: BRAND.primaryDeep,
 					light: '#FFFFFF'
 				},
 				errorCorrectionLevel: 'M'
