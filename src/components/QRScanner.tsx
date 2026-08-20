@@ -14,12 +14,30 @@ interface TicketLookup {
   owner: { name: string; email: string | null }
 }
 
+/**
+ * BarcodeDetector is not in lib.dom yet, and is unsupported in Safari and
+ * Firefox — which is most phones at an event, hence the fallback handling.
+ */
+interface DetectedBarcode {
+  rawValue: string
+}
+
+type BarcodeDetectorCtor = new (options: { formats: string[] }) => {
+  detect(source: ImageData): Promise<DetectedBarcode[]>
+}
+
+function getBarcodeDetector(): BarcodeDetectorCtor | null {
+  if (typeof window === 'undefined' || !('BarcodeDetector' in window)) return null
+  return (window as unknown as { BarcodeDetector: BarcodeDetectorCtor }).BarcodeDetector
+}
+
 export default function QRScanner() {
   const router = useRouter()
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const hasScanned = useRef(false)
+  const detectErrorReported = useRef(false)
   const [error, setError] = useState<string | null>(null)
 
   // Manual input state
@@ -31,8 +49,21 @@ export default function QRScanner() {
 
   useEffect(() => {
     let animationId: number
+    const Detector = getBarcodeDetector()
 
     async function startCamera() {
+      // Bail before requesting the camera: without BarcodeDetector the
+      // viewfinder would open and simply never detect anything, so asking for
+      // permission first would be misleading.
+      if (!Detector) {
+        setError(
+          'Browserul acesta nu suportă scanarea automată (Safari și Firefox). ' +
+          'Folosiți Chrome, sau căutați biletul după număr mai jos.'
+        )
+        setManualOpen(true)
+        return
+      }
+
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' }
@@ -63,10 +94,10 @@ export default function QRScanner() {
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
 
-        if ('BarcodeDetector' in window) {
-          const barcodeDetector = new (window as any).BarcodeDetector({ formats: ['qr_code'] })
+        if (Detector) {
+          const barcodeDetector = new Detector({ formats: ['qr_code'] })
           barcodeDetector.detect(imageData)
-            .then((barcodes: any[]) => {
+            .then((barcodes) => {
               if (barcodes.length > 0 && !hasScanned.current) {
                 hasScanned.current = true
                 const qrData = barcodes[0].rawValue
@@ -80,7 +111,14 @@ export default function QRScanner() {
                 }
               }
             })
-            .catch(() => {})
+            .catch((err: unknown) => {
+              // Runs per animation frame, so only surface the first failure.
+              if (detectErrorReported.current) return
+              detectErrorReported.current = true
+              console.error('QR detection error:', err)
+              setError('Scanarea a eșuat. Căutați biletul după număr mai jos.')
+              setManualOpen(true)
+            })
         }
       }
 
