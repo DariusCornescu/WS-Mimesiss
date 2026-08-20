@@ -140,7 +140,10 @@ export default async function RootLayout({
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
           <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
-          <style dangerouslySetInnerHTML={{__html: `:root{--primary:261 83% 68%;--background:0 0% 4%;--foreground:0 0% 98%;--border:0 0% 12%}body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground))}`}} />
+          {/* Critical first-paint colours. These MUST match :root in globals.css,
+              otherwise the pre-stylesheet paint is a different shade and causes
+              the very flash this is meant to prevent. */}
+          <style dangerouslySetInnerHTML={{__html: `:root{--background:240 3% 6%;--foreground:0 0% 100%}body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground))}`}} />
         </head>
         <body
           className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground min-h-screen`}
