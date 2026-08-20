@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
 	// Turbopack configuration (Next.js 16 uses Turbopack by default)
 	turbopack: {},
 	experimental: {
-		optimizePackageImports: ['react-icons', 'lucide-react'],
+		optimizePackageImports: ['react-icons'],
 	},
 };
 

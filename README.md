@@ -1,6 +1,6 @@
 # Mimesiss
 
-A modern workshop and event management platform built with Next.js 15, TypeScript, Tailwind CSS, MongoDB, and Clerk authentication. Features Stripe payment integration, QR code attendance tracking, and role-based access control.
+A modern workshop and event management platform built with Next.js 16, TypeScript, Tailwind CSS, MongoDB, and Clerk authentication. Features Stripe payment integration, QR code attendance tracking, and role-based access control.
 
 ## Features
 
@@ -54,13 +54,13 @@ A modern workshop and event management platform built with Next.js 15, TypeScrip
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 with App Router & Turbopack
+- **Framework**: Next.js 16 with App Router (Turbopack in dev, webpack for production builds)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
 - **Authentication**: Clerk
 - **Database**: MongoDB with Mongoose
 - **Payments**: Stripe
-- **QR Codes**: qrcode & html5-qrcode
+- **QR Codes**: `qrcode` for generation; the native `BarcodeDetector` Web API for scanning
 - **Icons**: React Icons
 - **Analytics**: Vercel Analytics & Speed Insights
 - **Deployment**: Vercel
@@ -97,7 +97,7 @@ src/
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 22+ (see `.nvmrc`)
 - A MongoDB database
 - A Clerk account
 - A Stripe account (for payments)
@@ -132,7 +132,7 @@ src/
    STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
    
    # App URL
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
    ```
 
 4. **Run the development server**
@@ -162,7 +162,7 @@ src/
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
-| `NEXT_PUBLIC_APP_URL` | Application URL |
+| `NEXT_PUBLIC_BASE_URL` | Application URL, used to build Stripe return URLs |
 
 ## Available Scripts
 
