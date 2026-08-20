@@ -10,6 +10,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { FaSpinner } from 'react-icons/fa';
+import { BRAND } from '@/lib/brand';
 
 // Load Stripe outside of component render to avoid recreating
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -169,35 +170,35 @@ export default function EmbeddedCheckout({ ticketId, quantity = 1, onSuccess, on
 	const appearance = {
 		theme: 'stripe' as const,
 		variables: {
-			colorPrimary: '#DF5739',
-			colorBackground: '#0F0F10',
-			colorText: '#ffffff',
-			colorDanger: '#FF1800',
+			colorPrimary: BRAND.primary,
+			colorBackground: BRAND.background,
+			colorText: BRAND.foreground,
+			colorDanger: BRAND.destructive,
 			fontFamily: 'Inter, system-ui, sans-serif',
 			spacingUnit: '4px',
 			borderRadius: '6px',
 		},
 		rules: {
 			'.Tab': {
-				backgroundColor: '#0F0F10',
-				border: '1px solid #DF5739',
-				color: '#9ca3af',
+				backgroundColor: BRAND.background,
+				border: `1px solid ${BRAND.primary}`,
+				color: BRAND.mutedForeground,
 			},
 			'.Tab--selected': {
-				backgroundColor: '#DF5739',
-				color: '#ffffff',
+				backgroundColor: BRAND.primary,
+				color: BRAND.onPrimary,
 			},
 			'.Input': {
-				backgroundColor: '#0F0F10',
-				border: '1px solid #374151',
-				color: '#ffffff',
+				backgroundColor: BRAND.background,
+				border: `1px solid ${BRAND.neutralBorder}`,
+				color: BRAND.foreground,
 			},
 			'.Input:focus': {
-				borderColor: '#DF5739',
-				boxShadow: '0 0 0 2px rgba(223, 87, 57, 0.2)',
+				borderColor: BRAND.primary,
+				boxShadow: '0 0 0 2px rgba(102, 153, 255, 0.2)',
 			},
 			'.Label': {
-				color: '#ffffff',
+				color: BRAND.foreground,
 				fontWeight: '500',
 			},
 		}

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import QRCode from 'qrcode'
 import { FaQrcode, FaTimes } from 'react-icons/fa'
+import { BRAND } from '@/lib/brand'
 
 interface TicketQRPopoverProps {
   ticketId: string
@@ -20,7 +21,7 @@ export default function TicketQRPopover({ ticketId, ticketLabel }: TicketQRPopov
       const dataUrl = await QRCode.toDataURL(url, {
         width: 280,
         margin: 2,
-        color: { dark: '#DF5739', light: '#FFFFFF' },
+        color: { dark: BRAND.primaryDeep, light: '#FFFFFF' },
         errorCorrectionLevel: 'M',
       })
       setQrDataUrl(dataUrl)
