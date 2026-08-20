@@ -6,9 +6,6 @@ import { getAllTickets } from '@/app/admin/tickets/actions';
 import type { Ticket as TicketType } from '@/types/models';
 import EmbeddedCheckout from './EmbeddedCheckout';
 
-interface EnhancedTicketSelectorProps {
-}
-
 export default function EnhancedTicketSelector() {
 	const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
 	const [showCheckout, setShowCheckout] = useState(false);
