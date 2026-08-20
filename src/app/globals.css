@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* MIMESISS Light Theme */
+    --background: 0 0% 100%;
+    --foreground: 16 100% 4%; /* Almost black #0F0F10 */
+    --card: 0 0% 100%;
+    --card-foreground: 16 100% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 16 100% 4%;
+    --primary: 13 76% 50%; /* MIMESISS Orange - restored brightness */
+    --primary-foreground: 0 0% 0%; /* Black text for better contrast */
+    --secondary: 0 100% 47%; /* MIMESISS Purple #790000 */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 13 76% 55%; /* MIMESISS Orange */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 7 100% 50%; /* MIMESISS Red #FF1800 */
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 89%;
+    --input: 0 0% 89%;
+    --ring: 13 76% 55%; /* MIMESISS Orange */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* MIMESISS Dark Theme */
+    --background: 16 100% 4%; /* MIMESISS Black #0F0F10 */
+    --foreground: 0 0% 98%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 13 76% 50%; /* MIMESISS Orange - restored brightness */
+    --primary-foreground: 0 0% 0%; /* Black text for better contrast */
+    --secondary: 0 100% 47%; /* MIMESISS Purple #790000 */
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 64%;
+    --accent: 13 76% 55%; /* MIMESISS Orange */
+    --accent-foreground: 0 0% 98%;
+    --destructive: 7 100% 50%; /* MIMESISS Red #FF1800 */
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 13 76% 55%; /* MIMESISS Orange */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: 'cv01', 'cv02', 'cv03', 'cv04', 'cv05', 'cv06', 'cv07', 'cv08', 'cv09', 'cv10', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+  
+  h1 {
+    @apply text-4xl font-bold tracking-tight;
+  }
+  
+  h2 {
+    @apply text-3xl font-semibold tracking-tight;
+  }
+  
+  h3 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  /* MIMESISS specific components */
+  
+  .mimesiss-title {
+    @apply text-4xl font-extrabold text-white sm:text-5xl md:text-6xl text-center;
+  }
+  
+  .mimesiss-subtitle {
+    @apply text-2xl font-bold text-gray-300 mt-4 text-center;
+  }
+  
+  .mimesiss-description {
+    @apply mt-6 max-w-4xl mx-auto text-lg text-gray-400 leading-relaxed text-center;
+  }
+  
+  .mimesiss-card {
+    @apply bg-card/80 backdrop-blur-sm rounded-lg border-2 border-border;
+  }
+  
+  .mimesiss-section-card {
+    @apply bg-card rounded-lg shadow border border-border overflow-hidden;
+  }
+  
+  .mimesiss-btn-primary {
+    @apply w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-black bg-primary hover:bg-primary/90 md:py-4 md:text-lg md:px-10 transition duration-200;
+  }
+  
+  .mimesiss-btn-secondary {
+    @apply w-full flex items-center justify-center px-8 py-3 border border-border text-base font-medium rounded-md text-secondary-foreground bg-secondary hover:bg-secondary/80 md:py-4 md:text-lg md:px-10 transition duration-200;
+  }
+  
+  .mimesiss-contact-card {
+    @apply bg-card/40 backdrop-blur-sm rounded-lg p-6 text-center border border-border;
+  }
+  
+  .mimesiss-info-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8;
+  }
+  
+  .mimesiss-info-card {
+    @apply bg-card/80 rounded-lg shadow-lg p-6 text-center border border-border;
+  }
+  
+  .mimesiss-info-icon {
+    @apply bg-card/60 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 border border-border;
+  }
+  
+  .mimesiss-section-header {
+    @apply bg-gradient-to-r from-card/90 to-card rounded-lg p-8 text-white border border-border;
+  }
+  
+  .mimesiss-countdown-grid {
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4 text-center;
+  }
+  
+  .mimesiss-countdown-item {
+    @apply bg-card/70 rounded-lg p-4 border border-border/50;
+  }
+  
+  .mimesiss-countdown-number {
+    @apply text-3xl md:text-4xl font-bold text-primary;
+  }
+  
+  .mimesiss-countdown-label {
+    @apply text-sm text-gray-300 mt-1;
+  }
+  
+  /* Utility classes */
+  .mimesiss-text-primary {
+    @apply text-primary;
+  }
+  
+  .mimesiss-text-secondary {
+    @apply text-gray-300;
+  }
+  
+  .mimesiss-border-step-1 {
+    @apply border-t-4 border-primary;
+  }
+  
+  .mimesiss-border-step-2 {
+    @apply border-t-4 border-border;
+  }
+  
+  .mimesiss-border-step-3 {
+    @apply border-t-4 border-border;
+  }
+  
+  .mimesiss-border-step-4 {
+    @apply border-t-4 border-primary;
+  }
+}
+
+
+.header-div {
+  background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/banners/header_mobile.jpeg');
+}
+
+@media screen and (min-width: 640px) {
+  .header-div {
+    background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('/banners/header.jpeg');
+  }
+  
+}
+
+ol.regulament-list {
+  counter-reset: art-counter;
+  list-style: none; /* hide default numbering */
+  padding-left: 0;
+}
+
+ol.regulament-list > li {
+  counter-increment: art-counter;
+  margin-left: 0;
+  margin-bottom: 0.5rem;
+  position: relative;
+  padding-left: 4rem; /* space for the "art N" label, adjust as needed */
+}
+
+ol.regulament-list > li::before {
+  content: "Art. " counter(art-counter);
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 600;
+  color: hsl(var(--primary)); /* uses your primary color variable */
+}
+
+.mimesiss-input {
+  @apply block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm;
+}
+
+.pill{
+  @apply border border-primary rounded-full p-1 bg-primary/45 inline-block;
+}
+
+/* Center single ticket on desktop */
+.ticket-grid {
+  @apply grid md:grid-cols-2 gap-6;
+}
+
+.ticket-grid:has(> :only-child) {
+  @apply md:grid-cols-1 md:max-w-md md:mx-auto;
+}

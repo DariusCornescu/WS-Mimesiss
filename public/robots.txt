@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /debug/
+Disallow: /dashboard/
+Disallow: /auth/signout
+
+# Allow access to public pages
+Allow: /workshops
+Allow: /auth/login
+Allow: /auth/signup
+
+# Sitemap location
+Sitemap: https://mimesiss.ro/sitemap.xml

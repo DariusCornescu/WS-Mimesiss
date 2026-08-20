@@ -1,0 +1,33 @@
+{
+  "name": "MIMESISS - Military Medicine Scientific Session for Students",
+  "short_name": "MIMESISS",
+  "description": "Cea de-a V-a ediție a Sesiunii de Comunicări Științifice Medico-Militare",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F0F10",
+  "theme_color": "#DF5739",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/web-app-manifest-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/web-app-manifest-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["medical", "education", "conferences"],
+  "lang": "ro",
+  "dir": "ltr"
+}
