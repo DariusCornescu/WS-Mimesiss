@@ -180,7 +180,7 @@ export default function BallTicketSelector({
                     type="button"
                     onClick={() => setQuantity((q) => clampQuantity(q - 1))}
                     disabled={quantity <= 1}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-border hover:bg-accent disabled:opacity-40"
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
                   >
                     <FaMinus className="h-3 w-3" />
                   </button>
@@ -189,7 +189,7 @@ export default function BallTicketSelector({
                     type="button"
                     onClick={() => setQuantity((q) => clampQuantity(q + 1))}
                     disabled={quantity >= remaining}
-                    className="w-8 h-8 flex items-center justify-center rounded-md border border-border hover:bg-accent disabled:opacity-40"
+                    className="w-8 h-8 flex items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
                   >
                     <FaPlus className="h-3 w-3" />
                   </button>

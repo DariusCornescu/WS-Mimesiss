@@ -77,7 +77,7 @@ export default function Header() {
         <button
           type="button"
           aria-label='Open Mobile Menu'
-          className="lg:hidden p-2 text-foreground hover:bg-accent rounded-md transition-colors"
+          className="lg:hidden p-2 text-foreground hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
           onClick={toggleMobileMenu}
         >
           <FaBars className="h-5 w-5" />
@@ -114,7 +114,7 @@ export default function Header() {
                 aria-label='Close Mobile Menu'
                 type="button"
                 onClick={toggleMobileMenu}
-                className="p-2 text-foreground hover:bg-accent rounded-md transition-colors duration-200"
+                className="p-2 text-foreground hover:bg-accent hover:text-accent-foreground rounded-md transition-colors duration-200"
               >
                 <FaTimes className="h-5 w-5" />
               </button>
