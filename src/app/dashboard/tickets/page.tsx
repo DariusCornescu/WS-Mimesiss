@@ -88,7 +88,7 @@ export default async function MyTicketsPage() {
           <p className="text-muted-foreground text-sm mt-1 mb-6">
             Cumpără un bilet pentru a participa la MIMESISS 2025
           </p>
-          <a href="/payment" className="mimesiss-button-primary inline-flex items-center gap-2">
+          <a href="/payment" className="mimesiss-btn-primary inline-flex items-center gap-2">
             <FaTicketAlt className="h-4 w-4" />
             Cumpără bilet
           </a>

@@ -127,11 +127,11 @@ export default async function AdminDashboard() {
               Creează workshop nou
             </Link>
             <Link
-              href="/debug"
+              href="/admin/settings"
               className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
             >
               <FaCog className="mr-2 h-4 w-4" />
-              Debug
+              Setări
             </Link>
             <Link
               href="/dashboard"
