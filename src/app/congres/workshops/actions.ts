@@ -174,7 +174,7 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
     }
 
     // Only revalidate on success
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     revalidatePath('/dashboard')
     
     return { success: true }

@@ -35,13 +35,13 @@ export default function Footer() {
         </div>
 
         <div className="text-center text-sm text-muted-foreground [&_a:hover]:underline">
-          <Link href="/reg">
+          <Link href="/congres/reg">
             Regulament
           </Link>
 
           <FaCircle className="inline mx-2" size={6} />
 
-          <Link href='/ghid'>
+          <Link href='/congres/ghid'>
             Ghid redactare abstracte
           </Link>
 

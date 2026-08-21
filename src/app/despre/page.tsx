@@ -1,6 +1,11 @@
 import HeaderContent from "@/components/ui/HeaderContent";
 import PersonCard from "@/components/ui/PersonCard";
 
+export const metadata = {
+  title: 'Cine suntem',
+  description: 'Echipa de conducere a Asociației Studenților Mediciniști Militari.',
+}
+
 type Person = {
 	name: string;
 	role: string;

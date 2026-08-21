@@ -3,7 +3,7 @@
 import type { Workshop } from '@/types/models'
 import { useTransition } from 'react'
 import { useToast } from '@/components/ui/ToastProvider'
-import { registerForWorkshop } from '@/app/workshops/actions'
+import { registerForWorkshop } from '@/app/congres/workshops/actions'
 import { useMongoUser } from '@/hooks/useMongoUser'
 import { useAppSettings } from '@/contexts/AppSettingsContext'
 import Link from 'next/link'

@@ -1,4 +1,4 @@
-import { getUserRegistrations } from '@/app/workshops/actions'
+import { getUserRegistrations } from '@/app/congres/workshops/actions'
 import { syncUserWithDatabase } from '@/lib/auth'
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
@@ -72,7 +72,7 @@ export default async function RegistrationsPage() {
 								</div>
 								{workshopVisibleToPublic && (
 									<Link
-										href={`/workshops/${registration.workshop._id || registration.workshop.id || ''}`}
+										href={`/congres/workshops/${registration.workshop._id || registration.workshop.id || ''}`}
 										className="text-sm font-medium text-primary hover:underline"
 									>
 										Detalii {registration.workshop.wsType === 'workshop' ? 'Workshop' : 'Conferință'}
@@ -82,7 +82,7 @@ export default async function RegistrationsPage() {
 						))}
 					</ul>
 				) : (
-					<p className="text-sm text-muted-foreground">Nu ai nicio înregistrare la workshopuri. <Link href="/workshops">Vezi workshopurile disponibile</Link></p>
+					<p className="text-sm text-muted-foreground">Nu ai nicio înregistrare la workshopuri. <Link href="/congres/workshops">Vezi workshopurile disponibile</Link></p>
 				)}
 			</div>
 		</>

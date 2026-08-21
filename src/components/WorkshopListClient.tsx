@@ -209,7 +209,7 @@ export default function WorkshopListClient({ initialWorkshops }: WorkshopListCli
 							{/* Registration button removed on list page - only details link shown */}
 							<div className="mt-6">
 								<Link
-									href={`/workshops/${workshop._id || workshop.id || ''}`}
+									href={`/congres/workshops/${workshop._id || workshop.id || ''}`}
 									className="w-full block text-center bg-secondary hover:bg-primary/90 text-primary-foreground font-medium py-2 px-4 rounded-md transition duration-200"
 								>
 									Vezi detalii

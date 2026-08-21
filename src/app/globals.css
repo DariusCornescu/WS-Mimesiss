@@ -217,3 +217,57 @@ ol.regulament-list > li::before {
 .ticket-grid:has(> :only-child) {
   @apply md:grid-cols-1 md:max-w-md md:mx-auto;
 }
+
+/* --- Animații asociație -------------------------------------------------
+   Fără dependențe: root layout-ul face deja getAppSettings() pe fiecare
+   request, deci calea critică e legată de Mongo — nu adăugăm bundle peste.
+   Toate se dezactivează la prefers-reduced-motion. */
+
+@keyframes asmm-ken-burns {
+  from { transform: scale(1.12); }
+  to   { transform: scale(1); }
+}
+
+@keyframes asmm-rise {
+  from { opacity: 0; transform: translateY(1.5rem); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes asmm-draw {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes asmm-cue {
+  0%, 100% { transform: translateY(0); opacity: .45; }
+  50%      { transform: translateY(.4rem); opacity: 1; }
+}
+
+.asmm-kenburns {
+  animation: asmm-ken-burns 20s cubic-bezier(.22, .61, .36, 1) forwards;
+}
+
+.asmm-rise {
+  opacity: 0;
+  animation: asmm-rise .95s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.asmm-draw {
+  transform-origin: left;
+  animation: asmm-draw 1.1s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+
+.asmm-cue {
+  animation: asmm-cue 2.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .asmm-kenburns,
+  .asmm-rise,
+  .asmm-draw,
+  .asmm-cue {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

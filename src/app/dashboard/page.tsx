@@ -147,7 +147,7 @@ export default async function DashboardPage() {
           </h3>
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {!isBallMode && (
-              <Link href="/workshops"
+              <Link href="/congres/workshops"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
               >
                 <FaCalendarAlt className="mr-2 h-4 w-4" />

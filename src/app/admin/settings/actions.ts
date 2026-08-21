@@ -53,7 +53,7 @@ export async function updateSettings(formData: FormData) {
 
     // Revalidate pages that might use settings
     revalidatePath('/admin/settings')
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     revalidatePath('/payment')
     revalidatePath('/')
     
@@ -84,7 +84,7 @@ export async function resetSettings() {
 
     // Revalidate pages that might use settings
     revalidatePath('/admin/settings')
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     revalidatePath('/')
     
     return { success: true }

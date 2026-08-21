@@ -20,7 +20,7 @@ export default async function HomePageCTAs() {
           <Link href="/dashboard" className="mimesiss-btn-primary">
             Accesează Contul
           </Link>
-          <Link href="/workshops" className="mimesiss-btn-secondary">
+          <Link href="/congres/workshops" className="mimesiss-btn-secondary">
             Vezi Atelierele
           </Link>
         </>
@@ -30,10 +30,10 @@ export default async function HomePageCTAs() {
           <Link href="/auth/signup" className="mimesiss-btn-primary">
             Înregistrează-te pentru a cumpara bilet
           </Link>
-          <Link href="/info" className="mimesiss-btn-secondary">
+          <Link href="/congres/info" className="mimesiss-btn-secondary">
             Informații
           </Link>
-          <Link href="/reg" className="mimesiss-btn-secondary">
+          <Link href="/congres/reg" className="mimesiss-btn-secondary">
             Regulament
           </Link>
         </>

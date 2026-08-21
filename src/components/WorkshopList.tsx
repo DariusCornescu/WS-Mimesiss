@@ -1,4 +1,4 @@
-import { getAllWorkshops, getIsRegisteredForWorkshop } from '@/app/workshops/actions';
+import { getAllWorkshops, getIsRegisteredForWorkshop } from '@/app/congres/workshops/actions';
 import type { Workshop } from '@/types/models';
 import WorkshopListClient from './WorkshopListClient';
 

@@ -99,7 +99,7 @@ export default async function WorkshopsPage() {
             </div>
             <div className="text-primary">
               <Link 
-                href="/info" 
+                href="/congres/info" 
                 className="inline-flex items-center hover:text-primary/80 font-medium hover:underline transition duration-200"
               >
                 Vezi toate informațiile despre înregistrare
@@ -108,7 +108,7 @@ export default async function WorkshopsPage() {
               <FaCircle className="inline mx-2" size={6} />
 
               <Link
-                href="/reg"
+                href="/congres/reg"
                 className="inline-flex items-center hover:text-primary/80 font-medium hover:underline transition duration-200"
               >
                 Regulament
@@ -116,7 +116,7 @@ export default async function WorkshopsPage() {
 
               <FaCircle className="inline mx-2" size={6} />
               <Link
-                href="/ghid"
+                href="/congres/ghid"
                 className="inline-flex items-center hover:text-primary/80 font-medium hover:underline transition duration-200"
               >
                 Ghid redactare abstracte
