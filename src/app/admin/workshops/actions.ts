@@ -78,7 +78,7 @@ export async function createWorkshop(formData: FormData) {
     // Revalidate the admin workshops page
     revalidatePath('/admin/workshops')
 
-    return { success: true, workshopId: workshop._id.toString() }
+    return { success: true, workshopId: String(workshop._id) }
   } catch (error) {
     console.error('Error creating workshop:', error)
     const message = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -171,7 +171,7 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
     // Revalidate the admin workshops page
     revalidatePath('/admin/workshops')
 
-    return { success: true, workshopId: workshop._id.toString() }
+    return { success: true, workshopId: String(workshop._id) }
   } catch (error) {
     console.error('Error updating workshop:', error)
     throw new Error('Failed to update workshop')
@@ -475,7 +475,7 @@ export async function manuallyAssignUserToWorkshop(
     })
 
     revalidatePath('/admin/workshops')
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     
     return { success: true }
 
@@ -512,7 +512,7 @@ export async function recountAllWorkshopParticipants() {
     // For each workshop, count registrations and update currentParticipants
     for (const workshop of workshops) {
       const count = await Registration.countDocuments({ 
-        workshopId: workshop._id.toString() 
+        workshopId: String(workshop._id) 
       })
 
       await Workshop.findByIdAndUpdate(
@@ -610,7 +610,7 @@ export async function removeUserFromWorkshop(
     ])
 
     revalidatePath('/admin/workshops')
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     
     return { success: true }
 

@@ -12,6 +12,30 @@ export interface IUser extends Document {
   userType: UserType
 }
 
+// Project interface — un proiect al asociației. Congresul este unul dintre ele.
+export interface IProject extends Document {
+  slug: string
+  title: string
+  /** Eticheta scurtă de deasupra titlului pe card, ex. „Concurs". */
+  kicker?: string
+  summary: string
+  description?: string
+  coverImage?: string
+  order: number
+  status: 'draft' | 'published'
+  kind: 'congress' | 'standard'
+}
+
+// Edition interface — o ediție a unui proiect (ex. MIMESISS 2025).
+export interface IEdition extends Document {
+  projectId: mongoose.Types.ObjectId
+  year: number
+  title: string
+  startDate?: Date
+  endDate?: Date
+  status: 'upcoming' | 'active' | 'archived'
+}
+
 // Workshop interface
 export interface IWorkshop extends Document {
   title: string
@@ -25,6 +49,8 @@ export interface IWorkshop extends Document {
   instructor: string
   status: 'active' | 'cancelled' | 'completed'
   url?: string;
+  /** Opțional: workshopurile dinainte de migrare nu au ediție. */
+  editionId?: mongoose.Types.ObjectId
 }
 
 // Registration interface
@@ -63,6 +89,40 @@ const UserSchema = new Schema<IUser>({
 // Add indexes for performance (clerkId and email already indexed via unique: true)
 UserSchema.index({ role: 1 })
 
+// Project schema
+const ProjectSchema = new Schema<IProject>({
+  slug: { type: String, required: true, unique: true }, // unique: true creates an index
+  title: { type: String, required: true },
+  kicker: { type: String, required: false },
+  summary: { type: String, required: true },
+  description: { type: String, required: false },
+  coverImage: { type: String, required: false },
+  order: { type: Number, default: 0 },
+  status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+  kind: { type: String, enum: ['congress', 'standard'], default: 'standard' },
+}, {
+  timestamps: true
+})
+
+// Ordinea din grila de pe homepage, filtrată după status
+ProjectSchema.index({ status: 1, order: 1 })
+
+// Edition schema
+const EditionSchema = new Schema<IEdition>({
+  projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
+  year: { type: Number, required: true },
+  title: { type: String, required: true },
+  startDate: { type: Date, required: false },
+  endDate: { type: Date, required: false },
+  status: { type: String, enum: ['upcoming', 'active', 'archived'], default: 'upcoming' },
+}, {
+  timestamps: true
+})
+
+EditionSchema.index({ projectId: 1, year: -1 })
+// O singură ediție pe an per proiect
+EditionSchema.index({ projectId: 1, year: 1 }, { unique: true })
+
 // Workshop schema
 const WorkshopSchema = new Schema<IWorkshop>({
   title: { type: String, required: true },
@@ -76,6 +136,7 @@ const WorkshopSchema = new Schema<IWorkshop>({
   status: { type: String, enum: ['active', 'cancelled', 'completed'], default: 'active' },
   wsType: { type: String, enum: ['workshop', 'conferinta'], default: 'workshop' },
   url: { type: String, required: false },
+  editionId: { type: Schema.Types.ObjectId, ref: 'Edition', required: false },
 }, {
   timestamps: true
 })
@@ -85,6 +146,8 @@ WorkshopSchema.index({ status: 1, date: 1 })
 WorkshopSchema.index({ wsType: 1 })
 WorkshopSchema.index({ date: 1 })
 WorkshopSchema.index({ status: 1 })
+// Programul unei ediții
+WorkshopSchema.index({ editionId: 1, date: 1 })
 
 // Registration schema
 const RegistrationSchema = new Schema<IRegistration>({
@@ -203,9 +266,17 @@ if (mongoose.models.IssuedTicket) delete mongoose.models.IssuedTicket
 export const IssuedTicket = mongoose.model<IIssuedTicket>('IssuedTicket', IssuedTicketSchema)
 
 
-export const Workshop = mongoose.models.Workshop || mongoose.model<IWorkshop>('Workshop', WorkshopSchema)
+// Workshop a primit editionId; fără re-înregistrare, un model deja cached în
+// dev ar rula cu schema veche și ar ignora tăcut câmpul (același motiv ca la
+// Payment și Ticket mai jos).
+if (mongoose.models.Workshop) delete mongoose.models.Workshop
+export const Workshop = mongoose.model<IWorkshop>('Workshop', WorkshopSchema)
+
 export const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema)
 export const Registration = mongoose.models.Registration || mongoose.model<IRegistration>('Registration', RegistrationSchema)
+
+export const Project = mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema)
+export const Edition = mongoose.models.Edition || mongoose.model<IEdition>('Edition', EditionSchema)
 
 // Payment and Ticket had fields added (ticketCategory/quantity and category).
 // Force re-registration so the updated schema is always used.
