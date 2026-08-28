@@ -419,25 +419,26 @@ export async function recountAllWorkshopParticipants() {
   try {
     await connectDB()
 
-    // Get all workshops
-    const workshops = await Workshop.find({}).select('_id')
+    // One aggregate + one bulkWrite instead of two queries per workshop.
+    const workshops = await Workshop.find({}).select('_id').lean()
+    const workshopIds = workshops.map(w => String(w._id))
 
-    let updated = 0
+    const counts = await Registration.aggregate([
+      { $match: { workshopId: { $in: workshopIds } } },
+      { $group: { _id: '$workshopId', total: { $sum: 1 } } },
+    ])
+    const countByWorkshop = new Map<string, number>(counts.map(c => [String(c._id), c.total]))
 
-    // For each workshop, count registrations and update currentParticipants
-    for (const workshop of workshops) {
-      const count = await Registration.countDocuments({ 
-        workshopId: String(workshop._id) 
-      })
-
-      await Workshop.findByIdAndUpdate(
-        workshop._id,
-        { currentParticipants: count },
-        { new: true }
-      )
-
-      updated++
+    if (workshops.length > 0) {
+      await Workshop.bulkWrite(workshops.map(w => ({
+        updateOne: {
+          filter: { _id: w._id },
+          update: { $set: { currentParticipants: countByWorkshop.get(String(w._id)) ?? 0 } },
+        },
+      })))
     }
+
+    const updated = workshops.length
 
     revalidatePath('/admin/workshops')
 
