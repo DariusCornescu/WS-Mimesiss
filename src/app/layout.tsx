@@ -8,7 +8,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import Header from "@/components/ui/Header";
 import "./globals.css";
 import Footer from "@/components/ui/Footer";
-import { AppSettingsProvider, type AppSettingsData } from '@/contexts/AppSettingsContext';
+import { AppSettingsProvider } from '@/contexts/AppSettingsContext';
 import { getAppSettings } from '@/lib/settings';
 
 const inter = Inter({
@@ -120,20 +120,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const rawSettings = await getAppSettings()
-  const appSettings: AppSettingsData = {
-    eventMode: rawSettings.eventMode ?? 'workshops',
-    globalRegistrationEnabled: rawSettings.globalRegistrationEnabled ?? true,
-    paymentsEnabled: rawSettings.paymentsEnabled ?? false,
-    workshopVisibleToPublic: rawSettings.workshopVisibleToPublic ?? false,
-    allowCancelRegistration: rawSettings.allowCancelRegistration ?? true,
-    registrationStartTime: rawSettings.registrationStartTime ? new Date(rawSettings.registrationStartTime).toISOString() : null,
-    registrationDeadline: rawSettings.registrationDeadline ? new Date(rawSettings.registrationDeadline).toISOString() : null,
-    defaultMaxParticipants: rawSettings.defaultMaxParticipants ?? 20,
-    ballTicketAvailableFrom: rawSettings.ballTicketAvailableFrom ? new Date(rawSettings.ballTicketAvailableFrom).toISOString() : null,
-    ballTicketAvailableTo: rawSettings.ballTicketAvailableTo ? new Date(rawSettings.ballTicketAvailableTo).toISOString() : null,
-    ballMaxTicketsPerUser: rawSettings.ballMaxTicketsPerUser ?? 2,
-  }
+  const appSettings = await getAppSettings()
+
   return (
     <ClerkProvider>
       <html lang="ro" className="dark">

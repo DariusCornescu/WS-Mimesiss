@@ -1,6 +1,27 @@
+import { cache } from 'react'
+import { unstable_cache, updateTag } from 'next/cache'
 import connectDB from '@/lib/mongodb'
 import { AppSettings } from '@/models'
 import type { IAppSettings } from '@/models'
+
+/**
+ * Plain, serializable settings shape used by everything outside this module.
+ * Dates are ISO strings so the object can cross the RSC boundary and live in
+ * unstable_cache without a Mongoose document in sight.
+ */
+export interface AppSettingsPlain {
+  eventMode: 'workshops' | 'ball'
+  globalRegistrationEnabled: boolean
+  paymentsEnabled: boolean
+  workshopVisibleToPublic: boolean
+  allowCancelRegistration: boolean
+  registrationStartTime: string | null
+  registrationDeadline: string | null
+  defaultMaxParticipants: number
+  ballTicketAvailableFrom: string | null
+  ballTicketAvailableTo: string | null
+  ballMaxTicketsPerUser: number
+}
 
 // Default settings
 const DEFAULT_SETTINGS = {
@@ -14,95 +35,95 @@ const DEFAULT_SETTINGS = {
   ballMaxTicketsPerUser: 2,
 }
 
+const toIso = (value: Date | string | null | undefined): string | null =>
+  value ? new Date(value).toISOString() : null
+
 /**
- * Get app settings from database or create default if doesn't exist.
- * Also patches any fields that were added to the schema after the document
- * was first created (lazy migration — safe and idempotent).
+ * Pure read: merges defaults in memory instead of lazily patching the
+ * database, so caching this can never write. Creating the settings document
+ * lives on the write path only (updateAppSettings upserts with defaults).
  */
-export async function getAppSettings(): Promise<IAppSettings> {
+async function readSettings(): Promise<AppSettingsPlain> {
   await connectDB()
-  
-  let settings = await AppSettings.findOne()
-  
-  if (!settings) {
-    settings = await AppSettings.create(DEFAULT_SETTINGS)
-    return settings
-  }
 
-  // Lazily migrate fields that may be missing in documents created before
-  // they were added to the schema. Only write if something is actually missing.
-  const patch: Partial<typeof DEFAULT_SETTINGS> = {}
-  for (const [key, defaultValue] of Object.entries(DEFAULT_SETTINGS) as [keyof typeof DEFAULT_SETTINGS, unknown][]) {
-    if (settings[key] === undefined || settings[key] === null) {
-      (patch as Record<string, unknown>)[key] = defaultValue
-    }
-  }
+  const doc = await AppSettings.findOne().lean() as Partial<IAppSettings> | null
 
-  if (Object.keys(patch).length > 0) {
-    settings = await AppSettings.findByIdAndUpdate(
-      settings._id,
-      { $set: patch },
-      { new: true }
-    ) ?? settings
+  return {
+    eventMode: doc?.eventMode ?? DEFAULT_SETTINGS.eventMode,
+    globalRegistrationEnabled: doc?.globalRegistrationEnabled ?? DEFAULT_SETTINGS.globalRegistrationEnabled,
+    paymentsEnabled: doc?.paymentsEnabled ?? DEFAULT_SETTINGS.paymentsEnabled,
+    workshopVisibleToPublic: doc?.workshopVisibleToPublic ?? DEFAULT_SETTINGS.workshopVisibleToPublic,
+    allowCancelRegistration: doc?.allowCancelRegistration ?? DEFAULT_SETTINGS.allowCancelRegistration,
+    registrationStartTime: toIso(doc?.registrationStartTime),
+    registrationDeadline: toIso(doc?.registrationDeadline),
+    defaultMaxParticipants: doc?.defaultMaxParticipants ?? DEFAULT_SETTINGS.defaultMaxParticipants,
+    ballTicketAvailableFrom: toIso(doc?.ballTicketAvailableFrom),
+    ballTicketAvailableTo: toIso(doc?.ballTicketAvailableTo),
+    ballMaxTicketsPerUser: doc?.ballMaxTicketsPerUser ?? DEFAULT_SETTINGS.ballMaxTicketsPerUser,
   }
-  
-  return settings
 }
 
+const cachedSettings = unstable_cache(readSettings, ['app-settings'], {
+  tags: ['app-settings'],
+  revalidate: 300, // belt-and-braces TTL on top of the tag invalidation below
+})
+
 /**
- * Update app settings
+ * Cached settings read. unstable_cache serves it across requests until a
+ * write revalidates the 'app-settings' tag (or the TTL passes); React's
+ * cache() dedupes within one request, so the root layout plus any page
+ * calling this hit the store at most once per render.
  */
-export async function updateAppSettings(updates: Partial<IAppSettings>): Promise<IAppSettings> {
+export const getAppSettings = cache((): Promise<AppSettingsPlain> => cachedSettings())
+
+/**
+ * Update app settings (creates the document on first write).
+ */
+export async function updateAppSettings(updates: Partial<IAppSettings>): Promise<void> {
   await connectDB()
-  
-  // Find existing settings or create new ones
-  let settings = await AppSettings.findOne()
-  
+
+  const settings = await AppSettings.findOne()
+
   if (!settings) {
-    // Create new settings with updates
-    settings = await AppSettings.create({ ...DEFAULT_SETTINGS, ...updates })
+    await AppSettings.create({ ...DEFAULT_SETTINGS, ...updates })
   } else {
-    // Update existing settings
-    settings = await AppSettings.findByIdAndUpdate(
+    const updated = await AppSettings.findByIdAndUpdate(
       settings._id,
       { $set: updates },
       { new: true }
     )
+    if (!updated) {
+      throw new Error('Failed to update settings')
+    }
   }
-  
-  if (!settings) {
-    throw new Error('Failed to update settings')
-  }
-  
-  return settings
+
+  // updateTag: expire the cached read AND refresh it in the same action, so
+  // the admin sees their own write immediately (server-action-only API).
+  updateTag('app-settings')
 }
 
 /**
  * Reset settings to defaults
  */
-export async function resetAppSettings(): Promise<IAppSettings> {
+export async function resetAppSettings(): Promise<void> {
   await connectDB()
-  
-  // Find existing settings
-  let settings = await AppSettings.findOne()
-  
+
+  const settings = await AppSettings.findOne()
+
   if (!settings) {
-    // Create new settings with defaults
-    settings = await AppSettings.create(DEFAULT_SETTINGS)
+    await AppSettings.create(DEFAULT_SETTINGS)
   } else {
-    // Update existing settings with defaults
-    settings = await AppSettings.findByIdAndUpdate(
+    const updated = await AppSettings.findByIdAndUpdate(
       settings._id,
       { $set: DEFAULT_SETTINGS },
       { new: true }
     )
+    if (!updated) {
+      throw new Error('Failed to reset settings')
+    }
   }
-  
-  if (!settings) {
-    throw new Error('Failed to reset settings')
-  }
-  
-  return settings
+
+  updateTag('app-settings')
 }
 
 /**

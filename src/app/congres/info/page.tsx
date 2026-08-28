@@ -8,7 +8,7 @@ import { getAllTickets } from './actions'
 export default async function InfoPage() {
   const settings = await getAppSettings();
 
-  const paymentEnabled = settings ?? false;
+  const paymentEnabled = settings.paymentsEnabled;
 
   const allTickets = await getAllTickets();
   

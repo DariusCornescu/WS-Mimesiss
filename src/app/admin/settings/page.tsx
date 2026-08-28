@@ -33,7 +33,7 @@ export default async function AdminSettingsPage() {
 
       {/* Settings Form */}
       <div className="bg-card shadow border border-border rounded-lg">
-        <SettingsForm initialSettings={JSON.parse(JSON.stringify(settings))} />
+        <SettingsForm initialSettings={settings} />
       </div>
     </div>
   )

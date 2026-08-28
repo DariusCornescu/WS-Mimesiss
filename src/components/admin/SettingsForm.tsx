@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import type { IAppSettings } from '@/models/AppSettings'
+import type { AppSettingsPlain } from '@/lib/settings'
 import { updateSettings, resetSettings } from '@/app/admin/settings/actions'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
 
 interface SettingsFormProps {
-  initialSettings: IAppSettings
+  initialSettings: AppSettingsPlain
 }
 
 // Simple CSS spinner component
@@ -19,7 +19,7 @@ function Spinner() {
 
 // Helper to format date for datetime-local input
 // Reads stored UTC time and displays it as-is (since we store the literal time as UTC)
-function formatDateTimeLocal(date: Date | string | undefined): string {
+function formatDateTimeLocal(date: Date | string | null | undefined): string {
   if (!date) return ''
   const d = new Date(date)
   // Use UTC methods because we store "20:00" as "20:00 UTC" (not as Romania time converted to UTC)

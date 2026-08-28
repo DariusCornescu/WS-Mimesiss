@@ -1,21 +1,10 @@
 'use client'
 
 import { createContext, useContext, type ReactNode } from 'react'
+import type { AppSettingsPlain } from '@/lib/settings'
 
-// Serializable settings shape (dates as ISO strings, no Mongoose Document)
-export interface AppSettingsData {
-  eventMode: 'workshops' | 'ball'
-  globalRegistrationEnabled: boolean
-  paymentsEnabled: boolean
-  workshopVisibleToPublic: boolean
-  allowCancelRegistration: boolean
-  registrationStartTime: string | null
-  registrationDeadline: string | null
-  defaultMaxParticipants: number
-  ballTicketAvailableFrom: string | null
-  ballTicketAvailableTo: string | null
-  ballMaxTicketsPerUser: number
-}
+// Serializable settings shape (dates as ISO strings, no Mongoose document).
+export type AppSettingsData = AppSettingsPlain
 
 const AppSettingsContext = createContext<AppSettingsData | null>(null)
 
