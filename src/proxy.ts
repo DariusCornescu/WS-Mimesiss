@@ -1,10 +1,16 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/admin(.*)',
-  // Defense in depth: unauthenticated /api/admin/* dies here. Role checks
-  // stay in the handlers - middleware runs on Edge and cannot read Mongo.
+])
+
+// Defense in depth: unauthenticated /api/admin/* dies here with a JSON 401
+// (auth.protect() would 307-redirect to the sign-in page, which is the wrong
+// shape for fetch callers). Role checks stay in the handlers - middleware
+// runs on Edge and cannot read Mongo roles.
+const isProtectedApiRoute = createRouteMatcher([
   '/api/admin(.*)',
 ])
 
@@ -21,7 +27,15 @@ export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) {
     return
   }
-  
+
+  if (isProtectedApiRoute(req)) {
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    return
+  }
+
   if (isProtectedRoute(req)) {
     await auth.protect()
   }
