@@ -50,7 +50,7 @@ async function SuccessContent() {
             </Link>
           ) : (
             <Link
-              href="/workshops"
+              href="/congres/workshops"
               className="block w-full border border-border bg-background text-foreground py-3 px-4 rounded-md font-medium hover:bg-muted transition-colors"
             >
               Vezi Workshop-urile

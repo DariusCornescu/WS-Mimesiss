@@ -1,8 +1,6 @@
-import { getUserRegistrations } from '@/app/workshops/actions'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { getMyRegistrations } from '@/app/congres/workshops/actions'
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import type { User as UserType } from '@/types/models'
 import Link from 'next/link'
 import { FaCircle, FaCheckCircle, FaTimes } from 'react-icons/fa'
 import { getAppSettings } from '@/lib/settings'
@@ -14,11 +12,10 @@ export default async function RegistrationsPage() {
 		redirect('/auth/login')
 	}
 
-	const user: UserType = await syncUserWithDatabase(clerkUser)
 
 
 	// Fetch  user registrations
-	const registrations = await getUserRegistrations(user.clerkId)
+	const registrations = await getMyRegistrations()
 
 	//get app settings
 	const appSettings = await getAppSettings()
@@ -72,7 +69,7 @@ export default async function RegistrationsPage() {
 								</div>
 								{workshopVisibleToPublic && (
 									<Link
-										href={`/workshops/${registration.workshop._id || registration.workshop.id || ''}`}
+										href={`/congres/workshops/${registration.workshop._id || registration.workshop.id || ''}`}
 										className="text-sm font-medium text-primary hover:underline"
 									>
 										Detalii {registration.workshop.wsType === 'workshop' ? 'Workshop' : 'Conferință'}
@@ -82,7 +79,7 @@ export default async function RegistrationsPage() {
 						))}
 					</ul>
 				) : (
-					<p className="text-sm text-muted-foreground">Nu ai nicio înregistrare la workshopuri. <Link href="/workshops">Vezi workshopurile disponibile</Link></p>
+					<p className="text-sm text-muted-foreground">Nu ai nicio înregistrare la workshopuri. <Link href="/congres/workshops">Vezi workshopurile disponibile</Link></p>
 				)}
 			</div>
 		</>

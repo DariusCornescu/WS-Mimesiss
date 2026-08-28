@@ -1,23 +1,13 @@
 import { NextResponse } from 'next/server'
-import { currentUser } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { User } from '@/models'
 import { User as UserInterface } from '@/types/models'
-import { isUserAdmin } from '@/lib/auth'
+import { requireRole, toAuthResponse } from '@/lib/auth'
 import { clerkClient } from '@clerk/nextjs/server'
 
 export async function GET() {
   try {
-    const clerkUser = await currentUser()
-    
-    if (!clerkUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const isUserAdminRole = await isUserAdmin(clerkUser.id)
-    if (!isUserAdminRole) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    await requireRole('admin')
 
     // Get users from MongoDB
     await connectDB()
@@ -50,6 +40,11 @@ export async function GET() {
 
     return NextResponse.json(users)
   } catch (error) {
+    const authResponse = toAuthResponse(error)
+    if (authResponse) {
+      return authResponse
+    }
+
     console.error('Error fetching users:', error)
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -4,7 +4,7 @@ import { syncUserWithDatabase } from '@/lib/auth'
 import type { User as UserType } from '@/types/models'
 import { ManualAssignmentForm } from '@/components/admin/ManualAssignmentForm'
 import { getAllUsers } from '../actions'
-import { getAllWorkshops } from '@/app/workshops/actions'
+import { getAllWorkshops } from '@/app/congres/workshops/actions'
 import Link from 'next/link'
 import { FaArrowLeft } from 'react-icons/fa'
 

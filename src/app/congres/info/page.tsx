@@ -8,7 +8,7 @@ import { getAllTickets } from './actions'
 export default async function InfoPage() {
   const settings = await getAppSettings();
 
-  const paymentEnabled = settings ?? false;
+  const paymentEnabled = settings.paymentsEnabled;
 
   const allTickets = await getAllTickets();
   
@@ -68,7 +68,7 @@ export default async function InfoPage() {
                   Doar pentru participanții activi. Încarcă abstractul conform ghidului de redactare 
                   disponibil în secțiunea de informații.
                 </p>
-                <Link href="/ghid" className="text-primary hover:underline">Vezi ghidul de redactare</Link>
+                <Link href="/congres/ghid" className="text-primary hover:underline">Vezi ghidul de redactare</Link>
               </div>
             </div>
 
@@ -164,7 +164,7 @@ export default async function InfoPage() {
               
               <div className="space-y-4">
                 <p className="text-gray-300">
-                  Prezintă o <Link href="/ghid" className="text-primary hover:underline">lucrare științifică</Link> în una dintre secțiunile disponibile.
+                  Prezintă o <Link href="/congres/ghid" className="text-primary hover:underline">lucrare științifică</Link> în una dintre secțiunile disponibile.
                 </p>
                 
                 <div className="bg-card/50 rounded-lg p-4 border border-border/30">
@@ -242,7 +242,7 @@ export default async function InfoPage() {
               Înregistrează-te acum
             </Link>
             <Link
-              href="/workshops"
+              href="/congres/workshops"
               className="mimesiss-btn-secondary inline-flex items-center"
             >
               Vezi programul

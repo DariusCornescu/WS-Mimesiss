@@ -5,18 +5,40 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
+  FaArrowLeft,
   FaBars,
   FaCalendarAlt,
   FaChartBar,
   FaHome,
   FaImage,
   FaInfoCircle,
+  FaProjectDiagram,
   FaTimes,
   FaUser,
   FaUsers
 } from 'react-icons/fa'
 
 import AuthLinks from '@/components/dashboard/AuthLinks'
+
+/** Navigația asociației — rădăcina site-ului. */
+const ASSOCIATION_LINKS = [
+  { href: '/', label: 'Acasă', icon: FaHome },
+  { href: '/proiecte', label: 'Proiecte', icon: FaProjectDiagram },
+  { href: '/despre', label: 'Cine suntem', icon: FaUsers },
+  { href: '/contact', label: 'Date de contact', icon: FaUser },
+  { href: '/congres', label: 'Congres', icon: FaCalendarAlt },
+]
+
+/** Navigația congresului. Primul link duce înapoi la site-ul asociației. */
+const CONGRESS_LINKS = [
+  { href: '/', label: 'ASMM', icon: FaArrowLeft },
+  { href: '/congres', label: 'Congres', icon: FaHome },
+  { href: '/congres/info', label: 'Informații', icon: FaInfoCircle },
+  { href: '/congres/program', label: 'Program', icon: FaCalendarAlt },
+  { href: '/congres/workshops', label: 'Ateliere', icon: FaCalendarAlt },
+  { href: '/congres/editii', label: 'Ediții anterioare', icon: FaChartBar },
+  { href: '/congres/gallery', label: 'Galerie foto', icon: FaImage },
+]
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -26,23 +48,17 @@ export default function Header() {
     setIsMobileMenuOpen(!isMobileMenuOpen)
   }
 
+  const inCongress = pathname.startsWith('/congres')
+  const links = inCongress ? CONGRESS_LINKS : ASSOCIATION_LINKS
+
   const isActive = (path: string) => {
-    if (path === '/') {
-      return pathname === '/'
+    // Cu două seturi de linkuri, „/" și „/congres" sunt amândouă rădăcini de
+    // secțiune: startsWith le-ar marca active pe tot subarborele.
+    if (path === '/' || path === '/congres') {
+      return pathname === path
     }
     return pathname.startsWith(path)
   }
-
-  const links = [
-    { href: '/', label: 'Acasă', icon: FaHome },
-    { href: '/info', label: 'Informații', icon: FaInfoCircle },
-    { href: '/program', label: 'Program', icon: FaCalendarAlt },
-    { href: '/about', label: 'Cine suntem', icon: FaUsers },
-    { href: '/workshops', label: 'Ateliere', icon: FaCalendarAlt },
-    { href: '/editii', label: 'Ediții anterioare', icon: FaChartBar },
-    { href: '/contact', label: 'Date de contact', icon: FaUser },
-    { href: '/gallery', label: 'Galerie foto', icon: FaImage },
-  ]
 
   return (
     <>

@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { currentUser } from '@clerk/nextjs/server'
-import connectDB from '@/lib/mongodb'
-import { IssuedTicket, User } from '@/models'
+import { requireRole, toAuthResponse } from '@/lib/auth'
+import { IssuedTicket } from '@/models'
+import { parseWith, issuedTicketStatusInput } from '@/lib/validation'
 
 export async function PATCH(req: NextRequest) {
   try {
-    const clerkUser = await currentUser()
-    if (!clerkUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    await requireRole('admin', 'moderator')
 
-    await connectDB()
+    const parsed = parseWith(issuedTicketStatusInput, await req.json())
 
-    const dbUser = await User.findOne({ clerkId: clerkUser.id })
-    if (!dbUser || (dbUser.role !== 'admin' && dbUser.role !== 'moderator')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
     }
 
-    const { ticketId, status } = await req.json()
-
-    if (!ticketId || !['active', 'used', 'cancelled'].includes(status)) {
-      return NextResponse.json({ error: 'Invalid ticketId or status' }, { status: 400 })
-    }
+    const { ticketId, status } = parsed.data
 
     const ticket = await IssuedTicket.findByIdAndUpdate(
       ticketId,
@@ -31,6 +25,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true, ticket })
   } catch (error) {
+    const authResponse = toAuthResponse(error)
+    if (authResponse) return authResponse
+
     console.error('Error updating ticket status:', error)
     return NextResponse.json({ error: 'Failed to update ticket status' }, { status: 500 })
   }

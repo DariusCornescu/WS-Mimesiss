@@ -1,22 +1,9 @@
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRoleOrRedirect } from '@/lib/auth'
 import { getAppSettings } from '@/lib/settings'
 import SettingsForm from '@/components/admin/SettingsForm'
 
 export default async function AdminSettingsPage() {
-  const clerkUser = await currentUser()
-  
-  if (!clerkUser) {
-    redirect('/auth/login')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-  
-  if (user.role !== 'admin') {
-    redirect('/unauthorized')
-  }
+  await requireRoleOrRedirect('admin')
 
   // Get current settings
   const settings = await getAppSettings()
@@ -33,7 +20,7 @@ export default async function AdminSettingsPage() {
 
       {/* Settings Form */}
       <div className="bg-card shadow border border-border rounded-lg">
-        <SettingsForm initialSettings={JSON.parse(JSON.stringify(settings))} />
+        <SettingsForm initialSettings={settings} />
       </div>
     </div>
   )

@@ -1,10 +1,8 @@
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect, notFound } from 'next/navigation'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { notFound } from 'next/navigation'
+import { requireRoleOrRedirect } from '@/lib/auth'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
 import type { IUser } from '@/models'
-import type { User as UserType } from '@/types/models'
 import { FaArrowLeft, FaTicketAlt, FaCalendar, FaUser, FaEnvelope } from 'react-icons/fa'
 import Link from 'next/link'
 import mongoose from 'mongoose'
@@ -19,11 +17,7 @@ export default async function ModeratorTicketDetailPage({
 }) {
   const { id } = await params
 
-  const clerkUser = await currentUser()
-  if (!clerkUser) redirect('/auth/login')
-
-  const user: UserType = await syncUserWithDatabase(clerkUser)
-  if (user.role !== 'moderator' && user.role !== 'admin') redirect('/unauthorized')
+  await requireRoleOrRedirect('admin', 'moderator')
 
   if (!mongoose.isValidObjectId(id)) notFound()
 

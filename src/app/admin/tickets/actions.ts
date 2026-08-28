@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { Ticket as TicketType } from "@/types/models";
 import { Ticket } from "@/models";
-import connectDB from "@/lib/mongodb";
+import { requireRole } from "@/lib/auth";
+import { parseWith, ticketCreateInput, ticketUpdateInput } from "@/lib/validation";
 
 // Get all tickets
 export async function getAllTickets(): Promise<TicketType[]> {
-	await connectDB();
+	await requireRole('admin');
 
 	const tickets = await Ticket.find().lean();
 	if (!tickets) {
@@ -27,12 +28,17 @@ export async function createTicket(data: {
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
 }): Promise<void> {
-	await connectDB();
+	await requireRole('admin');
+
+	const parsed = parseWith(ticketCreateInput, data);
+	if (!parsed.ok) {
+		throw new Error(parsed.error);
+	}
 
 	const ticket = new Ticket({
-		...data,
-		enabled: data.enabled ?? true,
-		category: data.category ?? 'workshop',
+		...parsed.data,
+		enabled: parsed.data.enabled ?? true,
+		category: parsed.data.category ?? 'workshop',
 	});
 	await ticket.save();
 	revalidatePath('/admin/tickets');
@@ -47,20 +53,25 @@ export async function updateTicket(ticketId: string, data: {
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
 }): Promise<void> {
-	await connectDB();
+	await requireRole('admin');
+
+	const parsed = parseWith(ticketUpdateInput, data);
+	if (!parsed.ok) {
+		throw new Error(parsed.error);
+	}
 
 	const ticket = await Ticket.findById(ticketId);
 	if (!ticket) {
 		throw new Error('Ticket not found');
 	}
 
-	ticket.title = data.title ?? ticket.title;
-	ticket.description = data.description ?? ticket.description;
-	ticket.price = data.price ?? ticket.price;
-	ticket.features = data.features ?? ticket.features;
-	ticket.type = data.type ?? ticket.type;
-	ticket.enabled = data.enabled ?? ticket.enabled;
-	if (data.category) ticket.category = data.category;
+	ticket.title = parsed.data.title ?? ticket.title;
+	ticket.description = parsed.data.description ?? ticket.description;
+	ticket.price = parsed.data.price ?? ticket.price;
+	ticket.features = parsed.data.features ?? ticket.features;
+	ticket.type = parsed.data.type ?? ticket.type;
+	ticket.enabled = parsed.data.enabled ?? ticket.enabled;
+	if (parsed.data.category) ticket.category = parsed.data.category;
 	await ticket.save();
 
 	revalidatePath('/admin/tickets');
@@ -68,7 +79,7 @@ export async function updateTicket(ticketId: string, data: {
 
 
 export async function deleteTicket(ticketId: string): Promise<void> {
-	await connectDB();
+	await requireRole('admin');
 
 	const ticket = await Ticket.deleteOne({_id: ticketId});
 	if (!ticket) {
@@ -77,7 +88,7 @@ export async function deleteTicket(ticketId: string): Promise<void> {
 }
 
 export async function getTicketById(ticketId: string): Promise<TicketType | null> {
-	await connectDB();
+	await requireRole('admin');
 
 	const ticket = await Ticket.findById(ticketId).lean();
 	if (!ticket) {

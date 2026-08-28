@@ -4,12 +4,12 @@ import { useState, useTransition, useId } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createWorkshop, updateWorkshop } from '@/app/admin/workshops/actions'
-import type { IAppSettings } from '@/models/AppSettings'
+import type { AppSettingsPlain } from '@/lib/settings'
 import type { Workshop } from '@/types/models'
 
 interface WorkshopFormProps {
   mode: 'create' | 'edit'
-  defaultSettings?: IAppSettings
+  defaultSettings?: AppSettingsPlain
   workshop?: Workshop
 }
 

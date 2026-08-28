@@ -37,6 +37,24 @@ const nextConfig: NextConfig = {
 	experimental: {
 		optimizePackageImports: ['react-icons'],
 	},
+
+	// Rutele congresului au trecut sub /congres cand site-ul a devenit al
+	// asociatiei. Link-urile vechi sunt deja in postari de Instagram si in
+	// materiale tiparite, deci raman valide permanent.
+	async redirects() {
+		return [
+			{ source: '/program', destination: '/congres/program', permanent: true },
+			{ source: '/workshops/:path*', destination: '/congres/workshops/:path*', permanent: true },
+			{ source: '/workshops', destination: '/congres/workshops', permanent: true },
+			{ source: '/reg', destination: '/congres/reg', permanent: true },
+			{ source: '/ghid', destination: '/congres/ghid', permanent: true },
+			{ source: '/info', destination: '/congres/info', permanent: true },
+			{ source: '/editii', destination: '/congres/editii', permanent: true },
+			{ source: '/gallery', destination: '/congres/gallery', permanent: true },
+			// /about era deja pagina asociatiei (conducerea ASMM), doar prost numita.
+			{ source: '/about', destination: '/despre', permanent: true },
+		]
+	},
 };
 
 export default nextConfig;

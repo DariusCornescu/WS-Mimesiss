@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FaArrowLeft, FaCheck } from 'react-icons/fa';
-import { getAllTickets } from '@/app/admin/tickets/actions';
+import { getPublicTickets } from '@/app/payment/actions';
 import type { Ticket as TicketType } from '@/types/models';
 import EmbeddedCheckout from './EmbeddedCheckout';
 
@@ -15,7 +15,7 @@ export default function EnhancedTicketSelector() {
 	// Fetch tickets on component mount
 	useEffect(() => {
 		const fetchTickets = async () => {
-			const allTickets = await getAllTickets();
+			const allTickets = await getPublicTickets();
 			// Filter only enabled tickets
 			const enabledTickets = allTickets.filter(ticket => ticket.enabled !== false);
 			setTickets(enabledTickets);

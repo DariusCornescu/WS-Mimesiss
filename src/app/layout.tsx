@@ -8,7 +8,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import Header from "@/components/ui/Header";
 import "./globals.css";
 import Footer from "@/components/ui/Footer";
-import { AppSettingsProvider, type AppSettingsData } from '@/contexts/AppSettingsContext';
+import { AppSettingsProvider } from '@/contexts/AppSettingsContext';
 import { getAppSettings } from '@/lib/settings';
 
 const inter = Inter({
@@ -29,11 +29,13 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://mimesiss.ro"),
+  // Radacina site-ului este acum asociatia; congresul isi pune propria
+  // metadata din src/app/congres/layout.tsx.
   title: {
-    default: "MIMESISS 2025 - Military Medicine Scientific Session for Students",
-    template: "%s | MIMESISS 2025"
+    default: "ASMM — Asociația Studenților Mediciniști Militari",
+    template: "%s | ASMM"
   },
-  description: "Cea de-a V-a ediție a Sesiunii de Comunicări Științifice Medico-Militare (MIMESISS 2025). 13-16 Noiembrie 2025 la Spitalul universitar de urgență militar central Dr. Carol Davila. Platformă pentru dezvoltare personală și profesională în medicina militară.",
+  description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
   keywords: [
     "MIMESISS",
     "MIMESISS 2025",
@@ -70,9 +72,9 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ro_RO",
     url: "https://mimesiss.ro",
-    siteName: "MIMESISS 2025",
-    title: "MIMESISS 2025 - Military Medicine Scientific Session for Students",
-    description: "Cea de-a V-a ediție a Sesiunii de Comunicări Științifice Medico-Militare. 13-16 Noiembrie 2025 la Spitalul militar central Dr. Carol Davila.",
+    siteName: "ASMM",
+    title: "ASMM — Asociația Studenților Mediciniști Militari",
+    description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
     images: [
       {
         url: "/og-image.jpg",
@@ -84,8 +86,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "MIMESISS 2025 - Military Medicine Scientific Session for Students",
-    description: "Cea de-a V-a ediție a Sesiunii de Comunicări Științifice Medico-Militare. 13-16 Noiembrie 2025.",
+    title: "ASMM — Asociația Studenților Mediciniști Militari",
+    description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
     images: ["/og-image.jpg"],
     creator: "@asmm_romania",
   },
@@ -118,20 +120,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const rawSettings = await getAppSettings()
-  const appSettings: AppSettingsData = {
-    eventMode: rawSettings.eventMode ?? 'workshops',
-    globalRegistrationEnabled: rawSettings.globalRegistrationEnabled ?? true,
-    paymentsEnabled: rawSettings.paymentsEnabled ?? false,
-    workshopVisibleToPublic: rawSettings.workshopVisibleToPublic ?? false,
-    allowCancelRegistration: rawSettings.allowCancelRegistration ?? true,
-    registrationStartTime: rawSettings.registrationStartTime ? new Date(rawSettings.registrationStartTime).toISOString() : null,
-    registrationDeadline: rawSettings.registrationDeadline ? new Date(rawSettings.registrationDeadline).toISOString() : null,
-    defaultMaxParticipants: rawSettings.defaultMaxParticipants ?? 20,
-    ballTicketAvailableFrom: rawSettings.ballTicketAvailableFrom ? new Date(rawSettings.ballTicketAvailableFrom).toISOString() : null,
-    ballTicketAvailableTo: rawSettings.ballTicketAvailableTo ? new Date(rawSettings.ballTicketAvailableTo).toISOString() : null,
-    ballMaxTicketsPerUser: rawSettings.ballMaxTicketsPerUser ?? 2,
-  }
+  const appSettings = await getAppSettings()
+
   return (
     <ClerkProvider>
       <html lang="ro" className="dark">

@@ -1,4 +1,4 @@
-import { getAllTickets } from "@/app/info/actions";
+import { getAllTickets } from "@/app/congres/info/actions";
 import { fetchAllUsers } from "@/app/admin/users/actions";
 import PaymentForm from "@/components/payments/PaymentForm";
 

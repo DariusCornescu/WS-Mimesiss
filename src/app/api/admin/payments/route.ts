@@ -1,36 +1,31 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createTicketPayment } from '@/app/admin/payments/actions';
-import type { Payment } from '@/types/models';
+import { requireRole, toAuthResponse } from '@/lib/auth';
+import { parseWith, manualPaymentInput } from '@/lib/validation';
 
 export async function POST(request: NextRequest) {
 	try {
-		const paymentData: Partial<Payment> = await request.json();
+		await requireRole('admin');
 
-		console.log('Received payment data:', paymentData);
+		const parsed = parseWith(manualPaymentInput, await request.json());
 
-		// Validate required fields
-		if (!paymentData.clerkId || !paymentData.ticketId || !paymentData.amount) {
-			console.error('Missing required fields:', { 
-				clerkId: paymentData.clerkId, 
-				ticketId: paymentData.ticketId, 
-				amount: paymentData.amount 
-			});
-			return NextResponse.json(
-				{ error: 'Missing required fields' },
-				{ status: 400 }
-			);
+		if (!parsed.ok) {
+			return NextResponse.json({ error: parsed.error }, { status: 400 });
 		}
 
-
-		console.log('Creating payment with data:', paymentData);
-
-		const newPayment = await createTicketPayment(paymentData);
+		// Whitelist-pick: only the parsed fields reach the model.
+		const newPayment = await createTicketPayment(parsed.data);
 
 		console.log('Payment created successfully:', newPayment);
 
 		return NextResponse.json(newPayment, { status: 201 });
 	} catch (error) {
+		const authResponse = toAuthResponse(error);
+		if (authResponse) {
+			return authResponse;
+		}
+
 		console.error('Error creating payment:', error);
 		console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
 		return NextResponse.json(

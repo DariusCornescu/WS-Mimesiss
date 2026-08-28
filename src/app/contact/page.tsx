@@ -3,6 +3,11 @@ import { FaEnvelope, FaPhone } from "react-icons/fa";
 import { FaInstagram, FaFacebook } from "react-icons/fa";
 import Link from "next/link";
 
+export const metadata = {
+  title: 'Contact',
+  description: 'Date de contact ale Asociației Studenților Mediciniști Militari.',
+}
+
 export default function ContactPage() {
 	return (
 		<>

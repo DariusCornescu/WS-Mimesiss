@@ -1,23 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { currentUser } from '@clerk/nextjs/server'
-import connectDB from '@/lib/mongodb'
-import { Payment, User, IssuedTicket } from '@/models'
+import { requireRole, toAuthResponse } from '@/lib/auth'
+import { Payment, IssuedTicket } from '@/models'
 
 export async function DELETE(req: NextRequest) {
   try {
-    const clerkUser = await currentUser()
-
-    if (!clerkUser) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    await connectDB()
-
-    // Check if user is admin
-    const user = await User.findOne({ clerkId: clerkUser.id })
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 })
-    }
+    await requireRole('admin')
 
     const { paymentId } = await req.json()
 
@@ -42,6 +29,11 @@ export async function DELETE(req: NextRequest) {
     })
 
   } catch (error) {
+    const authResponse = toAuthResponse(error)
+    if (authResponse) {
+      return authResponse
+    }
+
     console.error('Error deleting payment:', error)
     return NextResponse.json(
       { error: 'Failed to delete payment' },

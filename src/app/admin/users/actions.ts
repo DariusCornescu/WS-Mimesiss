@@ -4,18 +4,19 @@ import { currentUser } from '@clerk/nextjs/server'
 import { clerkClient } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { User } from '@/models'
-import { isUserAdmin } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import type { UserType, User as UserInterface } from '@/types/models'
+import type { UserRole, UserType, User as UserInterface } from '@/types/models'
+import { parseWith, userRoleInput } from '@/lib/validation'
 
 // Type definitions for update operations
 interface UserUpdateData {
-  role: 'user' | 'admin'
+  role: UserRole
   userType?: UserType | null
 }
 
 interface ClerkMetadataUpdate {
-  role: 'user' | 'admin'
+  role: UserRole
   userType?: UserType | null
   [key: string]: string | null | undefined
 }
@@ -28,26 +29,20 @@ export async function updateUserRole(formData: FormData) {
       redirect('/auth/login')
     }
 
-    const isAdmin = await isUserAdmin(clerkUser.id)
-    if (!isAdmin) {
-      throw new Error('Nu aveți permisiunea să efectuați această acțiune.')
+    await requireRole('admin')
+
+    const parsed = parseWith(userRoleInput, {
+      userId: formData.get('userId'),
+      role: formData.get('role'),
+      userType: formData.get('userType') ?? undefined,
+    })
+
+    if (!parsed.ok) {
+      throw new Error(parsed.error)
     }
 
-    const userId = formData.get('userId') as string
-    const newRole = formData.get('role') as 'user' | 'admin'
-    const userType = formData.get('userType') as string
-
-    if (!userId || !newRole) {
-      throw new Error('Date invalide.')
-    }
-
-    if (newRole !== 'user' && newRole !== 'admin' && newRole !== 'moderator') {
-      throw new Error('Rol invalid.')
-    }
-
-    if (userType && !['student', 'elev', 'rezident', ''].includes(userType)) {
-      throw new Error('Tip utilizator invalid.')
-    }
+    const { userId, userType } = parsed.data
+    const newRole = parsed.data.role
 
     // Don't allow changing own role
     if (userId === clerkUser.id) {
@@ -112,16 +107,17 @@ export async function deleteUser(formData: FormData) {
       redirect('/auth/login')
     }
 
-    const isAdmin = await isUserAdmin(clerkUser.id)
-    if (!isAdmin) {
-      throw new Error('Nu aveți permisiunea să efectuați această acțiune.')
+    await requireRole('admin')
+
+    const parsed = parseWith(userRoleInput.pick({ userId: true }), {
+      userId: formData.get('userId'),
+    })
+
+    if (!parsed.ok) {
+      throw new Error(parsed.error)
     }
 
-    const userId = formData.get('userId') as string
-
-    if (!userId) {
-      throw new Error('ID utilizator invalid.')
-    }
+    const { userId } = parsed.data
 
     // Don't allow deleting own account
     if (userId === clerkUser.id) {
@@ -164,10 +160,7 @@ export async function fetchAllUsers() {
     redirect('/auth/login')
   }
 
-  const isAdmin = await isUserAdmin(clerkUser.id)
-  if (!isAdmin) {
-    throw new Error('Nu aveți permisiunea să efectuați această acțiune.')
-  }
+  await requireRole('admin')
 
   await connectDB()
 

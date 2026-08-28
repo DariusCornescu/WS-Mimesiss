@@ -10,6 +10,7 @@ import {
   FaHome,
   FaCogs,
   FaCreditCard,
+  FaProjectDiagram,
   FaTicketAlt
 } from 'react-icons/fa'
 import type { User } from '@/types/models'
@@ -28,13 +29,14 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
     { href: '/dashboard/profile', icon: FaUser, label: 'Profil' },
     ...(eventMode !== 'ball' ? [{ href: '/dashboard/registrations', icon: FaCalendarAlt, label: 'Înregistrările mele' }] : []),
     { href: '/dashboard/tickets', icon: FaTicketAlt, label: 'Biletele mele' },
-    ...(eventMode !== 'ball' ? [{ href: '/workshops', icon: FaCalendarAlt, label: 'Workshop-uri' }] : []),
+    ...(eventMode !== 'ball' ? [{ href: '/congres/workshops', icon: FaCalendarAlt, label: 'Workshop-uri' }] : []),
     { href: '/payment', icon: FaCreditCard, label: 'Cumpără Bilet' },
   ]
 
   const adminLinks = [
     { href: '/admin', icon: FaChartBar, label: 'Dashboard Admin' },
     { href: '/admin/workshops', icon: FaCalendarAlt, label: 'Administrare Workshop-uri' },
+    { href: '/admin/proiecte', icon: FaProjectDiagram, label: 'Administrare Proiecte' },
     { href: '/admin/users', icon: FaUsers, label: 'Administrare Utilizatori' },
     { href: '/admin/tickets', icon: FaTicketAlt, label: 'Administrare Bilete' },
     { href: '/admin/payments', icon: FaCreditCard, label: 'Administrare Plăți' },

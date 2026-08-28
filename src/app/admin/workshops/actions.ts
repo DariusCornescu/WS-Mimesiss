@@ -1,26 +1,17 @@
 'use server'
 
-import { currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { Workshop, Registration, User } from '@/models'
 import connectDB from '@/lib/mongodb'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRole, requireRoleAction } from '@/lib/auth'
 import type { User as UserType, Workshop as WorkshopType, UserWithAttendance } from '@/types/models'
+import { registerUserForWorkshop } from '@/lib/registration'
+import { getActiveEdition } from '@/lib/editions'
+import { parseWith, workshopInput } from '@/lib/validation'
 
 export async function createWorkshop(formData: FormData) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -36,13 +27,16 @@ export async function createWorkshop(formData: FormData) {
   const wsType = (formData.get('type') as string) || ''
   const url = (formData.get('url') as string) || ''
 
-  // Validate required fields
-  if (!title || !description || !wsType) {
-    throw new Error('All required fields must be filled')
-  }
+  const parsed = parseWith(workshopInput, {
+    title,
+    description,
+    maxParticipants,
+    wsType: (wsType || 'workshop').toLowerCase(),
+    url,
+  })
 
-  if (!Number.isFinite(maxParticipants) || maxParticipants <= 0) {
-    throw new Error('Numărul maxim de participanți este invalid')
+  if (!parsed.ok) {
+    throw new Error(parsed.error)
   }
 
   try {
@@ -55,30 +49,33 @@ export async function createWorkshop(formData: FormData) {
       }
     }
 
-    // Validate wsType enum
-    const validWsTypes = ['workshop', 'conferinta'];
-    const normalizedWsType = wsType?.toLowerCase();
-    const finalWsType = validWsTypes.includes(normalizedWsType) ? normalizedWsType : 'workshop';
+    // Workshops belong to the active edition; refuse to create orphans
+    // that no public listing would ever show.
+    const activeEdition = await getActiveEdition()
+    if (!activeEdition) {
+      throw new Error('Nu există o ediție activă. Marchează o ediție ca activă (db.editions.updateOne({year: N}, {$set: {status: "active"}})) înainte de a crea workshopuri.')
+    }
 
     // Create the workshop
     const workshop = await Workshop.create({
-      title,
-      description,
+      title: parsed.data.title,
+      description: parsed.data.description,
       date: parsedDate,
       time: time || null,
       location: location || '',
-      maxParticipants,
+      maxParticipants: parsed.data.maxParticipants,
       currentParticipants: 0,
       instructor: instructor || '',
-      wsType: finalWsType,
+      wsType: parsed.data.wsType,
       status: 'active',
+      editionId: activeEdition._id,
       url: url || '',
     })
 
     // Revalidate the admin workshops page
     revalidatePath('/admin/workshops')
 
-    return { success: true, workshopId: workshop._id.toString() }
+    return { success: true, workshopId: String(workshop._id) }
   } catch (error) {
     console.error('Error creating workshop:', error)
     const message = error instanceof Error ? error.message : 'Unknown error occurred'
@@ -87,18 +84,7 @@ export async function createWorkshop(formData: FormData) {
 }
 
 export async function updateWorkshop(workshopId: string, formData: FormData) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -115,9 +101,16 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
 
   console.log('updateWorkshop: received url=', url)
 
-  // Validate required fields
-  if (!title || !description || !maxParticipants) {
-    throw new Error('All required fields must be filled')
+  const parsed = parseWith(workshopInput, {
+    title,
+    description,
+    maxParticipants,
+    wsType: (wsType || 'workshop').toLowerCase(),
+    url,
+  })
+
+  if (!parsed.ok) {
+    throw new Error(parsed.error)
   }
 
   try {
@@ -142,23 +135,18 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
       }
     }
 
-    // Validate wsType enum
-    const validWsTypes = ['workshop', 'conferinta'];
-    const normalizedWsType = wsType?.toLowerCase();
-    const finalWsType = validWsTypes.includes(normalizedWsType) ? normalizedWsType : 'workshop';
-
     // Update the workshop
     const workshop = await Workshop.findByIdAndUpdate(
       workshopId,
       {
-        title,
-        description,
+        title: parsed.data.title,
+        description: parsed.data.description,
         date: parsedDate,
         time: time || null,
         location: location || '',
-        maxParticipants,
+        maxParticipants: parsed.data.maxParticipants,
         instructor: instructor || '',
-        wsType: finalWsType,
+        wsType: parsed.data.wsType,
         url: url || '',
       },
       { new: true }
@@ -171,7 +159,7 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
     // Revalidate the admin workshops page
     revalidatePath('/admin/workshops')
 
-    return { success: true, workshopId: workshop._id.toString() }
+    return { success: true, workshopId: String(workshop._id) }
   } catch (error) {
     console.error('Error updating workshop:', error)
     throw new Error('Failed to update workshop')
@@ -179,18 +167,7 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
 }
 
 export async function deleteWorkshop(workshopId: string) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -217,18 +194,7 @@ export async function deleteWorkshop(workshopId: string) {
 
 
 export async function getRegistrations(workshopId: string): Promise<UserWithAttendance[]> {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -264,18 +230,7 @@ export async function getRegistrations(workshopId: string): Promise<UserWithAtte
 }
 
 export async function generateWorkshopsReport(): Promise<string> {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -362,167 +317,73 @@ export async function manuallyAssignUserToWorkshop(
   userId: string,
   workshopId: string
 ): Promise<ManualAssignResult> {
-  const clerkUser = await currentUser()
+  const denied = await requireRoleAction('admin')
 
-  if (!clerkUser) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' }
+  if (denied) {
+    return denied
   }
 
   await connectDB()
 
   try {
-    // Get workshop details
-    const workshopDoc = await Workshop.findById(workshopId)
-      .select('wsType maxParticipants currentParticipants')
-      .lean()
-
-    const workshop = workshopDoc as unknown as WorkshopType
-
-    if (!workshop) {
-      return { success: false, error: 'Workshop not found' }
-    }
-
-    // Check if user is already registered
-    const existingRegistration = await Registration.findOne({ userId, workshopId }).lean()
-
-    if (existingRegistration) {
-      return { success: false, error: 'User is already registered for this workshop' }
-    }
-
-    // For workshops (not conferences), enforce limits
-    if (workshop.wsType !== 'conferinta') {
-      // Check user's workshop count using aggregation
-      const [validationResult] = await Registration.aggregate([
-        {
-          $facet: {
-            // Check user's workshop count
-            userWorkshops: [
-              {
-                $match: {
-                  userId,
-                  workshopId: { $ne: workshopId }
-                }
-              },
-              {
-                $addFields: {
-                  workshopObjectId: { $toObjectId: '$workshopId' }
-                }
-              },
-              {
-                $lookup: {
-                  from: 'workshops',
-                  localField: 'workshopObjectId',
-                  foreignField: '_id',
-                  as: 'workshop'
-                }
-              },
-              {
-                $unwind: '$workshop'
-              },
-              {
-                $match: {
-                  'workshop.wsType': 'workshop'
-                }
-              },
-              {
-                $count: 'total'
-              }
-            ],
-            // Check current workshop registrations
-            workshopRegistrations: [
-              {
-                $match: { workshopId }
-              },
-              {
-                $count: 'total'
-              }
-            ]
-          }
-        }
-      ])
-
-      const userWorkshopCount = validationResult?.userWorkshops[0]?.total || 0
-      const currentRegistrations = validationResult?.workshopRegistrations[0]?.total || 0
-
-      // Validate user workshop limit
-      if (userWorkshopCount >= 2) {
-        return { success: false, error: 'User is already registered for 2 workshops (maximum allowed)' }
-      }
-
-      // Validate workshop capacity
-      if (currentRegistrations >= workshop.maxParticipants) {
-        return { success: false, error: 'Workshop is at full capacity' }
-      }
-    }
-
-    // Create registration
-    await Registration.create({
+    const result = await registerUserForWorkshop({
       userId,
       workshopId,
-      status: 'confirmed'
+      adminOverride: true,
     })
 
-    // Update participant count with atomic increment
-    await Workshop.findByIdAndUpdate(workshopId, {
-      $inc: { currentParticipants: 1 }
-    })
+    if (!result.ok) {
+      return { success: false, error: result.message }
+    }
 
     revalidatePath('/admin/workshops')
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     
     return { success: true }
 
   } catch (error) {
-    console.error('Error removing user from workshop:', error)
+    console.error('Error assigning user to workshop:', error)
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Failed to remove user from workshop' 
+      error: 'Nu am putut înscrie utilizatorul la workshop' 
     }
   }
 }
 
 export async function recountAllWorkshopParticipants() {
-  const clerkUser = await currentUser()
+  const denied = await requireRoleAction('admin')
 
-  if (!clerkUser) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' }
+  if (denied) {
+    return denied
   }
 
   try {
     await connectDB()
 
-    // Get all workshops
-    const workshops = await Workshop.find({}).select('_id')
+    // One aggregate + one bulkWrite instead of two queries per workshop.
+    // Scope to the active edition when one exists; with none, repair all
+    // (which also fixes drift on archived editions).
+    const activeEdition = await getActiveEdition()
+    const scope = activeEdition ? { editionId: activeEdition._id } : {}
+    const workshops = await Workshop.find(scope).select('_id').lean()
+    const workshopIds = workshops.map(w => String(w._id))
 
-    let updated = 0
+    const counts = await Registration.aggregate([
+      { $match: { workshopId: { $in: workshopIds } } },
+      { $group: { _id: '$workshopId', total: { $sum: 1 } } },
+    ])
+    const countByWorkshop = new Map<string, number>(counts.map(c => [String(c._id), c.total]))
 
-    // For each workshop, count registrations and update currentParticipants
-    for (const workshop of workshops) {
-      const count = await Registration.countDocuments({ 
-        workshopId: workshop._id.toString() 
-      })
-
-      await Workshop.findByIdAndUpdate(
-        workshop._id,
-        { currentParticipants: count },
-        { new: true }
-      )
-
-      updated++
+    if (workshops.length > 0) {
+      await Workshop.bulkWrite(workshops.map(w => ({
+        updateOne: {
+          filter: { _id: w._id },
+          update: { $set: { currentParticipants: countByWorkshop.get(String(w._id)) ?? 0 } },
+        },
+      })))
     }
+
+    const updated = workshops.length
 
     revalidatePath('/admin/workshops')
 
@@ -541,18 +402,7 @@ export async function recountAllWorkshopParticipants() {
 }
 
 export async function getAllUsers(): Promise<UserType[]> {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -578,39 +428,27 @@ export async function removeUserFromWorkshop(
   userId: string,
   workshopId: string
 ): Promise<RemoveUserResult> {
-  const clerkUser = await currentUser()
+  const denied = await requireRoleAction('admin')
 
-  if (!clerkUser) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' }
+  if (denied) {
+    return denied
   }
 
   await connectDB()
 
   try {
-    // Check if registration exists
-    const registration = await Registration.findOne({ userId, workshopId })
+    // Decrement only when a registration was actually deleted, so a double
+    // remove cannot drive the counter down twice.
+    const deleted = await Registration.findOneAndDelete({ userId, workshopId })
 
-    if (!registration) {
+    if (!deleted) {
       return { success: false, error: 'User is not registered for this workshop' }
     }
 
-    // Delete registration and decrement participant count atomically
-    await Promise.all([
-      Registration.findOneAndDelete({ userId, workshopId }),
-      Workshop.findByIdAndUpdate(workshopId, {
-        $inc: { currentParticipants: -1 }
-      })
-    ])
+    await Workshop.updateOne({ _id: workshopId }, { $inc: { currentParticipants: -1 } })
 
     revalidatePath('/admin/workshops')
-    revalidatePath('/workshops')
+    revalidatePath('/congres/workshops')
     
     return { success: true }
 
