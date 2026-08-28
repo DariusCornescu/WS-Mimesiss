@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { FaArrowRight, FaChevronDown } from 'react-icons/fa'
 
+import CountUp from '@/components/asociatie/CountUp'
 import Reveal from '@/components/asociatie/Reveal'
 import { cardSizes, getPublishedProjects } from '@/lib/projects'
 
@@ -124,7 +125,7 @@ export default async function HomePage() {
           {STATS.map((stat, i) => (
             <Reveal key={stat.label} delay={i * 90}>
               <div className="py-10 lg:py-14">
-                <p className="font-mono text-4xl font-bold text-primary sm:text-5xl">{stat.value}</p>
+                <CountUp value={stat.value} className="font-mono text-4xl font-bold text-primary sm:text-5xl" />
                 <p className="mt-2 max-w-[14rem] text-sm leading-snug text-muted-foreground">
                   {stat.label}
                 </p>
