@@ -4,6 +4,7 @@ import connectDB from '@/lib/mongodb';
 import { Registration, Workshop, User as MongoUser } from '@/models';
 import { syncUserWithDatabase, requireRole, toAuthResponse } from '@/lib/auth';
 import type { User as UserType } from '@/types/models';
+import { parseWith, attendancePatchInput } from '@/lib/validation';
 
 export async function GET(
 	req: NextRequest,
@@ -90,11 +91,13 @@ export async function PATCH(
 			return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 		}
 
-		const { registrationId, confirmed } = await req.json();
+		const parsed = parseWith(attendancePatchInput, await req.json());
 
-		if (!registrationId || confirmed === undefined) {
-			return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+		if (!parsed.ok) {
+			return NextResponse.json({ error: parsed.error }, { status: 400 });
 		}
+
+		const { registrationId, confirmed } = parsed.data;
 
 		// Ensure database connection with timeout
 		const connection = await connectDB();

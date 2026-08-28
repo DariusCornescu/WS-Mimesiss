@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe';
 import connectDB from '@/lib/mongodb';
 import { Payment, Ticket } from '@/models';
 import { Ticket as TicketInterface } from '@/types/models';
+import { parseWith, checkoutInput } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,15 +17,13 @@ export async function POST(req: NextRequest) {
     // Connect to database
     await connectDB();
 
-    const data = await req.json();
+    const parsed = parseWith(checkoutInput, await req.json());
 
-    console.log('Request data:', data);
-
-    const { ticketId } = data;
-
-    if (!ticketId) {
-      return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+
+    const { ticketId } = parsed.data;
 
     // Get ticket details from database
     const ticket = await Ticket.findById(ticketId).lean() as TicketInterface | null;

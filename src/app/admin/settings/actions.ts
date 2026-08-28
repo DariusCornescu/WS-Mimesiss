@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { updateAppSettings, resetAppSettings } from '@/lib/settings'
 import { syncUserWithDatabase } from '@/lib/auth'
+import { parseWith, settingsInput } from '@/lib/validation'
 
 export async function updateSettings(formData: FormData) {
   const clerkUser = await currentUser()
@@ -48,8 +49,13 @@ export async function updateSettings(formData: FormData) {
       ballTicketAvailableTo: parseDateTime(formData.get('ballTicketAvailableTo') as string),
     }
 
+    const parsed = parseWith(settingsInput, updates)
+    if (!parsed.ok) {
+      throw new Error(parsed.error)
+    }
+
     // Update settings
-    await updateAppSettings(updates)
+    await updateAppSettings(parsed.data)
 
     // Revalidate pages that might use settings
     revalidatePath('/admin/settings')

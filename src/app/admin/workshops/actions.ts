@@ -9,6 +9,7 @@ import { syncUserWithDatabase } from '@/lib/auth'
 import type { User as UserType, Workshop as WorkshopType, UserWithAttendance } from '@/types/models'
 import { registerUserForWorkshop } from '@/lib/registration'
 import { getActiveEdition } from '@/lib/editions'
+import { parseWith, workshopInput } from '@/lib/validation'
 
 export async function createWorkshop(formData: FormData) {
   const clerkUser = await currentUser()
@@ -38,13 +39,16 @@ export async function createWorkshop(formData: FormData) {
   const wsType = (formData.get('type') as string) || ''
   const url = (formData.get('url') as string) || ''
 
-  // Validate required fields
-  if (!title || !description || !wsType) {
-    throw new Error('All required fields must be filled')
-  }
+  const parsed = parseWith(workshopInput, {
+    title,
+    description,
+    maxParticipants,
+    wsType: (wsType || 'workshop').toLowerCase(),
+    url,
+  })
 
-  if (!Number.isFinite(maxParticipants) || maxParticipants <= 0) {
-    throw new Error('Numărul maxim de participanți este invalid')
+  if (!parsed.ok) {
+    throw new Error(parsed.error)
   }
 
   try {
@@ -57,11 +61,6 @@ export async function createWorkshop(formData: FormData) {
       }
     }
 
-    // Validate wsType enum
-    const validWsTypes = ['workshop', 'conferinta'];
-    const normalizedWsType = wsType?.toLowerCase();
-    const finalWsType = validWsTypes.includes(normalizedWsType) ? normalizedWsType : 'workshop';
-
     // Workshops belong to the active edition; refuse to create orphans
     // that no public listing would ever show.
     const activeEdition = await getActiveEdition()
@@ -71,15 +70,15 @@ export async function createWorkshop(formData: FormData) {
 
     // Create the workshop
     const workshop = await Workshop.create({
-      title,
-      description,
+      title: parsed.data.title,
+      description: parsed.data.description,
       date: parsedDate,
       time: time || null,
       location: location || '',
-      maxParticipants,
+      maxParticipants: parsed.data.maxParticipants,
       currentParticipants: 0,
       instructor: instructor || '',
-      wsType: finalWsType,
+      wsType: parsed.data.wsType,
       status: 'active',
       editionId: activeEdition._id,
       url: url || '',
@@ -125,9 +124,16 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
 
   console.log('updateWorkshop: received url=', url)
 
-  // Validate required fields
-  if (!title || !description || !maxParticipants) {
-    throw new Error('All required fields must be filled')
+  const parsed = parseWith(workshopInput, {
+    title,
+    description,
+    maxParticipants,
+    wsType: (wsType || 'workshop').toLowerCase(),
+    url,
+  })
+
+  if (!parsed.ok) {
+    throw new Error(parsed.error)
   }
 
   try {
@@ -152,23 +158,18 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
       }
     }
 
-    // Validate wsType enum
-    const validWsTypes = ['workshop', 'conferinta'];
-    const normalizedWsType = wsType?.toLowerCase();
-    const finalWsType = validWsTypes.includes(normalizedWsType) ? normalizedWsType : 'workshop';
-
     // Update the workshop
     const workshop = await Workshop.findByIdAndUpdate(
       workshopId,
       {
-        title,
-        description,
+        title: parsed.data.title,
+        description: parsed.data.description,
         date: parsedDate,
         time: time || null,
         location: location || '',
-        maxParticipants,
+        maxParticipants: parsed.data.maxParticipants,
         instructor: instructor || '',
-        wsType: finalWsType,
+        wsType: parsed.data.wsType,
         url: url || '',
       },
       { new: true }

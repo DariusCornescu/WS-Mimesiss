@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { currentUser } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
+import { parseWith, issuedTicketStatusInput } from '@/lib/validation'
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -15,11 +16,13 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const { ticketId, status } = await req.json()
+    const parsed = parseWith(issuedTicketStatusInput, await req.json())
 
-    if (!ticketId || !['active', 'used', 'cancelled'].includes(status)) {
-      return NextResponse.json({ error: 'Invalid ticketId or status' }, { status: 400 })
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 })
     }
+
+    const { ticketId, status } = parsed.data
 
     const ticket = await IssuedTicket.findByIdAndUpdate(
       ticketId,

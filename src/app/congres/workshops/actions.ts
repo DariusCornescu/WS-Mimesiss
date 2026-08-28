@@ -8,6 +8,7 @@ import { getAppSettings } from '@/lib/settings'
 import type { Workshop as WorkshopType, Registrations } from '@/types/models'
 import { registerUserForWorkshop } from '@/lib/registration'
 import { getActiveEdition } from '@/lib/editions'
+import { parseWith, registrationInput } from '@/lib/validation'
 
 type ActionResult = {
   success: boolean
@@ -17,12 +18,20 @@ type ActionResult = {
 export async function registerForWorkshop(formData: FormData): Promise<ActionResult> {
   const clerkUser = await currentUser()
 
-  const workshopId = formData.get('workshopId') as string
-  const action = formData.get('action') as string
-
   if (!clerkUser) {
     return { success: false, error: 'Authentication required' }
   }
+
+  const parsed = parseWith(registrationInput, {
+    workshopId: formData.get('workshopId'),
+    action: formData.get('action'),
+  })
+
+  if (!parsed.ok) {
+    return { success: false, error: parsed.error }
+  }
+
+  const { workshopId, action } = parsed.data
 
   await connectDB()
 

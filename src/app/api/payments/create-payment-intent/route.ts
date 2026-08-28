@@ -6,6 +6,7 @@ import { Payment, Ticket } from '@/models';
 import { User } from '@/models';
 import { User as UserInterface, Ticket as TicketInterface } from '@/types/models';
 import { getAppSettings } from '@/lib/settings';
+import { parseWith, paymentIntentInput } from '@/lib/validation';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,13 +23,13 @@ export async function POST(req: NextRequest) {
       getAppSettings(),
     ]);
 
-    const data = await req.json();
-    const { ticketId, quantity: rawQuantity } = data;
-    const quantity = Math.max(1, parseInt(rawQuantity) || 1);
+    const parsed = parseWith(paymentIntentInput, await req.json());
 
-    if (!ticketId) {
-      return NextResponse.json({ error: 'Ticket ID is required' }, { status: 400 });
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
+
+    const { ticketId, quantity } = parsed.data;
 
     // Get ticket details from database
     const ticket = await Ticket.findById(ticketId).lean() as TicketInterface | null;
