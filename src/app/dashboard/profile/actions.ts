@@ -2,9 +2,10 @@
 
 import { currentUser, clerkClient } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { syncUserWithDatabase, requireRole, AuthError } from '@/lib/auth'
 import { User, UserType } from '@/types/models'
 import { User as MongoUser } from '@/models'
+import connectDB from '@/lib/mongodb'
 
 export async function updateProfile(formData: FormData) {
   const clerkUser = await currentUser()
@@ -52,10 +53,18 @@ export async function updateProfile(formData: FormData) {
 
 
 export async function getUser(userId: string): Promise<User | null> {
-  const user = await MongoUser.findOne({ clerkId: userId }).lean() as User | null
-  if (user) {
-    return user
+  const clerkUser = await currentUser()
+
+  if (!clerkUser) {
+    throw new AuthError(401, 'Autentificare necesară')
   }
 
-  return null
+  // Staff can look up any user (the attendance pages need this); everyone
+  // else can only read their own record.
+  if (clerkUser.id !== userId) {
+    await requireRole('admin', 'moderator')
+  }
+
+  await connectDB()
+  return await MongoUser.findOne({ clerkId: userId }).lean() as User | null
 }

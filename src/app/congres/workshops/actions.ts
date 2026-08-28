@@ -197,7 +197,15 @@ interface registrationsWithWorkshops extends Registrations {
   };
 }
 
-export async function getUserRegistrations(userId: string): Promise<registrationsWithWorkshops[]> {
+export async function getMyRegistrations(): Promise<registrationsWithWorkshops[]> {
+  const clerkUser = await currentUser()
+
+  if (!clerkUser) {
+    return []
+  }
+
+  const userId = clerkUser.id
+
   await connectDB()
 
   try {
@@ -304,7 +312,7 @@ export async function getAllWorkshops(): Promise<WorkshopType[]> {
   try {
     // Use lean() for better performance and select only needed fields
     const workshops = await Workshop
-      .find({})
+      .find({ status: 'active' })
       .select('title description date time location maxParticipants currentParticipants instructor status wsType url createdAt updatedAt')
       .sort({ date: 1 })
       .lean()

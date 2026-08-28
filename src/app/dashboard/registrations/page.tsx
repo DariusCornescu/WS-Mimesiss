@@ -1,8 +1,6 @@
-import { getUserRegistrations } from '@/app/congres/workshops/actions'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { getMyRegistrations } from '@/app/congres/workshops/actions'
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import type { User as UserType } from '@/types/models'
 import Link from 'next/link'
 import { FaCircle, FaCheckCircle, FaTimes } from 'react-icons/fa'
 import { getAppSettings } from '@/lib/settings'
@@ -14,11 +12,10 @@ export default async function RegistrationsPage() {
 		redirect('/auth/login')
 	}
 
-	const user: UserType = await syncUserWithDatabase(clerkUser)
 
 
 	// Fetch  user registrations
-	const registrations = await getUserRegistrations(user.clerkId)
+	const registrations = await getMyRegistrations()
 
 	//get app settings
 	const appSettings = await getAppSettings()
