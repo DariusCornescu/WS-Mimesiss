@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import connectDB from '@/lib/mongodb';
-import { Registration } from '@/models';
-import { syncUserWithDatabase } from '@/lib/auth';
+import { Registration, Workshop, User as MongoUser } from '@/models';
+import { syncUserWithDatabase, requireRole, toAuthResponse } from '@/lib/auth';
+import type { User as UserType } from '@/types/models';
 
 export async function GET(
 	req: NextRequest,
@@ -10,54 +11,63 @@ export async function GET(
 ) {
 	try {
 		const { userId } = await params;
-		const currentUserData = await currentUser();
 
-		if (!currentUserData) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+		// requireRole also syncs the caller and establishes the DB connection.
+		await requireRole('admin', 'moderator');
+
+		// The scanned user's profile — NOT the caller's (the old code returned
+		// the caller, and crashed on populate() over a ref-less string field).
+		const targetUser = await MongoUser.findOne({ clerkId: userId }).lean() as UserType | null;
+		if (!targetUser) {
+			return NextResponse.json({ error: 'User not found' }, { status: 404 });
 		}
 
-		const userData = await syncUserWithDatabase(currentUserData);
+		const registrations = await Registration.find({ userId }).lean();
 
-		// Check if current user is admin
-		const isAdmin = userData?.role === 'admin' || userData?.role === 'moderator';
-		if (!isAdmin) {
-			return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+		// Manual join: Registration.workshopId is a plain string with no ref,
+		// so populate() cannot be used on it.
+		const workshopIds = registrations.map(reg => reg.workshopId);
+		const workshops = await Workshop.find({ _id: { $in: workshopIds } })
+			.select('title date time location instructor')
+			.lean();
+		const workshopMap = new Map<string, (typeof workshops)[number]>();
+		for (const workshop of workshops) {
+			workshopMap.set(String(workshop._id), workshop);
 		}
 
-		// Get user registrations with workshop details
-		const registrations = await Registration.find({ userId })
-			.populate('workshopId')
-			.maxTimeMS(5000)
-			.exec();
-
-		// Transform the data to include workshop details in the expected format
-		const transformedRegistrations = registrations.map(reg => ({
-			_id: reg._id,
-			workshopId: reg.workshopId._id,
-			workshop: {
-				_id: reg.workshopId._id,
-				title: reg.workshopId.title,
-				date: reg.workshopId.date,
-				time: reg.workshopId.time,
-				location: reg.workshopId.location,
-				instructor: reg.workshopId.instructor
-			},
-			status: reg.status,
-			attendance: reg.attendance || { confirmed: false }
-		}));
+		const transformedRegistrations = registrations.map(reg => {
+			const workshop = workshopMap.get(String(reg.workshopId));
+			return {
+				_id: reg._id,
+				workshopId: reg.workshopId,
+				workshop: workshop ? {
+					_id: workshop._id,
+					title: workshop.title,
+					date: workshop.date,
+					time: workshop.time,
+					location: workshop.location,
+					instructor: workshop.instructor,
+				} : null,
+				attendance: reg.attendance || { confirmed: false },
+			};
+		});
 
 		return NextResponse.json({
 			user: {
-				id: userData.clerkId,
-				firstName: userData.firstName,
-				lastName: userData.lastName,
-				email: userData.email,
-				userType: userData.userType
+				id: targetUser.clerkId,
+				firstName: targetUser.firstName,
+				lastName: targetUser.lastName,
+				email: targetUser.email,
+				userType: targetUser.userType,
 			},
-			registrations: transformedRegistrations
+			registrations: transformedRegistrations,
 		});
 
 	} catch (error) {
+		const authResponse = toAuthResponse(error);
+		if (authResponse) {
+			return authResponse;
+		}
 		console.error('Error fetching attendance data:', error);
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
