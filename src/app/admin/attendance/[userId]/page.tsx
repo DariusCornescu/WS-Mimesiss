@@ -113,11 +113,11 @@ export default async function AttendancePage({ params }: { params: Promise<{ use
 												</div>
 											</div>
 											<div className="flex flex-col items-end gap-2">
-												<span className={`inline-block px-2 py-1 rounded text-sm ${registration.attendance.status === 'confirmed'
+												<span className={`inline-block px-2 py-1 rounded text-sm ${registration.attendance.confirmed
 														? 'bg-primary/10 text-primary border border-primary/20'
 														: 'bg-muted text-muted-foreground'
 													}`}>
-													{registration.attendance.status}
+													{registration.attendance.confirmed ? 'Prezent' : 'Neconfirmat'}
 												</span>
 											</div>
 										</div>
