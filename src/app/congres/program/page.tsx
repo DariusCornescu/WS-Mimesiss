@@ -1,5 +1,6 @@
 import HeaderContent from "@/components/ui/HeaderContent";
 import Link from "next/link";
+import Reveal from "@/components/asociatie/Reveal";
 
 
 const timelineData = [
@@ -80,10 +81,11 @@ const timelineData = [
 ]; export default async function ProgramPage() {
 	return (
 		<>
-			<HeaderContent title="Program MIMESISS 2025" />
+			<HeaderContent kicker="Congres · Program" title="Program MIMESISS 2025" />
 
 			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
+				<Reveal>
 				<div className="mimesiss-card mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 text-center flex flex-col items-center justify-center p-8 space-y-4">
 
 					<h2 className="text-2xl font-bold text-primary text-center">JOI - 13 Noiembrie</h2>
@@ -106,26 +108,31 @@ const timelineData = [
 					<a className="mimesiss-btn-primary max-w-80 my-5 mx-auto" href="/docs/Program.pdf">Descarca Programul PDF</a>
 
 				</div>
+				</Reveal>
 
 				{/* Timeline Container */}
 				<div className="space-y-16">
 					{timelineData.map((day, dayIndex) => (
 						<div key={day.date} className="relative">
 							{/* Day Header */}
+							<Reveal>
 							<div className="mb-8">
 								<div className="flex items-center gap-4 mb-4">
 									<div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg">
 										{dayIndex + 1}
 									</div>
 									<div>
-										<h2 className="text-3xl font-bold text-primary">{day.date}</h2>
+										<h2 className="text-3xl font-bold uppercase tracking-tight text-primary">{day.date}</h2>
 										<p className="text-xl text-muted-foreground">{day.title}</p>
+										<div className="mt-2 h-px w-20 bg-gradient-to-r from-primary to-secondary" />
 									</div>
 								</div>
 							</div>
+							</Reveal>
 
 							<div className="ml-0 md:ml-6 md:border-l-4 border-primary/30 md:pl-8 space-y-8">
 								{/* Conferences */}
+								<Reveal delay={90}>
 								<div>
 									<h3 className="text-2xl font-semibold mb-3 text-foreground flex items-center gap-2">
 										<span className="w-3 h-3 rounded-full bg-primary"></span>
@@ -159,8 +166,10 @@ const timelineData = [
 										))}
 									</div>
 								</div>
+								</Reveal>
 
 								{/* Workshops */}
+								<Reveal delay={90}>
 								<div>
 									<h3 className="text-2xl font-semibold mb-6 text-foreground flex items-center gap-2">
 										<span className="w-3 h-3 rounded-full bg-primary"></span>
@@ -200,6 +209,7 @@ const timelineData = [
 										})}
 									</div>
 								</div>
+								</Reveal>
 							</div>
 						</div>
 					))}

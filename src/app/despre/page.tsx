@@ -1,5 +1,6 @@
 import HeaderContent from "@/components/ui/HeaderContent";
 import PersonCard from "@/components/ui/PersonCard";
+import Reveal from "@/components/asociatie/Reveal";
 
 export const metadata = {
   title: 'Cine suntem',
@@ -66,25 +67,33 @@ const peopleData: { row: Person[] }[] = [
 export default function AboutPage() {
 	return (
 		<>
-			<HeaderContent title="Comitetul de organizare" />
+			<HeaderContent kicker="Asociația · Echipa" title="Comitetul de organizare" />
 			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-				<h3 className="mimesiss-subtitle">Consiliu director</h3>
+				<Reveal>
+					<h3 className="mimesiss-subtitle">Consiliu director</h3>
+				</Reveal>
 
 				<div className="grid grid-cols-2 gap-4 py-4 max-w-4xl mx-auto">
 					{peopleData.slice(0, 3).map((group) => (
-						group.row.map((person) => (
-							<PersonCard key={person.name} name={person.name} role={person.role} imageUrl={person.imageUrl} className={person.className ? person.className : ''} />
+						group.row.map((person, i) => (
+							<Reveal key={person.name} delay={(i % 2) * 110} className={person.className ? person.className : ''}>
+								<PersonCard name={person.name} role={person.role} imageUrl={person.imageUrl} className="" />
+							</Reveal>
 						))
 					))}
 				</div>
 
-				<h3 className="mimesiss-subtitle">Consiliu director extins</h3>
+				<Reveal>
+					<h3 className="mimesiss-subtitle">Consiliu director extins</h3>
+				</Reveal>
 
 				<div className="grid grid-cols-2 gap-4 py-4 max-w-4xl mx-auto">
 					{peopleData.slice(3).map((group) => (
-						group.row.map((person) => (
-							<PersonCard key={person.name} name={person.name} role={person.role} imageUrl={person.imageUrl} className={person.className ? person.className : ''} />
+						group.row.map((person, i) => (
+							<Reveal key={person.name} delay={(i % 2) * 110} className={person.className ? person.className : ''}>
+								<PersonCard name={person.name} role={person.role} imageUrl={person.imageUrl} className="" />
+							</Reveal>
 						))
 					))}
 				</div>

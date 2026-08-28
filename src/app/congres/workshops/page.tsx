@@ -5,6 +5,7 @@ import { getAppSettings } from '@/lib/settings'
 import HeaderContent from '@/components/ui/HeaderContent'
 import { FaCircle,FaCalendar, FaMapPin } from 'react-icons/fa'
 import RegistrationCountdown from '@/components/RegistrationCountdown'
+import Reveal from '@/components/asociatie/Reveal'
 
 // Force dynamic rendering since we're fetching data from database
 export const dynamic = 'force-dynamic'
@@ -17,14 +18,14 @@ function WorkshopListSkeleton() {
         // biome-ignore lint/suspicious/noArrayIndexKey: This is a static skeleton array; the index is stable.
         <div key={i} className="mimesiss-section-card animate-pulse">
           <div className="p-6">
-            <div className="h-6 bg-gray-700 rounded mb-2 w-3/4"></div>
-            <div className="h-4 bg-gray-700 rounded mb-4 w-full"></div>
+            <div className="h-6 bg-muted rounded mb-2 w-3/4"></div>
+            <div className="h-4 bg-muted rounded mb-4 w-full"></div>
             <div className="space-y-2">
-              <div className="h-4 bg-gray-700 rounded w-2/3"></div>
-              <div className="h-4 bg-gray-700 rounded w-1/2"></div>
-              <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-muted rounded w-2/3"></div>
+              <div className="h-4 bg-muted rounded w-1/2"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
             </div>
-            <div className="mt-6 h-10 bg-gray-700 rounded"></div>
+            <div className="mt-6 h-10 bg-muted rounded"></div>
           </div>
         </div>
       ))}
@@ -43,10 +44,11 @@ export default async function WorkshopsPage() {
   return (
     <>
       {/* Main Content */}
-      <HeaderContent title="Ateliere MIMESISS 2025" />
+      <HeaderContent kicker="Congres · Ateliere" title="Ateliere MIMESISS 2025" />
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="space-y-6">
           {/* Page Header */}
+          <Reveal>
           <div className="mimesiss-section-header">
             <h1 className="text-3xl font-bold mb-2">Programul MIMESISS 2025</h1>
             <p className="mimesiss-text-secondary text-lg">
@@ -63,24 +65,30 @@ export default async function WorkshopsPage() {
               </div>
             </div>
           </div>
+          </Reveal>
 
           {/* Registration Countdown */}
           {globalRegistrationEnabled && (registrationStartTime || registrationDeadline) && (
-            <RegistrationCountdown startTime={registrationStartTime} deadline={registrationDeadline} />
+            <Reveal>
+              <RegistrationCountdown startTime={registrationStartTime} deadline={registrationDeadline} />
+            </Reveal>
           )}
 
           {/* Workshop List with Loading */}
-          <Suspense fallback={<WorkshopListSkeleton />}>
-            <WorkshopList workshopVisibleToPublic={workshopVisibleToPublic} />
-          </Suspense>
+          <Reveal delay={90}>
+            <Suspense fallback={<WorkshopListSkeleton />}>
+              <WorkshopList workshopVisibleToPublic={workshopVisibleToPublic} />
+            </Suspense>
+          </Reveal>
 
           {/* Info Section */}
+          <Reveal delay={110}>
           <div className="border border-primary rounded-lg p-6 space-y-8">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-lg font-semibold text-foreground">
               Informații importante despre înregistrare
             </h3>
-            <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-300">
-              <div className="border-none lg:border-r border-gray-700 pr-4">
+            <div className="grid md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+              <div className="border-none lg:border-r border-border pr-4">
                 <h4 className="font-medium mb-2">Participanți pasivi <span> 170 RON </span></h4>
                 <ul className="space-y-1 list-disc list-inside">
                   <li>Acces la toate conferințele</li>
@@ -123,6 +131,7 @@ export default async function WorkshopsPage() {
               </Link>
             </div>
           </div>
+          </Reveal>
         </div>
       </main>
     </>
