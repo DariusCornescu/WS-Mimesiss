@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { FaArrowLeft, FaCheck, FaMinus, FaPlus, FaTicketAlt, FaClock } from 'react-icons/fa';
-import { getAllTickets } from '@/app/admin/tickets/actions';
+import { getPublicTickets } from '@/app/payment/actions';
 import type { Ticket as TicketType } from '@/types/models';
 import EmbeddedCheckout from './EmbeddedCheckout';
 
@@ -37,7 +37,7 @@ export default function BallTicketSelector({
   const isOpen = !notYetOpen && !closed;
 
   useEffect(() => {
-    getAllTickets().then((all) => {
+    getPublicTickets().then((all) => {
       setTickets(all.filter((t) => t.category === 'ball' && t.enabled));
     });
   }, []);

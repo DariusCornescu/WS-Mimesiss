@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { Ticket as TicketType } from "@/types/models";
 import { Ticket } from "@/models";
-import connectDB from "@/lib/mongodb";
+import { requireRole } from "@/lib/auth";
 
 // Get all tickets
 export async function getAllTickets(): Promise<TicketType[]> {
-	await connectDB();
+	await requireRole('admin');
 
 	const tickets = await Ticket.find().lean();
 	if (!tickets) {
@@ -27,7 +27,7 @@ export async function createTicket(data: {
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
 }): Promise<void> {
-	await connectDB();
+	await requireRole('admin');
 
 	const ticket = new Ticket({
 		...data,
@@ -47,7 +47,7 @@ export async function updateTicket(ticketId: string, data: {
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
 }): Promise<void> {
-	await connectDB();
+	await requireRole('admin');
 
 	const ticket = await Ticket.findById(ticketId);
 	if (!ticket) {
@@ -68,7 +68,7 @@ export async function updateTicket(ticketId: string, data: {
 
 
 export async function deleteTicket(ticketId: string): Promise<void> {
-	await connectDB();
+	await requireRole('admin');
 
 	const ticket = await Ticket.deleteOne({_id: ticketId});
 	if (!ticket) {
@@ -77,7 +77,7 @@ export async function deleteTicket(ticketId: string): Promise<void> {
 }
 
 export async function getTicketById(ticketId: string): Promise<TicketType | null> {
-	await connectDB();
+	await requireRole('admin');
 
 	const ticket = await Ticket.findById(ticketId).lean();
 	if (!ticket) {

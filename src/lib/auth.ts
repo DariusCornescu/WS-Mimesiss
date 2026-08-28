@@ -1,7 +1,9 @@
-import { User as ClerkUser } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+import { redirect } from 'next/navigation'
+import { currentUser, User as ClerkUser } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { User as MongoUser } from '@/models'
-import { User } from '@/types/models'
+import { User, UserRole } from '@/types/models'
 
 /**
  * Sync Clerk user with our database
@@ -73,4 +75,64 @@ export async function getUserRole(clerkUserId: string): Promise<'user' | 'admin'
 export async function isUserAdmin(clerkUserId: string): Promise<boolean> {
   const role = await getUserRole(clerkUserId)
   return role === 'admin'
+}
+
+/**
+ * Error thrown by requireRole when the caller is unauthenticated (401) or
+ * lacks the required role (403). Route handlers convert it with
+ * toAuthResponse(); pages should use requireRoleOrRedirect() instead.
+ */
+export class AuthError extends Error {
+  constructor(public readonly status: 401 | 403, message: string) {
+    super(message)
+    this.name = 'AuthError'
+  }
+}
+
+/**
+ * Single authorization gate for route handlers, server actions and pages.
+ * Resolves the Clerk user, syncs it into Mongo (which also establishes the
+ * DB connection) and asserts the role against the database — roles live in
+ * Mongo, never in Clerk claims. Throws AuthError on failure.
+ */
+export async function requireRole(...roles: UserRole[]): Promise<User> {
+  const clerkUser = await currentUser()
+
+  if (!clerkUser) {
+    throw new AuthError(401, 'Autentificare necesară')
+  }
+
+  const user = await syncUserWithDatabase(clerkUser)
+
+  if (!roles.includes(user.role)) {
+    throw new AuthError(403, 'Nu ai permisiunea necesară')
+  }
+
+  return user
+}
+
+/**
+ * Route-handler adapter: returns a NextResponse for an AuthError, null for
+ * anything else (so existing catch blocks keep handling their own errors).
+ */
+export function toAuthResponse(error: unknown): NextResponse | null {
+  if (error instanceof AuthError) {
+    return NextResponse.json({ error: error.message }, { status: error.status })
+  }
+  return null
+}
+
+/**
+ * Page adapter: same gate, but redirects the way the pages do today —
+ * unauthenticated to the login page, wrong role to /unauthorized.
+ */
+export async function requireRoleOrRedirect(...roles: UserRole[]): Promise<User> {
+  try {
+    return await requireRole(...roles)
+  } catch (error) {
+    if (error instanceof AuthError) {
+      redirect(error.status === 401 ? '/auth/login' : '/unauthorized')
+    }
+    throw error
+  }
 }
