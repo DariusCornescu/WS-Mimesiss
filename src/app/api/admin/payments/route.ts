@@ -1,10 +1,13 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createTicketPayment } from '@/app/admin/payments/actions';
+import { requireRole, toAuthResponse } from '@/lib/auth';
 import type { Payment } from '@/types/models';
 
 export async function POST(request: NextRequest) {
 	try {
+		await requireRole('admin');
+
 		const paymentData: Partial<Payment> = await request.json();
 
 		console.log('Received payment data:', paymentData);
@@ -31,6 +34,11 @@ export async function POST(request: NextRequest) {
 
 		return NextResponse.json(newPayment, { status: 201 });
 	} catch (error) {
+		const authResponse = toAuthResponse(error);
+		if (authResponse) {
+			return authResponse;
+		}
+
 		console.error('Error creating payment:', error);
 		console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
 		return NextResponse.json(
