@@ -7,6 +7,7 @@ import connectDB from '@/lib/mongodb'
 import { getAppSettings } from '@/lib/settings'
 import type { Workshop as WorkshopType, Registrations } from '@/types/models'
 import { registerUserForWorkshop } from '@/lib/registration'
+import { getActiveEdition } from '@/lib/editions'
 
 type ActionResult = {
   success: boolean
@@ -33,8 +34,11 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
     }
 
     if (action === 'register') {
+      const activeEdition = await getActiveEdition()
+
       const result = await registerUserForWorkshop({
         userId: clerkUser.id,
+        activeEditionId: activeEdition?._id ?? null,
         workshopId,
         registrationDeadline: appSettings.registrationDeadline
           ? new Date(appSettings.registrationDeadline)
@@ -197,9 +201,17 @@ export async function getAllWorkshops(): Promise<WorkshopType[]> {
   await connectDB()
 
   try {
+    const activeEdition = await getActiveEdition()
+
+    // No active edition = between editions: the public listing is empty
+    // by design (WorkshopList renders its empty state).
+    if (!activeEdition) {
+      return []
+    }
+
     // Use lean() for better performance and select only needed fields
     const workshops = await Workshop
-      .find({ status: 'active' })
+      .find({ status: 'active', editionId: activeEdition._id })
       .select('title description date time location maxParticipants currentParticipants instructor status wsType url createdAt updatedAt')
       .sort({ date: 1 })
       .lean()

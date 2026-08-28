@@ -8,6 +8,7 @@ import connectDB from '@/lib/mongodb'
 import { syncUserWithDatabase } from '@/lib/auth'
 import type { User as UserType, Workshop as WorkshopType, UserWithAttendance } from '@/types/models'
 import { registerUserForWorkshop } from '@/lib/registration'
+import { getActiveEdition } from '@/lib/editions'
 
 export async function createWorkshop(formData: FormData) {
   const clerkUser = await currentUser()
@@ -61,6 +62,13 @@ export async function createWorkshop(formData: FormData) {
     const normalizedWsType = wsType?.toLowerCase();
     const finalWsType = validWsTypes.includes(normalizedWsType) ? normalizedWsType : 'workshop';
 
+    // Workshops belong to the active edition; refuse to create orphans
+    // that no public listing would ever show.
+    const activeEdition = await getActiveEdition()
+    if (!activeEdition) {
+      throw new Error('Nu există o ediție activă. Marchează o ediție ca activă (db.editions.updateOne({year: N}, {$set: {status: "active"}})) înainte de a crea workshopuri.')
+    }
+
     // Create the workshop
     const workshop = await Workshop.create({
       title,
@@ -73,6 +81,7 @@ export async function createWorkshop(formData: FormData) {
       instructor: instructor || '',
       wsType: finalWsType,
       status: 'active',
+      editionId: activeEdition._id,
       url: url || '',
     })
 
@@ -420,7 +429,11 @@ export async function recountAllWorkshopParticipants() {
     await connectDB()
 
     // One aggregate + one bulkWrite instead of two queries per workshop.
-    const workshops = await Workshop.find({}).select('_id').lean()
+    // Scope to the active edition when one exists; with none, repair all
+    // (which also fixes drift on archived editions).
+    const activeEdition = await getActiveEdition()
+    const scope = activeEdition ? { editionId: activeEdition._id } : {}
+    const workshops = await Workshop.find(scope).select('_id').lean()
     const workshopIds = workshops.map(w => String(w._id))
 
     const counts = await Registration.aggregate([
