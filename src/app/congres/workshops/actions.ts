@@ -6,6 +6,7 @@ import { Workshop, Registration } from '@/models'
 import connectDB from '@/lib/mongodb'
 import { getAppSettings } from '@/lib/settings'
 import type { Workshop as WorkshopType, Registrations } from '@/types/models'
+import { registerUserForWorkshop } from '@/lib/registration'
 
 type ActionResult = {
   success: boolean
@@ -14,7 +15,7 @@ type ActionResult = {
 
 export async function registerForWorkshop(formData: FormData): Promise<ActionResult> {
   const clerkUser = await currentUser()
-  
+
   const workshopId = formData.get('workshopId') as string
   const action = formData.get('action') as string
 
@@ -25,165 +26,51 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
   await connectDB()
 
   try {
-    // OPTIMIZATION 1: Get only essential fields with select() and use lean()
-    const [appSettings, workshopDoc, existingReg] = await Promise.all([
-      getAppSettings(),
-      Workshop.findById(workshopId)
-        .select('wsType maxParticipants currentParticipants status')
-        .lean()
-        .exec(),
-      Registration.findOne({ userId: clerkUser.id, workshopId })
-        .select('_id')
-        .lean()
-        .exec()
-    ])
+    const appSettings = await getAppSettings()
 
-    const workshop = workshopDoc as WorkshopType | null
-    const existingRegistration = existingReg as Registrations | null
-
-    if (!workshop) {
-      return { success: false, error: 'Workshop not found' }
-    }
-
-    // Check global registration settings
     if (!appSettings.globalRegistrationEnabled) {
       return { success: false, error: 'Inregistrarile sunt inchise in acest moment' }
     }
 
-    // Check if registration deadline has passed (only for workshops, not conferences)
-    if (workshop.wsType === 'workshop' && appSettings.registrationDeadline && new Date(appSettings.registrationDeadline) < new Date()) {
-      return { success: false, error: 'Termenul limită pentru înregistrări la workshop-uri a expirat' }
-    }
-
     if (action === 'register') {
-      // Validate registration conditions
-      
-      if (existingRegistration) {
-        return { success: false, error: 'Ești deja înregistrat la acest workshop' }
+      const result = await registerUserForWorkshop({
+        userId: clerkUser.id,
+        workshopId,
+        registrationDeadline: appSettings.registrationDeadline
+          ? new Date(appSettings.registrationDeadline)
+          : null,
+      })
+
+      if (!result.ok) {
+        return { success: false, error: result.message }
       }
-      
-      // OPTIMIZATION 2: Skip conference capacity checks entirely
-      if (workshop.wsType === 'conferinta') {
-        // For conferences, just create registration without checks
-        await Registration.create({
-          userId: clerkUser.id,
-          workshopId,
-          status: 'confirmed'
-        })
-        
-        // Update participant count with atomic increment
-        await Workshop.findByIdAndUpdate(workshopId, {
-          $inc: { currentParticipants: 1 }
-        })
-      } else {
-        // For workshops, enforce limits
-        // OPTIMIZATION 3: Use single aggregation for all validation
-        const [validationResult] = await Registration.aggregate([
-          {
-            $facet: {
-              // Check user's workshop count
-              userWorkshops: [
-                {
-                  $match: {
-                    userId: clerkUser.id,
-                    workshopId: { $ne: workshopId }
-                  }
-                },
-                {
-                  // Convert workshopId string to ObjectId
-                  $addFields: {
-                    workshopObjectId: { $toObjectId: '$workshopId' }
-                  }
-                },
-                {
-                  $lookup: {
-                    from: 'workshops',
-                    localField: 'workshopObjectId',
-                    foreignField: '_id',
-                    as: 'workshop'
-                  }
-                },
-                {
-                  $unwind: '$workshop'
-                },
-                {
-                  $match: {
-                    'workshop.wsType': 'workshop'
-                  }
-                },
-                {
-                  $count: 'total'
-                }
-              ],
-              // Check current workshop registrations
-              workshopRegistrations: [
-                {
-                  $match: { workshopId }
-                },
-                {
-                  $count: 'total'
-                }
-              ]
-            }
-          }
-        ])
-
-        const userWorkshopCount = validationResult?.userWorkshops[0]?.total || 0
-        const currentRegistrations = validationResult?.workshopRegistrations[0]?.total || 0
-
-        // Validate user workshop limit
-        if (userWorkshopCount >= 2) {
-          return { success: false, error: 'Poți fi înregistrat la maxim 2 workshop-uri simultan' }
-        }
-
-        // Validate workshop capacity
-        if (currentRegistrations >= workshop.maxParticipants) {
-          return { success: false, error: 'Workshop is full' }
-        }
-
-        // OPTIMIZATION 4: Use atomic operations to prevent race conditions
-        // Create registration and increment counter atomically
-        await Registration.create({
-          userId: clerkUser.id,
-          workshopId,
-          status: 'confirmed'
-        })
-        
-        // Use $inc for atomic increment
-        await Workshop.findByIdAndUpdate(workshopId, {
-          $inc: { currentParticipants: 1 }
-        })
-      }
-
     } else if (action === 'cancel') {
       if (!appSettings.allowCancelRegistration) {
         return { success: false, error: 'Registration cancellation is not allowed' }
       }
 
-      if (!existingRegistration) {
+      // Decrement only when a registration was actually deleted, so a double
+      // cancel cannot drive the counter down twice.
+      const deleted = await Registration.findOneAndDelete({ userId: clerkUser.id, workshopId })
+
+      if (!deleted) {
         return { success: false, error: 'No registration found to cancel' }
       }
 
-      // OPTIMIZATION 5: Use atomic decrement and delete in parallel
-      await Promise.all([
-        Registration.findOneAndDelete({ userId: clerkUser.id, workshopId }),
-        Workshop.findByIdAndUpdate(workshopId, {
-          $inc: { currentParticipants: -1 }
-        })
-      ])
+      await Workshop.updateOne({ _id: workshopId }, { $inc: { currentParticipants: -1 } })
     }
 
     // Only revalidate on success
     revalidatePath('/congres/workshops')
     revalidatePath('/dashboard')
-    
+
     return { success: true }
 
   } catch (error) {
     console.error('Registration action error:', error)
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'A apărut o eroare. Te rugăm încearcă din nou.' 
+    return {
+      success: false,
+      error: 'A apărut o eroare. Te rugăm încearcă din nou.'
     }
   }
 }

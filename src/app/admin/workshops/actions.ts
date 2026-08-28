@@ -7,6 +7,7 @@ import { Workshop, Registration, User } from '@/models'
 import connectDB from '@/lib/mongodb'
 import { syncUserWithDatabase } from '@/lib/auth'
 import type { User as UserType, Workshop as WorkshopType, UserWithAttendance } from '@/types/models'
+import { registerUserForWorkshop } from '@/lib/registration'
 
 export async function createWorkshop(formData: FormData) {
   const clerkUser = await currentUser()
@@ -378,101 +379,15 @@ export async function manuallyAssignUserToWorkshop(
   await connectDB()
 
   try {
-    // Get workshop details
-    const workshopDoc = await Workshop.findById(workshopId)
-      .select('wsType maxParticipants currentParticipants')
-      .lean()
-
-    const workshop = workshopDoc as unknown as WorkshopType
-
-    if (!workshop) {
-      return { success: false, error: 'Workshop not found' }
-    }
-
-    // Check if user is already registered
-    const existingRegistration = await Registration.findOne({ userId, workshopId }).lean()
-
-    if (existingRegistration) {
-      return { success: false, error: 'User is already registered for this workshop' }
-    }
-
-    // For workshops (not conferences), enforce limits
-    if (workshop.wsType !== 'conferinta') {
-      // Check user's workshop count using aggregation
-      const [validationResult] = await Registration.aggregate([
-        {
-          $facet: {
-            // Check user's workshop count
-            userWorkshops: [
-              {
-                $match: {
-                  userId,
-                  workshopId: { $ne: workshopId }
-                }
-              },
-              {
-                $addFields: {
-                  workshopObjectId: { $toObjectId: '$workshopId' }
-                }
-              },
-              {
-                $lookup: {
-                  from: 'workshops',
-                  localField: 'workshopObjectId',
-                  foreignField: '_id',
-                  as: 'workshop'
-                }
-              },
-              {
-                $unwind: '$workshop'
-              },
-              {
-                $match: {
-                  'workshop.wsType': 'workshop'
-                }
-              },
-              {
-                $count: 'total'
-              }
-            ],
-            // Check current workshop registrations
-            workshopRegistrations: [
-              {
-                $match: { workshopId }
-              },
-              {
-                $count: 'total'
-              }
-            ]
-          }
-        }
-      ])
-
-      const userWorkshopCount = validationResult?.userWorkshops[0]?.total || 0
-      const currentRegistrations = validationResult?.workshopRegistrations[0]?.total || 0
-
-      // Validate user workshop limit
-      if (userWorkshopCount >= 2) {
-        return { success: false, error: 'User is already registered for 2 workshops (maximum allowed)' }
-      }
-
-      // Validate workshop capacity
-      if (currentRegistrations >= workshop.maxParticipants) {
-        return { success: false, error: 'Workshop is at full capacity' }
-      }
-    }
-
-    // Create registration
-    await Registration.create({
+    const result = await registerUserForWorkshop({
       userId,
       workshopId,
-      status: 'confirmed'
+      adminOverride: true,
     })
 
-    // Update participant count with atomic increment
-    await Workshop.findByIdAndUpdate(workshopId, {
-      $inc: { currentParticipants: 1 }
-    })
+    if (!result.ok) {
+      return { success: false, error: result.message }
+    }
 
     revalidatePath('/admin/workshops')
     revalidatePath('/congres/workshops')
@@ -480,10 +395,10 @@ export async function manuallyAssignUserToWorkshop(
     return { success: true }
 
   } catch (error) {
-    console.error('Error removing user from workshop:', error)
+    console.error('Error assigning user to workshop:', error)
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : 'Failed to remove user from workshop' 
+      error: 'Nu am putut înscrie utilizatorul la workshop' 
     }
   }
 }
@@ -594,20 +509,15 @@ export async function removeUserFromWorkshop(
   await connectDB()
 
   try {
-    // Check if registration exists
-    const registration = await Registration.findOne({ userId, workshopId })
+    // Decrement only when a registration was actually deleted, so a double
+    // remove cannot drive the counter down twice.
+    const deleted = await Registration.findOneAndDelete({ userId, workshopId })
 
-    if (!registration) {
+    if (!deleted) {
       return { success: false, error: 'User is not registered for this workshop' }
     }
 
-    // Delete registration and decrement participant count atomically
-    await Promise.all([
-      Registration.findOneAndDelete({ userId, workshopId }),
-      Workshop.findByIdAndUpdate(workshopId, {
-        $inc: { currentParticipants: -1 }
-      })
-    ])
+    await Workshop.updateOne({ _id: workshopId }, { $inc: { currentParticipants: -1 } })
 
     revalidatePath('/admin/workshops')
     revalidatePath('/congres/workshops')
