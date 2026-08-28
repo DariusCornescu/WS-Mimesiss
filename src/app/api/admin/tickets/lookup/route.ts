@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { currentUser } from '@clerk/nextjs/server'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRole, toAuthResponse } from '@/lib/auth'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
 import type { IUser } from '@/models'
 
 export async function GET(req: NextRequest) {
-  const clerkUser = await currentUser()
-  if (!clerkUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const user = await syncUserWithDatabase(clerkUser)
-  if (user.role !== 'moderator' && user.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  try {
+    await requireRole('admin', 'moderator')
+  } catch (error) {
+    const authResponse = toAuthResponse(error)
+    if (authResponse) return authResponse
+    throw error
   }
 
   const ticketNumber = req.nextUrl.searchParams.get('number')

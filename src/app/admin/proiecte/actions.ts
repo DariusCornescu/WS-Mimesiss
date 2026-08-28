@@ -1,11 +1,10 @@
 'use server'
 
-import { currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import connectDB from '@/lib/mongodb'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { Project } from '@/models'
 import type { ProjectDoc } from '@/lib/projects'
 
@@ -13,16 +12,7 @@ export type AdminProject = ProjectDoc & { _id: string }
 
 /** Aceeași poartă ca în restul adminului: rolul se verifică server-side, mereu. */
 async function requireAdmin() {
-  const clerkUser = await currentUser()
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  const user = await syncUserWithDatabase(clerkUser)
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
-
+  await requireRole('admin')
   await connectDB()
 }
 

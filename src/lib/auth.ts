@@ -136,3 +136,21 @@ export async function requireRoleOrRedirect(...roles: UserRole[]): Promise<User>
     throw error
   }
 }
+
+/**
+ * ActionResult adapter for actions that return { success, error } instead of
+ * throwing: null when allowed, the ready-made error result when not.
+ */
+export async function requireRoleAction(
+  ...roles: UserRole[]
+): Promise<{ success: false; error: string } | null> {
+  try {
+    await requireRole(...roles)
+    return null
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { success: false, error: error.message }
+    }
+    throw error
+  }
+}

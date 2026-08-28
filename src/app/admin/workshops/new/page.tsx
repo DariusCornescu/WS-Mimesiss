@@ -1,22 +1,9 @@
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRoleOrRedirect } from '@/lib/auth'
 import { getAppSettings } from '@/lib/settings'
 import WorkshopForm from '@/components/admin/WorkshopForm'
 
 export default async function NewWorkshopPage() {
-  const clerkUser = await currentUser()
-  
-  if (!clerkUser) {
-    redirect('/auth/login')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-  
-  if (user.role !== 'admin') {
-    redirect('/unauthorized')
-  }
+  await requireRoleOrRedirect('admin')
 
   // Get app settings for defaults
   const settings = await getAppSettings()

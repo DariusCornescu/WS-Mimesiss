@@ -4,7 +4,7 @@ import { currentUser } from '@clerk/nextjs/server'
 import { clerkClient } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { User } from '@/models'
-import { isUserAdmin } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import type { UserRole, UserType, User as UserInterface } from '@/types/models'
 import { parseWith, userRoleInput } from '@/lib/validation'
@@ -29,10 +29,7 @@ export async function updateUserRole(formData: FormData) {
       redirect('/auth/login')
     }
 
-    const isAdmin = await isUserAdmin(clerkUser.id)
-    if (!isAdmin) {
-      throw new Error('Nu aveți permisiunea să efectuați această acțiune.')
-    }
+    await requireRole('admin')
 
     const parsed = parseWith(userRoleInput, {
       userId: formData.get('userId'),
@@ -110,10 +107,7 @@ export async function deleteUser(formData: FormData) {
       redirect('/auth/login')
     }
 
-    const isAdmin = await isUserAdmin(clerkUser.id)
-    if (!isAdmin) {
-      throw new Error('Nu aveți permisiunea să efectuați această acțiune.')
-    }
+    await requireRole('admin')
 
     const parsed = parseWith(userRoleInput.pick({ userId: true }), {
       userId: formData.get('userId'),
@@ -166,10 +160,7 @@ export async function fetchAllUsers() {
     redirect('/auth/login')
   }
 
-  const isAdmin = await isUserAdmin(clerkUser.id)
-  if (!isAdmin) {
-    throw new Error('Nu aveți permisiunea să efectuați această acțiune.')
-  }
+  await requireRole('admin')
 
   await connectDB()
 

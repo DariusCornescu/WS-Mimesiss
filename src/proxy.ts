@@ -3,6 +3,9 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/admin(.*)',
+  // Defense in depth: unauthenticated /api/admin/* dies here. Role checks
+  // stay in the handlers - middleware runs on Edge and cannot read Mongo.
+  '/api/admin(.*)',
 ])
 
 const isPublicRoute = createRouteMatcher([

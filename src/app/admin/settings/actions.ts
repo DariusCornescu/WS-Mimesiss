@@ -1,24 +1,12 @@
 'use server'
 
-import { currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { updateAppSettings, resetAppSettings } from '@/lib/settings'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRole } from '@/lib/auth'
 import { parseWith, settingsInput } from '@/lib/validation'
 
 export async function updateSettings(formData: FormData) {
-  const clerkUser = await currentUser()
-  
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-  
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   try {
     // Extract form data
@@ -71,18 +59,7 @@ export async function updateSettings(formData: FormData) {
 }
 
 export async function resetSettings() {
-  const clerkUser = await currentUser()
-  
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-  
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   try {
     // Reset settings to defaults

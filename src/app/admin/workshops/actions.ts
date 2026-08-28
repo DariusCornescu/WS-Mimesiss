@@ -1,29 +1,17 @@
 'use server'
 
-import { currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 import { Workshop, Registration, User } from '@/models'
 import connectDB from '@/lib/mongodb'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRole, requireRoleAction } from '@/lib/auth'
 import type { User as UserType, Workshop as WorkshopType, UserWithAttendance } from '@/types/models'
 import { registerUserForWorkshop } from '@/lib/registration'
 import { getActiveEdition } from '@/lib/editions'
 import { parseWith, workshopInput } from '@/lib/validation'
 
 export async function createWorkshop(formData: FormData) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -96,18 +84,7 @@ export async function createWorkshop(formData: FormData) {
 }
 
 export async function updateWorkshop(workshopId: string, formData: FormData) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -190,18 +167,7 @@ export async function updateWorkshop(workshopId: string, formData: FormData) {
 }
 
 export async function deleteWorkshop(workshopId: string) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -228,18 +194,7 @@ export async function deleteWorkshop(workshopId: string) {
 
 
 export async function getRegistrations(workshopId: string): Promise<UserWithAttendance[]> {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -275,18 +230,7 @@ export async function getRegistrations(workshopId: string): Promise<UserWithAtte
 }
 
 export async function generateWorkshopsReport(): Promise<string> {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -373,17 +317,10 @@ export async function manuallyAssignUserToWorkshop(
   userId: string,
   workshopId: string
 ): Promise<ManualAssignResult> {
-  const clerkUser = await currentUser()
+  const denied = await requireRoleAction('admin')
 
-  if (!clerkUser) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' }
+  if (denied) {
+    return denied
   }
 
   await connectDB()
@@ -414,16 +351,10 @@ export async function manuallyAssignUserToWorkshop(
 }
 
 export async function recountAllWorkshopParticipants() {
-  const clerkUser = await currentUser()
+  const denied = await requireRoleAction('admin')
 
-  if (!clerkUser) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' }
+  if (denied) {
+    return denied
   }
 
   try {
@@ -471,18 +402,7 @@ export async function recountAllWorkshopParticipants() {
 }
 
 export async function getAllUsers(): Promise<UserType[]> {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    throw new Error('Authentication required')
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    throw new Error('Admin access required')
-  }
+  await requireRole('admin')
 
   await connectDB()
 
@@ -508,17 +428,10 @@ export async function removeUserFromWorkshop(
   userId: string,
   workshopId: string
 ): Promise<RemoveUserResult> {
-  const clerkUser = await currentUser()
+  const denied = await requireRoleAction('admin')
 
-  if (!clerkUser) {
-    return { success: false, error: 'Authentication required' }
-  }
-
-  // Sync user and check if admin
-  const user = await syncUserWithDatabase(clerkUser)
-
-  if (user.role !== 'admin') {
-    return { success: false, error: 'Admin access required' }
+  if (denied) {
+    return denied
   }
 
   await connectDB()

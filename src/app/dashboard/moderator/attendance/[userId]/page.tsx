@@ -4,26 +4,12 @@ import { getUser } from '@/app/dashboard/profile/actions';
 import connectDB from '@/lib/mongodb';
 import { Registration, Workshop } from '@/models';
 import AttendanceToggle from '@/components/AttendanceToggle';
-import { currentUser } from '@clerk/nextjs/server';
-import { syncUserWithDatabase } from '@/lib/auth';
-import { redirect } from 'next/navigation';
+import { requireRoleOrRedirect } from '@/lib/auth';
 
 export default async function AttendancePage({ params }: { params: Promise<{ userId: string }> }) {
 	const { userId } = await params;
 
-	// Check authentication and authorization
-	const clerkUser = await currentUser();
-	
-	if (!clerkUser) {
-		redirect('/auth/login');
-	}
-
-	// Sync user and check if admin or moderator
-	const currentDbUser = await syncUserWithDatabase(clerkUser);
-	
-	if (currentDbUser.role !== 'admin' && currentDbUser.role !== 'moderator') {
-		redirect('/unauthorized');
-	}
+	await requireRoleOrRedirect('admin', 'moderator');
 
 	// Fetch user data from database
 	const user = await getUser(userId);

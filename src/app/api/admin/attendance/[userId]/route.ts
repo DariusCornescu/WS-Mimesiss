@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { currentUser } from '@clerk/nextjs/server';
 import connectDB from '@/lib/mongodb';
 import { Registration, Workshop, User as MongoUser } from '@/models';
-import { syncUserWithDatabase, requireRole, toAuthResponse } from '@/lib/auth';
+import { requireRole, toAuthResponse } from '@/lib/auth';
 import type { User as UserType } from '@/types/models';
 import { parseWith, attendancePatchInput } from '@/lib/validation';
 
@@ -78,18 +77,7 @@ export async function PATCH(
 	req: NextRequest,
 ) {
 	try {
-		const currentUserData = await currentUser();
-
-		if (!currentUserData) {
-			return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-		}
-
-		// Check if current user is admin or moderator
-		const userData = await syncUserWithDatabase(currentUserData);
-		const isAdmin = userData?.role === 'admin' || userData?.role === 'moderator';
-		if (!isAdmin) {
-			return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-		}
+		const caller = await requireRole('admin', 'moderator');
 
 		const parsed = parseWith(attendancePatchInput, await req.json());
 
@@ -110,7 +98,7 @@ export async function PATCH(
 		const updateData = {
 			'attendance.confirmed': confirmed,
 			'attendance.confirmedAt': confirmed ? new Date() : null,
-			'attendance.confirmedBy': confirmed ? currentUserData.id : null
+			'attendance.confirmedBy': confirmed ? caller.clerkId : null
 		};
 
 		const registration = await Registration.findByIdAndUpdate(
@@ -129,6 +117,10 @@ export async function PATCH(
 		});
 
 	} catch (error) {
+		const authResponse = toAuthResponse(error);
+		if (authResponse) {
+			return authResponse;
+		}
 		console.error('Error updating attendance:', error);
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}

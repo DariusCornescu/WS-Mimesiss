@@ -1,20 +1,13 @@
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRoleOrRedirect } from '@/lib/auth'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
-import type { User as UserType } from '@/types/models'
 import { FaTicketAlt, FaCalendar, FaSearch } from 'react-icons/fa'
 import TicketStatusToggle from '@/components/moderator/TicketStatusToggle'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ModeratorTicketsPage() {
-  const clerkUser = await currentUser()
-  if (!clerkUser) redirect('/auth/login')
-
-  const user: UserType = await syncUserWithDatabase(clerkUser)
-  if (user.role !== 'moderator' && user.role !== 'admin') redirect('/unauthorized')
+  await requireRoleOrRedirect('admin', 'moderator')
 
   await connectDB()
 

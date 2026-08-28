@@ -1,23 +1,9 @@
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
-import { syncUserWithDatabase } from '@/lib/auth'
-import type { User as UserType } from '@/types/models'
+import { requireRoleOrRedirect } from '@/lib/auth'
 import { FaQrcode } from 'react-icons/fa'
 import Link from 'next/link'
 
 export default async function ModeratorDashboardPage() {
-  const clerkUser = await currentUser()
-  
-  if (!clerkUser) {
-    redirect('/auth/login')
-  }
-
-  // Sync user and check if moderator
-  const user: UserType = await syncUserWithDatabase(clerkUser)
-  
-  if (user.role !== 'moderator' && user.role !== 'admin') {
-    redirect('/unauthorized')
-  }
+  await requireRoleOrRedirect('admin', 'moderator')
 
   return (
     <div className="container mx-auto py-8 px-4">

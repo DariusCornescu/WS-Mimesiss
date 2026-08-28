@@ -1,7 +1,5 @@
-import { currentUser } from '@clerk/nextjs/server'
-import { redirect } from 'next/navigation'
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar'
-import { syncUserWithDatabase } from '@/lib/auth'
+import { requireRoleOrRedirect } from '@/lib/auth'
 import { User } from '@/types/models'
 
 export default async function AdminLayout({
@@ -9,20 +7,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const clerkUser = await currentUser()
-
-  if (!clerkUser) {
-    redirect('/auth/login')
-  }
-
-  // Sync Clerk user with our database and get user data
-  const user: User = await syncUserWithDatabase(clerkUser)
-
-  // Check if user is admin
-  if (user.role !== 'admin') {
-    console.log('Admin Layout - Access denied, redirecting')
-    redirect('/unauthorized')
-  }
+  const user: User = await requireRoleOrRedirect('admin')
 
   // Serialize user for Client Component
   const serializedUser = JSON.parse(JSON.stringify(user))
