@@ -1,7 +1,13 @@
-# CLAUDE.md
+# Project guidance
 
 Workshop, ticketing and attendance platform for MIMESISS / ASMM. Romanian-language UI, deployed on
 Vercel.
+
+## Attribution rule
+
+Do not mention AI coding assistants or automated development tools by name in site content, metadata,
+project documentation, source comments, or commit messages. Use neutral descriptions of the project
+and its maintainers. Keep local runtime paths configurable rather than tied to a particular tool.
 
 ## Stack
 
@@ -25,8 +31,8 @@ Local database:
 docker run -d --name mimesiss-mongo -p 27017:27017 mongo:7
 ```
 
-Copy `.env.example` to `.env.local` first — `src/lib/mongodb.ts` and `src/lib/stripe.ts` both throw
-at import time if their variables are missing.
+Configure required environment variables in `.env.local` before running the app. Database and payment
+features require their respective credentials.
 
 ## Things worth knowing before editing
 

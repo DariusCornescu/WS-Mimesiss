@@ -5,7 +5,7 @@ Date: 2026-09-11
 ## Scope and reference
 
 Selected visual: second image displayed in the design exploration (centered photographic hero, yellow ribbon, white navigation, MIMESISS feature).
-Source visual truth: C:/Users/c0rnesky/.codex/generated_images/01a091ae-e8a7-7133-ab6f-07fcea8499d5/exec-88ae3629-edb6-4dd8-b16c-dae6dcbb8a11.png
+Source visual truth: the second design exploration image retained in the project discussion.
 
 Implementation: src/components/asociatie/AssociationHome.tsx and AssociationHeader.tsx, rendered directly in an isolated Next.js harness at http://127.0.0.1:3000. The production homepage passes getPublishedProjects() results to the same component. The isolated harness uses an empty project array to exercise the editorial fallback; it does not connect to production services.
 

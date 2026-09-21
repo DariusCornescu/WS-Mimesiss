@@ -1,13 +1,12 @@
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import path from 'node:path';
 const require = createRequire(import.meta.url);
 require('@next/env').loadEnvConfig(process.cwd());
 const { MongoClient } = require('mongodb');
 const { createClerkClient } = require('@clerk/backend');
 const apply = process.argv.includes('--apply');
 const csvPath = 'C:/Users/c0rnesky/Desktop/Darius/Projects/IMM/users_mimesiss_clerk.csv';
-const python = path.join(process.env.USERPROFILE, '.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe');
+const python = process.env.PYTHON_EXECUTABLE || (process.platform === 'win32' ? 'py' : 'python3');
 const pythonCode = 'import csv,json,sys\nwith open(sys.argv[1],encoding="utf-8-sig",newline="") as f: print(json.dumps(list(csv.DictReader(f))))';
 const rows = JSON.parse(execFileSync(python, ['-X', 'utf8', '-c', pythonCode, csvPath], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, windowsHide: true }));
 const assert = (ok, message) => { if (!ok) throw new Error(message); };

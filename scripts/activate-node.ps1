@@ -1,9 +1,20 @@
 # Dot-source this file to enable Node.js in the current PowerShell session.
-$projectNodeBin = Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin'
-if (-not (Test-Path -LiteralPath (Join-Path $projectNodeBin 'node.exe'))) {
-    throw 'The bundled Node.js runtime was not found. Install Node.js or update this script with its location.'
+param([string]$NodeBin = $env:NODE_BIN)
+
+if (-not $NodeBin) {
+    $node = Get-Command node.exe -ErrorAction SilentlyContinue
+    if (-not $node) {
+        throw 'Node.js was not found. Install it or pass -NodeBin with the directory containing node.exe.'
+    }
+    Write-Host "Node.js is available for this terminal: $(& $node.Source --version)"
+    return
 }
-if (($env:Path -split ';') -notcontains $projectNodeBin) {
-    $env:Path = "$projectNodeBin;$env:Path"
+
+$nodeExecutable = Join-Path $NodeBin 'node.exe'
+if (-not (Test-Path -LiteralPath $nodeExecutable)) {
+    throw "Node.js was not found at $nodeExecutable"
 }
-Write-Host "Node.js enabled for this terminal: $(node --version)"
+if (($env:Path -split ';') -notcontains $NodeBin) {
+    $env:Path = "$NodeBin;$env:Path"
+}
+Write-Host "Node.js enabled for this terminal: $(& $nodeExecutable --version)"
