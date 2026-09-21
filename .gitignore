@@ -44,3 +44,6 @@ next-env.d.ts
 #other 
 
 scripts/*.js
+# Isolated public design preview (no production credentials)
+/.preview/
+/.pnpm-store/

@@ -1,85 +1,12 @@
-import HeaderContent from "@/components/ui/HeaderContent";
-import { FaEnvelope, FaPhone } from "react-icons/fa";
-import { FaInstagram, FaFacebook } from "react-icons/fa";
-import Link from "next/link";
-
-export const metadata = {
-  title: 'Contact',
-  description: 'Date de contact ale Asociației Studenților Mediciniști Militari.',
-}
-
-export default function ContactPage() {
-	return (
-		<>
-			<HeaderContent title='Contact' />
-			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
-				{/* Secretariat Information */}
-				<div className="mimesiss-card p-4 space-y-6">
-					<h2 className="text-2xl font-bold text-accent text-center  md:col-span-2" >Echipa de Secretariat</h2>
-					<div className="text-center">
-						<FaEnvelope className="h-8 w-8 text-primary mx-auto mb-4" />
-						<h4 className="text-lg font-semibold text-white mb-2">Email</h4>
-						<Link href="mailto:secretariat@asmm-bucuresti.com" className="mimesiss-text-secondary hover:text-primary transition duration-200">
-							secretariat@asmm-bucuresti.com
-						</Link>
-					</div>
-				</div>
-
-				{/* Secretariat Information */}
-				<div className="mimesiss-card p-4 space-y-4">
-					<h2 className="text-2xl font-bold text-accent text-center" >Președinte Congres</h2>
-					<div className="text-center">
-						<FaPhone className="h-8 w-8 text-primary mx-auto mb-4" />
-						<h4 className="text-lg font-semibold text-white mb-2">Anghel Liviu Florin</h4>
-						<Link href="tel:0760200222" className="mimesiss-text-secondary hover:text-primary transition duration-200">
-							0760200222
-						</Link>
-					</div>	
-				</div>
-
-				{/* Sponsorship Information */}
-				<div className="mimesiss-card p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<h2 className="text-2xl font-bold text-accent text-center  md:col-span-2" >Sponsorizări & Parteneriate</h2>
-					<div className="text-center">
-						<FaPhone className="h-8 w-8 text-primary mx-auto mb-4" />
-						<h4 className="text-lg font-semibold text-white mb-2">Vicepreședinte Externe: Bosca Mihai Iulian</h4>
-						<Link href="tel:0742138755" className="mimesiss-text-secondary hover:text-primary transition duration-200">
-							0742138755
-						</Link>
-					</div>
-					<div className="text-center border-t border-primary pt-4 md:pt-0 md:border-t-0 md:border-l">
-						<FaPhone className="h-8 w-8 text-primary mx-auto mb-4" />
-						<h4 className="text-lg font-semibold text-white mb-2">Responsabil Fundraising - Oncel Mara Elena</h4>
-						<Link href="tel:0753642438" className="mimesiss-text-secondary hover:text-primary transition duration-200">
-							0753642438
-						</Link>
-					</div>
-
-					<div className="text-center border-t border-primary pt-4 md:col-span-2 mt-4 gap-4">
-						<FaEnvelope className="h-8 w-8 text-primary mx-auto mb-4" />
-						<h4 className="text-lg font-semibold text-white mb-2">Email oficial ASMM</h4>
-						<Link href="mailto:office.asmm@gmail.com" className="mimesiss-text-secondary hover:text-primary transition duration-200">
-							office.asmm@gmail.com
-						</Link>
-					</div>
-				</div>
-
-
-				{/* Social Media */}
-				<div className="mimesiss-card p-4 space-y-4">
-					<h2 className="text-2xl font-bold text-accent text-center  md:col-span-2" >Urmărește activitatea ASMM</h2>
-					<div className="flex flex-row justify-center items-center space-x-6">
-						<Link href="https://www.instagram.com/asmm.bucuresti?igsh=MWExZHc0Y3hrNWh1bg==" target="_blank" aria-label="Instagram">
-							<FaInstagram className="h-6 w-6 text-primary mb-4" />
-						</Link>
-
-						<Link href="https://www.facebook.com/share/1CmCN8trYg/?mibextid=wwXIfr" target="_blank" aria-label="Facebook">
-							<FaFacebook className="h-6 w-6 text-primary mb-4" />
-						</Link>
-
-					</div>
-				</div>
-			</div>
-		</>
-	);
-}
+import Link from 'next/link'
+import HeaderContent from '@/components/ui/HeaderContent'
+import { FaEnvelope, FaPhone, FaInstagram, FaFacebook } from 'react-icons/fa'
+export const metadata = {title:'Contact',description:'Date de contact ale Asociației Studenților Mediciniști Militari.'}
+const contacts = [
+  {title:'Secretariat',name:'Întrebări despre congres și participare',href:'mailto:secretariat@asmm-bucuresti.com',label:'secretariat@asmm-bucuresti.com',email:true},
+  {title:'Președinte congres',name:'Anghel Liviu Florin',href:'tel:0760200222',label:'0760 200 222'},
+  {title:'Sponsorizări și parteneriate',name:'Vicepreședinte Externe · Bosca Mihai Iulian',href:'tel:0742138755',label:'0742 138 755'},
+  {title:'Fundraising',name:'Oncel Mara Elena',href:'tel:0753642438',label:'0753 642 438'},
+  {title:'Email oficial ASMM',name:'Pentru idei, colaborări și întrebări despre asociație',href:'mailto:office.asmm@gmail.com',label:'office.asmm@gmail.com',email:true},
+]
+export default function ContactPage() {return <><HeaderContent title="Hai să vorbim." kicker="ASMM · Contact"/><div className="public-page"><p className="public-intro">Ai o întrebare despre congres, o idee de proiect sau vrei să colaborăm? Alege persoana potrivită și ia legătura cu noi.</p><div className="public-grid">{contacts.map(contact => <section key={contact.href} className="public-card"><div className="mb-6">{contact.email ? <FaEnvelope size={24} aria-hidden="true"/> : <FaPhone size={24} aria-hidden="true"/>}</div><h2>{contact.title}</h2><p>{contact.name}</p><a href={contact.href} className="public-link break-all">{contact.label}</a></section>)}</div><section className="mt-16"><h2 className="text-3xl mb-6">Urmărește activitatea ASMM</h2><div className="flex flex-wrap gap-8"><Link href="https://www.instagram.com/asmm.bucuresti?igsh=MWExZHc0Y3hrNWh1bg==" target="_blank" rel="noreferrer" className="public-link"><FaInstagram aria-hidden="true"/> Instagram</Link><Link href="https://www.facebook.com/share/1CmCN8trYg/?mibextid=wwXIfr" target="_blank" rel="noreferrer" className="public-link"><FaFacebook aria-hidden="true"/> Facebook</Link></div></section></div></>}

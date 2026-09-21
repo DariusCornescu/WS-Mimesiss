@@ -1,0 +1,115 @@
+.public-site {
+  --background: 0 0% 100%; --foreground: 216 51% 17%; --card: 210 25% 98%; --card-foreground: 216 51% 17%;
+  --primary: 43 100% 61%; --primary-foreground: 216 51% 17%; --secondary: 216 51% 17%; --secondary-foreground: 0 0% 100%;
+  --muted: 210 20% 96%; --muted-foreground: 215 15% 38%; --accent: 216 51% 17%; --accent-foreground: 216 51% 17%;
+  --border: 215 20% 87%; --input: 215 20% 87%; --ring: 216 51% 30%;
+  color: #142641; background: #fff; font-family: var(--font-inter), Arial, sans-serif;
+}
+.public-site main { background: #fff; }
+.public-site .header-div { background: #f3f5f7; padding: 58px 24px; border-bottom: 1px solid #e1e6eb; }
+.public-site .header-div > div { max-width: 1232px; }
+.public-site .header-div h1 { color: #142641; text-align: left; font-size: clamp(32px,4vw,54px); line-height: 1.15; margin-top: 18px; }
+.public-site .header-div .bg-gradient-to-r { background: #ffd037; height: 5px; width: 68px; }
+.public-site .header-div .text-primary { color: #526071; }
+.public-site .mimesiss-subtitle { color: #142641; margin-bottom: 26px; text-align: left; }
+.public-site .mimesiss-card, .public-site .mimesiss-section-card, .public-site .mimesiss-contact-card { background: #f6f7f9; border: 1px solid #e1e6eb; border-radius: 5px; box-shadow: none; }
+.public-site .text-white, .public-site .text-gray-100, .public-site .text-gray-200, .public-site .text-gray-300 { color: #142641; }
+.public-site .text-gray-400, .public-site .text-gray-500, .public-site .mimesiss-text-secondary { color: #526071; }
+.public-site .mimesiss-btn-primary { background: #ffd037; color: #142641; border: 1px solid #ffd037; border-radius: 4px; box-shadow: none; }
+.public-site .mimesiss-btn-primary:hover { background: #f2c022; }
+.public-site a:focus-visible, .public-site button:focus-visible { outline: 3px solid #2864ce; outline-offset: 4px; }
+.public-site footer { background: #142641; color: white; --foreground: 0 0% 100%; --muted-foreground: 215 20% 78%; --border: 216 24% 30%; }
+.congress-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 26px; padding: 16px 24px; border-top: 1px solid #e1e6eb; background: #f7f8fa; font-size: 13px; }
+.congress-nav a { padding: 5px 0; }
+.congress-nav a[aria-current] { box-shadow: 0 3px #ffd037; font-weight: 700; }
+.public-page { max-width: 1232px; margin: auto; padding: 64px 24px; }
+.public-intro { max-width: 760px; font-size: 19px; line-height: 1.8; margin-bottom: 40px; color: #526071; }
+.public-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 32px; }
+.public-card { min-width: 0; border-bottom: 1px solid #e1e6eb; padding-bottom: 26px; }
+.public-card img { width: 100%; height: 240px; object-fit: cover; margin-bottom: 24px; }
+.public-card h2 { font-size: 26px; margin-bottom: 12px; }
+.public-card p { color: #526071; line-height: 1.7; margin-bottom: 20px; }
+.public-kicker { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; margin: 20px 0 12px; }
+.public-link { display: inline-flex; align-items: center; gap: 14px; font-weight: 600; border-bottom: 3px solid #ffd037; padding-bottom: 5px; }
+.public-photo { width: 100%; max-height: 500px; object-fit: cover; }
+.person-card img { width: 100%; aspect-ratio: 4/5; object-fit: cover; object-position: top; }
+.person-card h3 { font-size: 17px; margin-top: 18px; line-height: 1.5; }
+.person-card p { color: #526071; font-size: 14px; margin: 8px 0 25px; }
+.gallery-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; }
+.gallery-grid button { overflow: hidden; cursor: zoom-in; }
+.gallery-grid img { width: 100%; height: 300px; object-fit: cover; transition: transform .2s; }
+.gallery-grid button:hover img { transform: scale(1.03); }
+.gallery-dialog { border: 0; padding: 24px; max-width: min(1100px,95vw); max-height: 95vh; background: #142641; color: white; }
+.gallery-dialog::backdrop { background: rgba(0,0,0,.85); }
+.gallery-dialog img { width: 100%; height: min(70vh,750px); object-fit: contain; }
+.gallery-controls { display:flex; align-items:center; justify-content: space-between; gap:16px; padding-top:16px; }
+.gallery-controls button { padding: 12px 18px; border: 1px solid #8a96a6; border-radius: 3px; }
+.archive-note { padding: 18px 24px; background: #fff7dd; border-left: 4px solid #ffd037; margin-bottom:32px; line-height:1.7; }
+@media(max-width:760px) { .public-grid, .gallery-grid { grid-template-columns:1fr; } .public-page { padding:40px 22px; } .public-site .header-div { padding:38px 22px; } .congress-nav { justify-content:flex-start; gap:8px 20px; } .public-intro { font-size:17px; } .gallery-controls { flex-wrap:wrap; } }
+@media(prefers-reduced-motion:reduce) { .gallery-grid img { transition:none; } }
+
+.public-site { --yellow: #ffd037; --navy: #142641; }
+.congress-hero-copy { color: white; font-size: 19px; margin: -14px 0 30px; }
+.public-site main a.text-primary { color: #6e5100; }
+.public-site .mimesiss-info-card { border-color: #e1e6eb; background: #f6f7f9; box-shadow:none; }
+.public-site .header-div .asmm-rise, .public-site .header-div .asmm-draw { animation: none; opacity: 1; transform: none; }
+.project-list { grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
+.project-list > article:only-child > a { display: grid; grid-template-columns: 1.1fr 1fr; column-gap: 44px; align-content: center; }
+.project-list > article:only-child img { grid-row: 1 / span 5; height: 360px; margin: 0; }
+.project-list > article:only-child .public-link { justify-self: start; }
+@media(max-width:760px) { .project-list > article:only-child > a { display:block; } .project-list > article:only-child img { height:260px; margin-bottom:24px; } }
+
+.public-site .asmm-reveal { opacity: 1; transform: none; transition: none; }
+.public-site main .text-primary { color: #745600; }
+
+.public-card img.public-photo { height: 440px; object-position: center 45%; }
+.public-site .public-document { max-width: 900px; line-height: 1.85; }
+.public-site .regulament-list > li::before { color: #745600; }
+@media(max-width:760px) { .public-card img.public-photo {height:260px;} }
+
+.public-site .header-div { position:relative; overflow:hidden; background:radial-gradient(ellipse at 95% 0%,#fff0b9,transparent 55%),#f3f5f7; }
+.public-card, .person-card { transition:transform .3s, box-shadow .3s; }
+.public-card { border-radius:12px; padding:22px; background:#f7f8fa; border:1px solid #e5e9ee; }
+.public-card img, .person-card img, .gallery-grid button { border-radius:10px; }
+.public-link { transition:gap .25s, color .25s; }
+.public-link:hover { gap:22px; color:#745600; }
+.gallery-grid img { transition:transform .6s cubic-bezier(.2,.7,.2,1),filter .4s; }
+.gallery-grid button:hover img { transform:scale(1.07); filter:saturate(1.15); }
+.gallery-dialog[open] { animation:gallery-arrive .25s ease-out; border-radius:14px; }
+@media(hover:hover) { .public-card:hover, .person-card:hover { transform:translateY(-5px); box-shadow:0 16px 35px -18px rgba(20,38,65,.25); } }
+@keyframes gallery-arrive { from { opacity:0; transform:scale(.97); } to { opacity:1; transform:scale(1); } }
+@media(prefers-reduced-motion:reduce) { .public-site *, .public-site *::before, .public-site *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; } .public-card:hover, .person-card:hover, .gallery-grid button:hover img { transform:none; } }
+
+/* Match the ASMM Instagram burgundy/ivory palette across public pages. */
+.public-site {
+  --background:30 47% 97%; --foreground:351 45% 19%; --card:26 44% 94%; --card-foreground:351 45% 19%;
+  --primary:356 59% 29%; --primary-foreground:35 70% 96%; --secondary:350 49% 20%; --secondary-foreground:35 70% 96%;
+  --muted:27 36% 94%; --muted-foreground:350 13% 34%; --accent:350 49% 20%; --accent-foreground:35 70% 96%;
+  --border:23 24% 83%; --input:23 24% 83%; --ring:356 59% 29%;
+  --yellow:#e8cfac; --navy:#42191d; color:#42191d; background:#fcf8f3;
+}
+.public-site main { background:#fcf8f3; }
+.public-site .header-div { background:radial-gradient(ellipse at 95% 0%,#edd6c7,transparent 55%),#f5ece3; border-bottom-color:#e8d4c3; }
+.public-site .header-div h1, .public-site .mimesiss-subtitle,
+.public-site .text-white, .public-site .text-gray-100, .public-site .text-gray-200, .public-site .text-gray-300 { color:#42191d; }
+.public-site .header-div .bg-gradient-to-r { background:#84272a; }
+.public-site .text-gray-400, .public-site .text-gray-500, .public-site .mimesiss-text-secondary,
+.public-card p, .person-card p, .public-intro { color:#624c4d; }
+.public-site .mimesiss-card, .public-site .mimesiss-section-card,
+.public-site .mimesiss-contact-card, .public-site .mimesiss-info-card,
+.public-card { background:#f5ece3; border-color:#e8d4c3; }
+.public-site .mimesiss-btn-primary { background:#761e23; border-color:#761e23; color:#fff8ed; }
+.public-site .mimesiss-btn-primary:hover { background:#5c151c; }
+.public-site main a.text-primary, .public-site main .text-primary,
+.public-site .regulament-list > li::before { color:#761e23; }
+.public-site a:focus-visible, .public-site button:focus-visible { outline-color:#a33d42; }
+.public-site footer { background:#351016; --border:350 24% 31%; }
+.public-site footer .text-primary { color:#f2e5d5; }
+.congress-nav { background:#f5ece3; border-top-color:#e8d4c3; }
+.congress-nav a { color:#42191d; }
+.congress-nav a:hover, .congress-nav a:focus-visible { color:#84272a; }
+.congress-nav a[aria-current] { box-shadow:0 3px #84272a; }
+.public-link { border-bottom-color:#84272a; }
+.public-link:hover { color:#84272a; }
+.gallery-dialog { background:#351016; }
+.archive-note { background:#f5e8d9; border-left-color:#84272a; }

@@ -35,6 +35,20 @@ const DEFAULT_SETTINGS = {
   ballMaxTicketsPerUser: 2,
 }
 
+const settingsWithoutDatabase = (): AppSettingsPlain => ({
+  eventMode: DEFAULT_SETTINGS.eventMode,
+  globalRegistrationEnabled: DEFAULT_SETTINGS.globalRegistrationEnabled,
+  paymentsEnabled: DEFAULT_SETTINGS.paymentsEnabled,
+  workshopVisibleToPublic: DEFAULT_SETTINGS.workshopVisibleToPublic,
+  allowCancelRegistration: DEFAULT_SETTINGS.allowCancelRegistration,
+  registrationStartTime: null,
+  registrationDeadline: null,
+  defaultMaxParticipants: DEFAULT_SETTINGS.defaultMaxParticipants,
+  ballTicketAvailableFrom: null,
+  ballTicketAvailableTo: null,
+  ballMaxTicketsPerUser: DEFAULT_SETTINGS.ballMaxTicketsPerUser,
+})
+
 const toIso = (value: Date | string | null | undefined): string | null =>
   value ? new Date(value).toISOString() : null
 
@@ -74,7 +88,17 @@ const cachedSettings = unstable_cache(readSettings, ['app-settings'], {
  * cache() dedupes within one request, so the root layout plus any page
  * calling this hit the store at most once per render.
  */
-export const getAppSettings = cache((): Promise<AppSettingsPlain> => cachedSettings())
+export const getAppSettings = cache(async (): Promise<AppSettingsPlain> => {
+  if (process.env.NODE_ENV === 'development' && process.env.ASMM_LOCAL_PREVIEW === '1') return settingsWithoutDatabase()
+  if (!process.env.MONGODB_URI) return settingsWithoutDatabase()
+  try {
+    return await cachedSettings()
+  } catch (error) {
+    if (process.env.NODE_ENV !== 'development') throw error
+    console.warn('Local preview: MongoDB unavailable; using default app settings.')
+    return settingsWithoutDatabase()
+  }
+})
 
 /**
  * Update app settings (creates the document on first write).

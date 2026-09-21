@@ -1,0 +1,5 @@
+import Link from 'next/link'
+import HeaderContent from '@/components/ui/HeaderContent'
+export default function WorkshopPageContent({children, title = 'Ateliere MIMESISS', countdown}: {children:React.ReactNode; title?:string; countdown?:React.ReactNode}) {
+  return <><HeaderContent title={title} kicker="Congres · Învățare în practică" /><div className="public-page"><p className="public-intro">Descoperă atelierele și conferințele disponibile pentru ediția activă. Consultă detaliile fiecărei activități înainte de înscriere.</p>{countdown}{children}<section className="archive-note mt-12"><h2 className="text-xl mb-3">Înainte de înscriere</h2><p>Verifică tipul de participare, disponibilitatea locurilor și condițiile de înscriere. Taxele publicate pentru ediția curentă se găsesc în secțiunea de informații.</p><div className="flex flex-wrap gap-6 mt-5"><Link className="public-link" href="/congres/info">Informații participare</Link><Link className="public-link" href="/congres/reg">Regulament 2025</Link><Link className="public-link" href="/congres/ghid">Ghid abstracte 2025</Link></div></section></div></>
+}

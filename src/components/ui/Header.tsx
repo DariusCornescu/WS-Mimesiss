@@ -19,6 +19,8 @@ import {
 } from 'react-icons/fa'
 
 import AuthLinks from '@/components/dashboard/AuthLinks'
+import AssociationHeader from '@/components/asociatie/AssociationHeader'
+import { isPublicPath } from '@/lib/public-routes'
 
 /** Navigația asociației — rădăcina site-ului. */
 const ASSOCIATION_LINKS = [
@@ -43,6 +45,8 @@ const CONGRESS_LINKS = [
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
+
+  if (isPublicPath(pathname)) return <AssociationHeader />
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)

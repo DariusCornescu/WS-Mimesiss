@@ -10,6 +10,7 @@ import "./globals.css";
 import Footer from "@/components/ui/Footer";
 import { AppSettingsProvider } from '@/contexts/AppSettingsContext';
 import { getAppSettings } from '@/lib/settings';
+import PublicSurface from '@/components/asociatie/PublicSurface';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -140,11 +141,13 @@ export default async function RootLayout({
         >
           <AppSettingsProvider settings={appSettings}>
             <ToastProvider>
+              <PublicSurface>
               <Header />
-              <main className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background">
+              <main id="site-main" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background">
                 {children}
               </main>
               <Footer />
+              </PublicSurface>
             </ToastProvider>
           </AppSettingsProvider>
           <SpeedInsights />

@@ -5,7 +5,7 @@ export default function RegPage() {
 	return (
 		<>
 			<HeaderContent title='Regulament de participare la MIMESISS 2025' />
-			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+			<div className="public-document max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="archive-note">Arhivă · Informațiile de pe această pagină se referă la ediția MIMESISS 2025.</p>
 				<ol className="regulament-list flex flex-col gap-4">
 					<li>
 						MIMESISS 2025 (Military Medicine Scientific Session for Students 2025) reprezintă un congres care oferă studenților atât o platformă interactivă și inovativă prin intermediul căreia să dobândească cunoștințe din domeniul medical și medico-militar din partea unor specialiști de renume ai lumii medicale, cât și posibilitatea de a debuta academic prin participarea la concursul dedicat studenților din cadrul congresului.

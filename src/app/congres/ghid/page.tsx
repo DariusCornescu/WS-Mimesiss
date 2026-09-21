@@ -5,7 +5,7 @@ export default function GhidPage() {
 	return (
 		<>
 			<HeaderContent title='Ghid de redactare pentru Congresul MIMESISS 2025' />
-			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+			<div className="public-document max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="archive-note">Arhivă · Informațiile de pe această pagină se referă la ediția MIMESISS 2025.</p>
 				
 				{/* Section 1: Dispoziții generale */}
 				<section className="mb-12">

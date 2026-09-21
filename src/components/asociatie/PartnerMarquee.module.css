@@ -1,0 +1,33 @@
+.section { background: #fff; color: #42191d; padding: 76px 0 80px; overflow: hidden; }
+.rows { width: 100%; margin: 0 auto; }
+.lane + .lane { margin-top: 72px; }
+.laneHeading { position: relative; max-width: 1380px; margin: 0 auto 35px; padding: 0 24px; text-align: center; }
+.laneHeading h2 { margin: 0; font-size: clamp(27px, 3.7vw, 50px); line-height: 1.15; font-weight: 800; letter-spacing: .025em; text-transform: uppercase; }
+.pauseButton { position: absolute; right: 24px; top: 50%; transform: translateY(-50%); border: 1px solid #bda5a0; border-radius: 999px; padding: 8px 14px; color: #42191d; font-size: 12px; font-weight: 700; background: #fff; cursor: pointer; }
+.pauseButton:hover { background: #f5ece3; }
+.pauseButton:focus-visible { outline: 3px solid #84272a; outline-offset: 3px; }
+.viewport { overflow: hidden; mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent); }
+.track { display: flex; width: max-content; animation: glide 48s linear infinite; }
+.track:hover, .track:focus-within, .track.paused { animation-play-state: paused; }
+.group { display: flex; flex: none; align-items: center; gap: 40px; padding-right: 40px; }
+.logo { width: 200px; height: 150px; flex: none; display: grid; place-items: center; }
+.logo img { width: 200px; height: 150px; object-fit: contain; }
+.empty { min-height: 140px; margin: 0 auto; padding: 24px; max-width: 620px; display: grid; place-items: center; text-align: center; color: #705d5d; font-size: 16px; line-height: 1.5; }
+@keyframes glide { to { transform: translateX(-50%); } }
+@media (max-width: 760px) {
+  .section { padding: 50px 0 58px; }
+  .lane + .lane { margin-top: 56px; }
+  .laneHeading { margin-bottom: 22px; }
+  .laneHeading h2 { font-size: clamp(24px, 7vw, 34px); }
+  .pauseButton { position: static; transform: none; margin-top: 16px; }
+  .group { gap: 22px; padding-right: 22px; }
+  .logo { width: 150px; height: 115px; }
+  .logo img { width: 150px; height: 115px; }
+  .empty { min-height: 105px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .viewport { overflow-x: auto; mask-image: none; }
+  .track { animation: none; }
+  .group[aria-hidden="true"] { display: none; }
+  .pauseButton { display: none; }
+}

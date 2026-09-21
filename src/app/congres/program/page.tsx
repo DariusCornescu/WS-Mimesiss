@@ -83,7 +83,7 @@ const timelineData = [
 		<>
 			<HeaderContent kicker="Congres · Program" title="Program MIMESISS 2025" />
 
-			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="archive-note">Arhivă · Informațiile de pe această pagină se referă la ediția MIMESISS 2025.</p>
 
 				<Reveal>
 				<div className="mimesiss-card mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 text-center flex flex-col items-center justify-center p-8 space-y-4">

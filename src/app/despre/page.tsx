@@ -67,8 +67,8 @@ const peopleData: { row: Person[] }[] = [
 export default function AboutPage() {
 	return (
 		<>
-			<HeaderContent kicker="Asociația · Echipa" title="Comitetul de organizare" />
-			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+			<HeaderContent kicker="Asociația · Echipa" title="Oamenii din spatele ASMM" />
+			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="public-intro">Suntem studenți mediciniști militari, uniți de dorința de a învăța și de a construi împreună. Echipa noastră organizează proiectele asociației și congresul MIMESISS.</p>
 
 				<Reveal>
 					<h3 className="mimesiss-subtitle">Consiliu director</h3>
