@@ -74,7 +74,7 @@ export default function Footer() {
             &copy; {new Date().getFullYear()} MIMESISS. Toate drepturile rezervate.
           </p>
           <p className="text-xs">
-            Dezvoltat de <a target='_blank' rel='noreferrer' className='text-primary underline' href="https://fldr.xyz">Ursan Bogdan</a>
+            Dezvoltat de Cornescu Darius
           </p>
         </div>
       </div>
