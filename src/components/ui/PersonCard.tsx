@@ -1,4 +1,34 @@
 import Image from 'next/image'
-export default function PersonCard({ name, role, imageUrl, className = '' }: {name:string; role:string; imageUrl:string; className?:string}) {
-  return <article className={`person-card ${className}`}><Image src={imageUrl} alt={name} width={500} height={625} sizes="(max-width: 640px) 50vw, 400px" /><h3>{name}</h3><p>{role}</p></article>
+import styles from './PersonCard.module.css'
+
+type PersonCardProps = {
+  name: string
+  role: string
+  imageUrl: string
+  priority?: boolean
+  imageOffsetX?: number
+}
+
+export default function PersonCard({ name, role, imageUrl, priority = false, imageOffsetX = 0 }: PersonCardProps) {
+  return (
+    <article className={styles.card}>
+      <div className={styles.portrait}>
+        <div className={styles.imageFrame}>
+          <Image
+            src={imageUrl}
+            alt={name}
+            width={800}
+            height={1000}
+            sizes="(max-width: 479px) calc(100vw - 44px), (max-width: 1023px) calc((100vw - 72px) / 2), (max-width: 1200px) calc((100vw - 104px) / 3), 366px"
+            priority={priority}
+            style={{ left: `${imageOffsetX}%` }}
+          />
+        </div>
+      </div>
+      <div className={styles.caption}>
+        <h3>{name}</h3>
+        <p>{role}</p>
+      </div>
+    </article>
+  )
 }

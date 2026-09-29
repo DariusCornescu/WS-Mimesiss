@@ -1,0 +1,98 @@
+.card {
+  --portrait-shape: 42% 58% 38% 62% / 48% 40% 60% 52%;
+  --portrait-tilt: -5deg;
+  min-width: 0;
+}
+
+.card:nth-child(3n + 2) {
+  --portrait-shape: 58% 42% 62% 38% / 40% 54% 46% 60%;
+  --portrait-tilt: 5deg;
+}
+
+.card:nth-child(3n) {
+  --portrait-shape: 38% 62% 46% 54% / 56% 38% 62% 44%;
+  --portrait-tilt: -3deg;
+}
+
+.portrait {
+  position: relative;
+  isolation: isolate;
+  aspect-ratio: 4 / 5;
+}
+
+.portrait::before,
+.portrait::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  border-radius: var(--portrait-shape);
+}
+
+.portrait::before {
+  inset: 18% 4% 2%;
+  background: var(--portrait-fill, linear-gradient(145deg, color-mix(in srgb, hsl(var(--brand-ivory)) 28%, hsl(var(--brand-header))), hsl(var(--brand-header))));
+  transform: rotate(var(--portrait-tilt));
+}
+
+.portrait::after {
+  inset: 23% 2% 1% 8%;
+  border: 1px solid hsl(var(--brand-header) / .18);
+  transform: rotate(calc(var(--portrait-tilt) * -1));
+}
+
+.imageFrame {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: clip;
+  border-radius: 38% 62% 44% 56% / 10% 12% 24% 22%;
+}
+
+.portrait img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center bottom;
+}
+
+.card:nth-child(3n + 2) .imageFrame {
+  border-radius: 58% 42% 58% 42% / 12% 10% 22% 28%;
+}
+
+.caption { padding: 18px 0 0; }
+
+.caption h3 {
+  color: hsl(var(--foreground));
+  font-size: clamp(18px, 1.7vw, 22px);
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.caption p {
+  margin-top: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card { transition: transform .35s ease; }
+  .portrait::before { transition: transform .6s ease, box-shadow .4s ease; }
+  .portrait::after { transition: transform .6s ease, border-color .4s ease; }
+  .portrait img { transition: transform .6s cubic-bezier(.2, .7, .2, 1); }
+  .caption h3 { transition: color .35s ease; }
+
+  .card:hover { transform: translateY(-6px); }
+  .card:hover .portrait::before {
+    transform: translateY(-6px) rotate(calc(var(--portrait-tilt) * -1)) scale(1.025);
+    box-shadow: 0 18px 36px -24px hsl(var(--brand-deep) / .35);
+  }
+  .card:hover .portrait::after {
+    transform: rotate(var(--portrait-tilt));
+    border-color: hsl(var(--brand-header) / .3);
+  }
+  .card:hover .portrait img { transform: scale(1.035); }
+  .card:hover .caption h3 { color: hsl(var(--primary)); }
+}

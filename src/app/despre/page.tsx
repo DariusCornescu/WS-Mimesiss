@@ -1,103 +1,61 @@
-import HeaderContent from "@/components/ui/HeaderContent";
-import PersonCard from "@/components/ui/PersonCard";
-import Reveal from "@/components/asociatie/Reveal";
+import type { Metadata } from 'next'
+import HeaderContent from '@/components/ui/HeaderContent'
+import PersonCard from '@/components/ui/PersonCard'
+import styles from './page.module.css'
 
-export const metadata = {
-  title: 'Cine suntem',
-  description: 'Echipa de conducere a Asociației Studenților Mediciniști Militari.',
+export const metadata: Metadata = {
+  title: 'Despre noi',
+  description: 'Cunoaște echipa ASMM: Consiliul Director și Consiliul Director Extins al Asociației Studenților Mediciniști Militari.',
 }
 
-type Person = {
-	name: string;
-	role: string;
-	imageUrl: string;
-	className?: string;
-};
+const board = [
+  { name: 'Boșcă Mihai Iulian', role: 'Președinte ASMM', imageUrl: '/pics/echipa/bosca-mihai-iulian-cutout.webp', imageOffsetX: 6 },
+  { name: 'Oncel Mara Elena', role: 'Secretar General', imageUrl: '/pics/echipa/oncel-mara-elena-cutout.webp', imageOffsetX: 12 },
+  { name: 'Nebunu Andrada Daniela', role: 'Vicepreședinte pentru relații externe', imageUrl: '/pics/echipa/nebunu-andrada-daniela-cutout.webp', imageOffsetX: 4 },
+  { name: 'Neacșu Georgiana Rebeca', role: 'Trezorier', imageUrl: '/pics/echipa/neacsu-georgiana-rebeca-cutout.webp', imageOffsetX: 0 },
+  { name: 'Marin Teodor Ștefan', role: 'Vicepreședinte pentru relații interne', imageUrl: '/pics/echipa/marin-teodor-stefan-cutout.webp', imageOffsetX: -6.5 },
+]
 
-const peopleData: { row: Person[] }[] = [
-	{
-		row: [
-			{ name: "Sd. Plt. Adj. Anghel Liviu-Florin", role: "Presedinte", imageUrl: "/pics/anghel.jpeg" },
-			{ name: "Sd. Sg. Maj. Stancu Ștefania-Ionela", role: "Secretar General", imageUrl: "/pics/stancu.jpeg" },
-		],
-	},
-	{
-		row: [
-			{ name: "Sd. Plt. Ursan Beatrice Ioana", role: "Vicepreședinte Interne", imageUrl: "/pics/ursan.jpeg", className: "col-span-2 w-1/2 mx-auto" },
-		],
-	},
-	{
-		row: [
-			{ name: "Sd. Sg. Boșcă Mihai-Iulian", role: "Vicepreședinte Externe", imageUrl: "/pics/bosca.jpeg" },
-			{ name: "Sd. Sg. Bănici Alexandru", role: "Vicepreședinte Științific", imageUrl: "/pics/banici.jpeg" },
-		],
-	},
-	{
-		row: [
-			{ name: "Slt. Răducan Alexandra", role: "Coresponsabil Media", imageUrl: "/pics/raducan.jpeg" },
-			{ name: "Sd. Sg. Geară Codruța Andreea", role: "Coresponsabil Media", imageUrl: "/pics/geara.jpeg" },
-		],
-	},
-	{
-		row: [
-			{ name: "Slt. Peptănaru Daria Gabriela", role: "Coresponsabil Public Relations", imageUrl: "/pics/peptanaru.jpeg" },
-			{ name: "Sd. Sg. Lascu Maria-Alina-Cerasela", role: "Coresponsabil Public Relations", imageUrl: "/pics/lascu.jpeg" },
-		],
-	},
-	{
-		row: [
-			{ name: "Sd. Sg. Maj. Codreanu Radu Andrei", role: "Coresponsabil logistică", imageUrl: "/pics/codreanu.jpeg" },
-			{ name: "Sd. Sg. Popescu Radu-George", role: "Coresponsabil logistică", imageUrl: "/pics/popescu.jpeg" },
-		],
-	},
-	{
-		row: [
-			{ name: "Sd. Plt. Dobrin Costin", role: "Responsabil HR", imageUrl: "/pics/dobrin.jpeg" },
-			{ name: "Sd. Cap. Oncel Mara-Elena", role: "Responsabil fundraising", imageUrl: "/pics/oncel.jpeg" },
-		],
-	},
-	{
-		row: [
-			{ name: "Sd. Plt. Mocanu Mioara", role: "Responsabil conferințe", imageUrl: "/pics/mocanu.jpeg" },
-			{ name: "Sd. Sg. Luca Vlad Mario", role: "Responsabil workshops", imageUrl: "/pics/luca.jpeg" },
-		],
-	},
-];
+const extendedBoard = [
+  { name: 'Tănase Nicoleta', role: 'Șef Departament Logistică', imageUrl: '/pics/echipa/tanase-nicoleta-cutout.webp', imageOffsetX: 15 },
+  { name: 'Focșa Cosmina Ștefania', role: 'Șef Departament MM', imageUrl: '/pics/echipa/focsa-cosmina-stefania-cutout.webp', imageOffsetX: 6.5 },
+  { name: 'Codiță Maria Alexandra', role: 'Șef Departament HR', imageUrl: '/pics/echipa/codita-maria-alexandra-cutout.webp', imageOffsetX: -2 },
+  { name: 'Stan Denisa Maria', role: 'Șef Departament FR', imageUrl: '/pics/echipa/stan-denisa-maria-cutout.webp', imageOffsetX: 3 },
+  { name: 'Mitrache Ana Ilinca', role: 'Șef Departament Grafică', imageUrl: '/pics/echipa/mitrache-ana-ilinca-cutout.webp', imageOffsetX: 12.5 },
+  { name: 'Manole Daria Gabriela', role: 'Șef Departament PR', imageUrl: '/pics/echipa/manole-daria-gabriela-cutout.webp', imageOffsetX: 17 },
+]
 
 export default function AboutPage() {
-	return (
-		<>
-			<HeaderContent kicker="Asociația · Echipa" title="Oamenii din spatele ASMM" />
-			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="public-intro">Suntem studenți mediciniști militari, uniți de dorința de a învăța și de a construi împreună. Echipa noastră organizează proiectele asociației și congresul MIMESISS.</p>
-
-				<Reveal>
-					<h3 className="mimesiss-subtitle">Consiliu director</h3>
-				</Reveal>
-
-				<div className="grid grid-cols-2 gap-4 py-4 max-w-4xl mx-auto">
-					{peopleData.slice(0, 3).map((group) => (
-						group.row.map((person, i) => (
-							<Reveal key={person.name} delay={(i % 2) * 110} className={person.className ? person.className : ''}>
-								<PersonCard name={person.name} role={person.role} imageUrl={person.imageUrl} className="" />
-							</Reveal>
-						))
-					))}
-				</div>
-
-				<Reveal>
-					<h3 className="mimesiss-subtitle">Consiliu director extins</h3>
-				</Reveal>
-
-				<div className="grid grid-cols-2 gap-4 py-4 max-w-4xl mx-auto">
-					{peopleData.slice(3).map((group) => (
-						group.row.map((person, i) => (
-							<Reveal key={person.name} delay={(i % 2) * 110} className={person.className ? person.className : ''}>
-								<PersonCard name={person.name} role={person.role} imageUrl={person.imageUrl} className="" />
-							</Reveal>
-						))
-					))}
-				</div>
-			</div>
-		</>
-	);
+  return (
+    <>
+      <HeaderContent kicker="Asociația · Echipa" title="Oamenii din spatele ASMM" />
+      <div className={styles.page}>
+        <div className={styles.intro}>
+          <p>Suntem studenți mediciniști militari, uniți de dorința de a învăța și de a construi împreună. Echipa noastră organizează proiectele asociației și congresul MIMESISS.</p>
+          <nav aria-label="Echipa ASMM" className={styles.navigation}>
+            <a href="#consiliul-director">Consiliul Director <span aria-hidden="true">↓</span></a>
+            <a href="#consiliul-director-extins">Consiliul Director Extins <span aria-hidden="true">↓</span></a>
+          </nav>
+        </div>
+        <section id="consiliul-director" aria-labelledby="board-title" className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.eyebrow}>Echipa de conducere</p>
+            <h2 id="board-title">Consiliul Director</h2>
+          </div>
+          <div className={`${styles.grid} ${styles.board}`}>
+            {board.map((person, index) => <PersonCard key={person.name} {...person} priority={index === 0} />)}
+          </div>
+        </section>
+        <section id="consiliul-director-extins" aria-labelledby="extended-board-title" className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <p className={styles.eyebrow}>Coordonatorii departamentelor</p>
+            <h2 id="extended-board-title">Consiliul Director Extins</h2>
+          </div>
+          <div className={styles.grid}>
+            {extendedBoard.map(person => <PersonCard key={person.name} {...person} />)}
+          </div>
+        </section>
+      </div>
+    </>
+  )
 }
