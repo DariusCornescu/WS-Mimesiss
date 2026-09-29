@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 
 const MONGODB_URI = process.env.MONGODB_URI
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME
 
 interface MongooseCache {
   conn: typeof mongoose | null
@@ -34,6 +35,7 @@ async function connectDB() {
       socketTimeoutMS: 45000,
       maxIdleTimeMS: 30000,
       connectTimeoutMS: 10000,
+      ...(MONGODB_DB_NAME ? { dbName: MONGODB_DB_NAME } : {}),
     }
 
     cached.promise = mongoose.connect(MONGODB_URI, opts)

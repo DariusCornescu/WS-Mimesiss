@@ -1,21 +1,46 @@
 import { createRequire } from 'node:module';
-import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 const require = createRequire(import.meta.url);
 require('@next/env').loadEnvConfig(process.cwd());
 const { MongoClient } = require('mongodb');
 const { createClerkClient } = require('@clerk/backend');
 const apply = process.argv.includes('--apply');
-const csvPath = 'C:/Users/c0rnesky/Desktop/Darius/Projects/IMM/users_mimesiss_clerk.csv';
-const python = process.env.PYTHON_EXECUTABLE || (process.platform === 'win32' ? 'py' : 'python3');
-const pythonCode = 'import csv,json,sys\nwith open(sys.argv[1],encoding="utf-8-sig",newline="") as f: print(json.dumps(list(csv.DictReader(f))))';
-const rows = JSON.parse(execFileSync(python, ['-X', 'utf8', '-c', pythonCode, csvPath], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, windowsHide: true }));
+const csvPath = process.env.CLERK_USER_EXPORT_CSV;
+const expectedDomain = process.env.CLERK_MIGRATION_EXPECTED_DOMAIN || 'asmm.ro';
 const assert = (ok, message) => { if (!ok) throw new Error(message); };
+assert(csvPath, 'CLERK_USER_EXPORT_CSV must point to the fresh Clerk CSV export.');
+function parseCsv(input) {
+ const parsed = [];
+ let row = [];
+ let field = '';
+ let quoted = false;
+ for (let i = 0; i < input.length; i++) {
+  const char = input[i];
+  if (quoted) {
+   if (char === '"' && input[i + 1] === '"') { field += '"'; i++; }
+   else if (char === '"') quoted = false;
+   else field += char;
+  } else if (char === '"' && field === '') quoted = true;
+  else if (char === ',') { row.push(field); field = ''; }
+  else if (char === '\n') { row.push(field); parsed.push(row); row = []; field = ''; }
+  else if (char !== '\r') field += char;
+ }
+ assert(!quoted, 'CSV contains an unterminated quoted field.');
+ if (field || row.length) { row.push(field); parsed.push(row); }
+ const headers = parsed.shift()?.map((value, index) => index === 0 ? value.replace(/^\uFEFF/, '') : value) || [];
+ assert(headers.length > 0, 'CSV has no header row.');
+ return parsed.filter(values => values.some(Boolean)).map(values => {
+  assert(values.length === headers.length, 'CSV row has an unexpected number of columns.');
+  return Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+ });
+}
+const rows = parseCsv(readFileSync(csvPath, 'utf8'));
 const norm = value => String(value || '').trim().toLowerCase();
 const refs = [['registrations', 'userId'], ['registrations', 'attendance.confirmedBy'], ['payments', 'clerkId'], ['issuedtickets', 'clerkId']];
 let client;
 try {
  assert(process.env.CLERK_MIGRATION_SECRET_KEY?.startsWith('sk_live_'), 'A separate production migration key is required.');
- assert(process.env.CLERK_MIGRATION_PUBLISHABLE_KEY?.startsWith('pk_live_') && Buffer.from(process.env.CLERK_MIGRATION_PUBLISHABLE_KEY.slice(8), 'base64').toString() === 'clerk.mimesiss.ro$', 'Expected the production publishable key for clerk.mimesiss.ro.');
+ assert(process.env.CLERK_MIGRATION_PUBLISHABLE_KEY?.startsWith('pk_live_') && Buffer.from(process.env.CLERK_MIGRATION_PUBLISHABLE_KEY.slice(8), 'base64').toString() === `clerk.${expectedDomain}$`, `Expected the production publishable key for clerk.${expectedDomain}.`);
  assert(new URL(process.env.MONGODB_URI).pathname === '/mimesiss_test', 'Only mimesiss_test is supported.');
  assert(rows.length > 0, 'CSV is empty.');
  assert(new Set(rows.map(r => r.id)).size === rows.length, 'Duplicate source IDs.');
@@ -31,13 +56,25 @@ try {
  const db = client.db('mimesiss_test');
  const sourceIds = new Set(rows.map(r => r.id));
  const mongoUsers = await db.collection('users').find({}, { projection: { clerkId: 1, email: 1, legacyClerkId: 1, role: 1 } }).toArray();
+ const matchIssues = { missing: 0, duplicate: 0, emailMismatch: 0 };
+ let emailOnlyMatches = 0;
+ const sourceToMongoId = new Map();
  for (const r of rows) {
-  const matches = mongoUsers.filter(u => u.clerkId === r.id || u.legacyClerkId === r.id);
-  assert(matches.length === 1 && norm(matches[0].email) === norm(r.primary_email_address), 'CSV and database users do not match exactly.');
+  let matches = mongoUsers.filter(u => u.clerkId === r.id || u.legacyClerkId === r.id);
+  if (!matches.length) {
+   matches = mongoUsers.filter(u => norm(u.email) === norm(r.primary_email_address));
+   if (matches.length === 1) emailOnlyMatches++;
+  }
+  if (!matches.length) matchIssues.missing++;
+  else if (matches.length > 1) matchIssues.duplicate++;
+  else if (norm(matches[0].email) !== norm(r.primary_email_address)) matchIssues.emailMismatch++;
+  else sourceToMongoId.set(r.id, matches[0].clerkId);
  }
+ assert(Object.values(matchIssues).every(count => count === 0), `CSV and database users do not match exactly: ${JSON.stringify({ ...matchIssues, mongoUsers: mongoUsers.length, emailOnlyMatches })}.`);
+ assert(new Set(sourceToMongoId.values()).size === rows.length, 'CSV-to-Mongo user mapping is not one-to-one.');
  const clerk = createClerkClient({ secretKey: process.env.CLERK_MIGRATION_SECRET_KEY });
  const domains = await clerk.domains.list();
- assert(domains.data.some(d => d.name === 'mimesiss.ro' && !d.isSatellite), 'Secret key does not belong to the expected production domain.');
+ assert(domains.data.some(d => d.name === expectedDomain && !d.isSatellite), 'Secret key does not belong to the expected production domain.');
  const targetUsers = [];
  for (let offset = 0; ; offset += 100) {
   const page = await clerk.users.getUserList({ limit: 100, offset });
@@ -57,12 +94,12 @@ try {
    existing.set(r.id, u.id);
   }
  }
- const knownIds = new Set([...sourceIds, ...existing.values()]);
+ const knownIds = new Set([...sourceIds, ...sourceToMongoId.values(), ...existing.values()]);
  for (const [collection, field] of refs.filter(([, field]) => field !== 'attendance.confirmedBy')) {
   const values = await db.collection(collection).distinct(field);
   assert(values.every(id => knownIds.has(id)), 'A record owner is missing from the migration map.');
  }
- console.log(JSON.stringify({ mode: apply ? 'apply' : 'audit', csvUsers: rows.length, matchedDatabaseUsers: rows.length, targetClerkUsers: targetUsers.length, alreadyImported: existing.size, toImport: rows.length - existing.size, passwordHasher: 'bcrypt', destination: 'Clerk Production for mimesiss.ro; MongoDB read-only' }));
+ console.log(JSON.stringify({ mode: apply ? 'apply' : 'audit', csvUsers: rows.length, matchedDatabaseUsers: rows.length, matchedByCurrentOrLegacyId: rows.length - emailOnlyMatches, matchedByUniqueEmail: emailOnlyMatches, targetClerkUsers: targetUsers.length, alreadyImported: existing.size, toImport: rows.length - existing.size, passwordHasher: 'bcrypt', destination: `Clerk Production for ${expectedDomain}; MongoDB read-only` }));
  if (!apply) { console.log('Production audit passed. No accounts or database records changed.'); }
  else {
   console.log('Importing into Clerk Production only. MongoDB and development accounts will not be changed. No invitation messages are sent by this script.');
@@ -70,7 +107,9 @@ try {
   for (const r of rows) {
    if (existing.has(r.id)) continue;
    // Do not automatically retry ambiguous writes. Rerun discovers successful imports by externalId.
-   const u = await clerk.users.createUser({ externalId: r.id, emailAddress: [r.primary_email_address], firstName: r.first_name || undefined, lastName: r.last_name || undefined, passwordDigest: r.password_digest, passwordHasher: 'bcrypt' });
+   const createdAt = r.created_at ? new Date(r.created_at) : undefined;
+   assert(!createdAt || !Number.isNaN(createdAt.valueOf()), 'Invalid source creation timestamp.');
+   const u = await clerk.users.createUser({ externalId: r.id, emailAddress: [r.primary_email_address], firstName: r.first_name || undefined, lastName: r.last_name || undefined, passwordDigest: r.password_digest, passwordHasher: 'bcrypt', createdAt, skipLegalChecks: true });
    existing.set(r.id, u.id);
    imported++;
    if (imported % 25 === 0) console.log(JSON.stringify({ newlyImported: imported }));

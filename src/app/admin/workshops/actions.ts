@@ -237,7 +237,7 @@ export async function generateWorkshopsReport(): Promise<string> {
   try {
     // Get the current host from headers
     const headersList = await headers()
-    const host = headersList.get('host') || 'mimesiss.ro'
+    const host = headersList.get('host') || 'asmm.ro'
     const protocol = host.includes('localhost') ? 'http' : 'https'
     const baseUrl = `${protocol}://${host}`
 

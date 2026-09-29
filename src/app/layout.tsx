@@ -29,7 +29,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mimesiss.ro"),
+  metadataBase: new URL("https://asmm.ro"),
   // Radacina site-ului este acum asociatia; congresul isi pune propria
   // metadata din src/app/congres/layout.tsx.
   title: {
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ro_RO",
-    url: "https://mimesiss.ro",
+    url: "https://asmm.ro",
     siteName: "ASMM",
     title: "ASMM — Asociația Studenților Mediciniști Militari",
     description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
@@ -127,7 +127,7 @@ export default async function RootLayout({
     <ClerkProvider>
       <html lang="ro" className="dark">
         <head>
-          <link rel="preconnect" href="https://clerk.mimesiss.ro" crossOrigin="anonymous" />
+          <link rel="preconnect" href="https://clerk.asmm.ro" crossOrigin="anonymous" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
           <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />

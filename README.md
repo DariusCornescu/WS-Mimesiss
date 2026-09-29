@@ -125,6 +125,7 @@ src/
    
    # MongoDB
    MONGODB_URI=your_mongodb_connection_string
+   MONGODB_DB_NAME=your_database_name
    
    # Stripe
    STRIPE_SECRET_KEY=your_stripe_secret_key
@@ -159,6 +160,7 @@ src/
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
 | `CLERK_SECRET_KEY` | Clerk secret key |
 | `MONGODB_URI` | MongoDB connection string |
+| `MONGODB_DB_NAME` | MongoDB database name (useful when the connection string has no database path) |
 | `STRIPE_SECRET_KEY` | Stripe secret key |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
