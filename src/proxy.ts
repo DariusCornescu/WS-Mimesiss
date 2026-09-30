@@ -1,5 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import type { NextFetchEvent, NextRequest } from 'next/server'
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
@@ -22,7 +23,7 @@ const isPublicRoute = createRouteMatcher([
   '/qr/(.*)', // QR code routes should be public
 ])
 
-export default clerkMiddleware(async (auth, req) => {
+const authenticatedProxy = clerkMiddleware(async (auth, req) => {
   // Skip auth for public routes (including webhooks)
   if (isPublicRoute(req)) {
     return
@@ -40,6 +41,14 @@ export default clerkMiddleware(async (auth, req) => {
     await auth.protect()
   }
 })
+
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (process.env.NODE_ENV === 'development' && process.env.ASMM_LOCAL_PREVIEW === '1') {
+    return NextResponse.next()
+  }
+
+  return authenticatedProxy(req, event)
+}
 
 export const config = {
   matcher: [

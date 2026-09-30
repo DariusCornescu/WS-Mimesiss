@@ -2,8 +2,8 @@ import AssociationHome from '@/components/asociatie/AssociationHome'
 import { getPublishedProjects } from '@/lib/projects'
 
 export const metadata = {
-  title: 'ASMM — Asociația Studenților Mediciniști Militari',
-  description: 'Asociația care organizează congresul MIMESISS și proiectele studenților mediciniști militari.',
+  title: 'ASMM — Asociația Studenților în Medicină Militară',
+  description: 'Asociația care organizează congresul MIMESISS și proiectele studenților la medicină militară.',
 }
 
 export default async function HomePage() {

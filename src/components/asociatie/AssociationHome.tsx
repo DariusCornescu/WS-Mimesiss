@@ -14,12 +14,19 @@ export default function AssociationHome({ projects }: { projects: ProjectCard[] 
         <Image src="/old/3.jpeg" alt="" fill priority sizes="100vw" className={styles.heroPhoto} />
         <div className={styles.heroShade} />
         <div className={styles.heroContent}>
-          <p className={styles.heroEyebrow}>Asociația Studenților Mediciniști Militari</p>
+          <p className={styles.heroEyebrow}>Asociația Studenților în Medicină Militară</p>
           <h1 id="association-title">Împreună, dincolo<br className={styles.desktopBreak} /> de amfiteatru.</h1>
           <Link href="#proiecte" className={styles.button}>Descoperă proiectele <FaArrowRight aria-hidden="true" /></Link>
         </div>
       </section>
-      <div className={styles.energyBand}><span>Medicină</span><span aria-hidden="true">✳</span><span>Comunitate</span><span aria-hidden="true">✳</span><span>Experiențe</span><span aria-hidden="true">✳</span><span>Împreună</span></div>
+      <div className={styles.energyBand} aria-label="Medicină, comunitate, experiențe, împreună">
+        <div className={styles.energyBandInner}>
+          <span>Medicină</span>
+          <span>Comunitate</span>
+          <span>Experiențe</span>
+          <span>Împreună</span>
+        </div>
+      </div>
       <section data-entrance id="proiecte" aria-labelledby="congress-title" className={styles.feature}>
         <div className={styles.featureCopy}>
           <p className={styles.eyebrow}>Proiectul nostru</p>

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import HeaderContent from '@/components/ui/HeaderContent'
 import { FaEnvelope, FaPhone, FaInstagram, FaFacebook } from 'react-icons/fa'
-export const metadata = {title:'Contact',description:'Date de contact ale Asociației Studenților Mediciniști Militari.'}
+export const metadata = {title:'Contact',description:'Date de contact ale Asociației Studenților în Medicină Militară.'}
 const contacts = [
   {title:'Secretariat',name:'Întrebări despre congres și participare',href:'mailto:secretariat@asmm-bucuresti.com',label:'secretariat@asmm-bucuresti.com',email:true},
   {title:'Președinte congres',name:'Anghel Liviu Florin',href:'tel:0760200222',label:'0760 200 222'},

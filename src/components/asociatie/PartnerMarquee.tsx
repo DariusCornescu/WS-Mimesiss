@@ -57,7 +57,9 @@ export default function PartnerMarquee() {
     <section className={styles.section} aria-label="Colaborări">
       <div className={styles.rows}>
         <PartnerLane title="Parteneri instituționali" organizations={institutionalPartners} />
-        <PartnerLane title="Sponsori și asociații partenere" organizations={sponsorsAndAssociations} />
+        {sponsorsAndAssociations.length > 0 && (
+          <PartnerLane title="Sponsori și asociații partenere" organizations={sponsorsAndAssociations} />
+        )}
       </div>
     </section>
   )

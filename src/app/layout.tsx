@@ -33,10 +33,10 @@ export const metadata: Metadata = {
   // Radacina site-ului este acum asociatia; congresul isi pune propria
   // metadata din src/app/congres/layout.tsx.
   title: {
-    default: "ASMM — Asociația Studenților Mediciniști Militari",
+    default: "ASMM — Asociația Studenților în Medicină Militară",
     template: "%s | ASMM"
   },
-  description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
+  description: "Asociația Studenților în Medicină Militară (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
   keywords: [
     "MIMESISS",
     "MIMESISS 2025",
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     "cercetare medicală",
     "medicină de urgență"
   ],
-  authors: [{ name: "Asociația Studenților în Medicină-Militară (ASMM)" }],
+  authors: [{ name: "Asociația Studenților în Medicină Militară (ASMM)" }],
   creator: "ASMM",
   publisher: "ASMM",
   formatDetection: {
@@ -74,8 +74,8 @@ export const metadata: Metadata = {
     locale: "ro_RO",
     url: "https://asmm.ro",
     siteName: "ASMM",
-    title: "ASMM — Asociația Studenților Mediciniști Militari",
-    description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
+    title: "ASMM — Asociația Studenților în Medicină Militară",
+    description: "Asociația Studenților în Medicină Militară (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
     images: [
       {
         url: "/og-image.jpg",
@@ -87,8 +87,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "ASMM — Asociația Studenților Mediciniști Militari",
-    description: "Asociația Studenților Mediciniști Militari (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
+    title: "ASMM — Asociația Studenților în Medicină Militară",
+    description: "Asociația Studenților în Medicină Militară (ASMM) — proiectele, echipa și congresul MIMESISS. Workshopuri practice, conferințe și comunicări științifice pentru studenții la medicina militară.",
     images: ["/og-image.jpg"],
     creator: "@asmm_romania",
   },

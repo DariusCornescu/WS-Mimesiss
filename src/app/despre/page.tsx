@@ -5,7 +5,7 @@ import styles from './page.module.css'
 
 export const metadata: Metadata = {
   title: 'Despre noi',
-  description: 'Cunoaște echipa ASMM: Consiliul Director și Consiliul Director Extins al Asociației Studenților Mediciniști Militari.',
+  description: 'Cunoaște echipa ASMM: Consiliul Director și Consiliul Director Extins al Asociației Studenților în Medicină Militară.',
 }
 
 const board = [
@@ -28,15 +28,8 @@ const extendedBoard = [
 export default function AboutPage() {
   return (
     <>
-      <HeaderContent kicker="Asociația · Echipa" title="Oamenii din spatele ASMM" />
+      <HeaderContent kicker="Asociația · Echipa" title="Studenți la medicină militară" />
       <div className={styles.page}>
-        <div className={styles.intro}>
-          <p>Suntem studenți mediciniști militari, uniți de dorința de a învăța și de a construi împreună. Echipa noastră organizează proiectele asociației și congresul MIMESISS.</p>
-          <nav aria-label="Echipa ASMM" className={styles.navigation}>
-            <a href="#consiliul-director">Consiliul Director <span aria-hidden="true">↓</span></a>
-            <a href="#consiliul-director-extins">Consiliul Director Extins <span aria-hidden="true">↓</span></a>
-          </nav>
-        </div>
         <section id="consiliul-director" aria-labelledby="board-title" className={styles.section}>
           <div className={styles.sectionHeading}>
             <p className={styles.eyebrow}>Echipa de conducere</p>
