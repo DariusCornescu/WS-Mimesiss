@@ -2,25 +2,15 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
+import type { Partner } from '@/lib/partner-types'
 import styles from './PartnerMarquee.module.css'
 
-type Organization = { name: string; logo: string }
-
-const institutionalPartners: Organization[] = [
-  { name: 'Spitalul Universitar de Urgență Militar Central „Dr. Carol Davila”', logo: '/orgs/2.png' },
-  { name: 'Direcția Medicală', logo: '/orgs/3.png' },
-  { name: 'Universitatea de Medicină și Farmacie „Carol Davila”', logo: '/orgs/4.png' },
-  { name: 'Institutul Medico-Militar', logo: '/orgs/5.png' },
-  { name: 'Institutul Național de Medicină Aeronautică și Spațială', logo: '/orgs/aero.png' },
-]
-
-// Adăugăm aici doar sponsorii și asociațiile partenere confirmate.
-const sponsorsAndAssociations: Organization[] = []
+type Organization = Pick<Partner, 'id' | 'name' | 'logo'>
 
 function OrganizationCards({ organizations }: { organizations: Organization[] }) {
   return organizations.map(organization => (
-    <div className={styles.logo} key={organization.logo}>
-      <Image src={organization.logo} alt={organization.name} width={200} height={150} sizes="(max-width: 760px) 150px, 200px" />
+    <div className={styles.logo} key={organization.id}>
+      <Image src={organization.logo} alt={organization.name || 'Logo organizație parteneră'} width={200} height={150} unoptimized sizes="(max-width: 760px) 150px, 200px" />
     </div>
   ))
 }
@@ -43,22 +33,25 @@ function PartnerLane({ title, organizations }: { title: string; organizations: O
         </button>}
       </div>
       {organizations.length > 0 ? <div className={styles.viewport}>
-        <div className={`${styles.track} ${paused ? styles.paused : ''}`}>
+        <div className={`${styles.track} ${organizations.length === 1 ? styles.staticTrack : ''} ${paused ? styles.paused : ''}`}>
           <div className={styles.group}><OrganizationCards organizations={organizations} /></div>
-          <div className={styles.group} aria-hidden="true"><OrganizationCards organizations={organizations} /></div>
+          {organizations.length > 1 && <div className={styles.group} aria-hidden="true"><OrganizationCards organizations={organizations} /></div>}
         </div>
       </div> : <p className={styles.empty}>Aici vor apărea siglele sponsorilor și ale asociațiilor partenere confirmate.</p>}
     </div>
   )
 }
 
-export default function PartnerMarquee() {
+export default function PartnerMarquee({ partners }: { partners: Partner[] }) {
+  const institutionalPartners = partners.filter(partner => partner.visible && partner.category === 'institutional')
+  const sponsors = partners.filter(partner => partner.visible && partner.category === 'sponsor')
+  if (!institutionalPartners.length && !sponsors.length) return null
   return (
     <section className={styles.section} aria-label="Colaborări">
       <div className={styles.rows}>
-        <PartnerLane title="Parteneri instituționali" organizations={institutionalPartners} />
-        {sponsorsAndAssociations.length > 0 && (
-          <PartnerLane title="Sponsori și asociații partenere" organizations={sponsorsAndAssociations} />
+        {institutionalPartners.length > 0 && <PartnerLane title="Parteneri instituționali" organizations={institutionalPartners} />}
+        {sponsors.length > 0 && (
+          <PartnerLane title="Sponsori" organizations={sponsors} />
         )}
       </div>
     </section>

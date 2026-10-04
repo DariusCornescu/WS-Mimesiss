@@ -34,6 +34,7 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
   ]
 
   const adminLinks = [
+    { href: '/admin/parteneri', icon: FaUsers, label: 'Parteneri și sponsori' },
     { href: '/admin', icon: FaChartBar, label: 'Dashboard Admin' },
     { href: '/admin/workshops', icon: FaCalendarAlt, label: 'Administrare Workshop-uri' },
     { href: '/admin/proiecte', icon: FaProjectDiagram, label: 'Administrare Proiecte' },

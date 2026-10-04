@@ -31,3 +31,6 @@
   .group[aria-hidden="true"] { display: none; }
   .pauseButton { display: none; }
 }
+
+.staticTrack { width: 100%; justify-content: center; animation: none; }
+.staticTrack .group { padding-right: 0; }
