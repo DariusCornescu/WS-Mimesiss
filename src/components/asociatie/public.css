@@ -10,7 +10,7 @@
 .public-site .header-div > div { max-width: 1232px; }
 .public-site .header-div h1 { color: #142641; text-align: left; font-size: clamp(32px,4vw,54px); line-height: 1.15; margin-top: 18px; }
 .public-site .header-div .bg-gradient-to-r { background: #ffd037; height: 5px; width: 68px; }
-.public-site .header-div .text-primary { color: #526071; }
+.public-site .header-div .text-accent { color: #526071; }
 .public-site .mimesiss-subtitle { color: #142641; margin-bottom: 26px; text-align: left; }
 .public-site .mimesiss-card, .public-site .mimesiss-section-card, .public-site .mimesiss-contact-card { background: #f6f7f9; border: 1px solid #e1e6eb; border-radius: 5px; box-shadow: none; }
 .public-site .text-white, .public-site .text-gray-100, .public-site .text-gray-200, .public-site .text-gray-300 { color: #142641; }
@@ -50,7 +50,7 @@
 
 .public-site { --yellow: #ffd037; --navy: #142641; }
 .congress-hero-copy { color: white; font-size: 19px; margin: -14px 0 30px; }
-.public-site main a.text-primary { color: #6e5100; }
+.public-site main a.text-accent { color: #6e5100; }
 .public-site .mimesiss-info-card { border-color: #e1e6eb; background: #f6f7f9; box-shadow:none; }
 .public-site .header-div .asmm-rise, .public-site .header-div .asmm-draw { animation: none; opacity: 1; transform: none; }
 .project-list { grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); }
@@ -60,7 +60,7 @@
 @media(max-width:760px) { .project-list > article:only-child > a { display:block; } .project-list > article:only-child img { height:260px; margin-bottom:24px; } }
 
 .public-site .asmm-reveal { opacity: 1; transform: none; transition: none; }
-.public-site main .text-primary { color: #745600; }
+.public-site main .text-accent { color: #745600; }
 
 .public-card img.public-photo { height: 440px; object-position: center 45%; }
 .public-site .public-document { max-width: 900px; line-height: 1.85; }
@@ -100,11 +100,11 @@
 .public-card { background:#f5ece3; border-color:#e8d4c3; }
 .public-site .mimesiss-btn-primary { background:#761e23; border-color:#761e23; color:#fff8ed; }
 .public-site .mimesiss-btn-primary:hover { background:#5c151c; }
-.public-site main a.text-primary, .public-site main .text-primary,
+.public-site main a.text-accent, .public-site main .text-accent,
 .public-site .regulament-list > li::before { color:#761e23; }
 .public-site a:focus-visible, .public-site button:focus-visible { outline-color:#a33d42; }
 .public-site footer { background:#351016; --border:350 24% 31%; }
-.public-site footer .text-primary { color:#f2e5d5; }
+.public-site footer .text-accent { color:#f2e5d5; }
 .congress-nav { background:#f5ece3; border-top-color:#e8d4c3; }
 .congress-nav a { color:#42191d; }
 .congress-nav a:hover, .congress-nav a:focus-visible { color:#84272a; }

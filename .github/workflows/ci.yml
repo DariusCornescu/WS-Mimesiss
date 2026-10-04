@@ -115,7 +115,7 @@ jobs:
             sleep 1
           done
           FAILED=0
-          for path in / /program /contact /reg /info; do
+          for path in / /congres/program /contact /congres/reg /congres/info; do
             CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${path}")
             echo "${path} -> ${CODE}"
             [ "$CODE" = "200" ] || FAILED=1

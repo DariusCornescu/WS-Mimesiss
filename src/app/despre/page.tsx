@@ -28,7 +28,7 @@ const extendedBoard = [
 export default function AboutPage() {
   return (
     <>
-      <HeaderContent kicker="Asociația · Echipa" title="Studenți la medicină militară" />
+      <HeaderContent kicker="Asociația · Echipa" title="Studenți la medicină militară" breadcrumbLabel="Despre noi" titleClassName={styles.mobileTitle} />
       <div className={styles.page}>
         <section id="consiliul-director" aria-labelledby="board-title" className={styles.section}>
           <div className={styles.sectionHeading}>

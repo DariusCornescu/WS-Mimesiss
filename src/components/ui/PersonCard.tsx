@@ -19,7 +19,7 @@ export default function PersonCard({ name, role, imageUrl, priority = false, ima
             alt={name}
             width={800}
             height={1000}
-            sizes="(max-width: 479px) calc(100vw - 44px), (max-width: 1023px) calc((100vw - 72px) / 2), (max-width: 1200px) calc((100vw - 104px) / 3), 366px"
+            sizes="(max-width: 479px) calc((100vw - 48px) / 2), (max-width: 1023px) calc((100vw - 72px) / 2), (max-width: 1200px) calc((100vw - 104px) / 3), 366px"
             priority={priority}
             style={{ left: `${imageOffsetX}%` }}
           />

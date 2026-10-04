@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose'
 
 export interface IAppSettings extends Document {
-  _id: string
+  _id: mongoose.Types.ObjectId
   // Event mode: switches what the payment page and user dashboard show
   eventMode: 'workshops' | 'ball'
   // Global workshop settings
