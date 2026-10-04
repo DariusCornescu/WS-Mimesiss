@@ -13,9 +13,9 @@ export default function BreadCrumbs({ items = [] }: { items?: Crumb[] }) {
 				<li className="inline-flex items-center">
 					<Link
 						href="/"
-						className="inline-flex items-center text-sm font-medium text-foreground hover:text-primary underline"
+						className="inline-flex items-center text-sm font-medium text-foreground hover:text-accent underline"
 					>
-						Acasa
+						Acasă
 					</Link>
 				</li>
 				{items.map((item) => (
@@ -24,7 +24,7 @@ export default function BreadCrumbs({ items = [] }: { items?: Crumb[] }) {
 						{item.href ? (
 							<Link
 								href={item.href}
-								className="text-sm font-medium text-foreground hover:text-primary"
+								className="text-sm font-medium text-foreground hover:text-accent"
 							>
 								{item.label}
 							</Link>

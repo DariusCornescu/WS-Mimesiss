@@ -226,7 +226,7 @@ const TicketSchema = new Schema<ITicket>({
 })
 
 // Counter (for auto-incrementing sequences)
-interface ICounter extends Document {
+interface ICounter extends Document<string> {
   _id: string
   seq: number
 }
