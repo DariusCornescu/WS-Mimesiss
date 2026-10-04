@@ -16,8 +16,8 @@ export async function syncUserWithDatabase(clerkUser: ClerkUser): Promise<User> 
     // First, check if user already exists to preserve their role
     const existingUser = await MongoUser.findOne({ clerkId: clerkUser.id }).lean() as User | null
 
-    // Determine the role: use Clerk's publicMetadata if set, otherwise preserve existing role or default to 'user'
-    const role = clerkUser.publicMetadata?.role || existingUser?.role || 'user'
+    // Roles are managed in MongoDB; authentication metadata cannot grant privileges.
+    const role = existingUser?.role || 'user'
 
     // Use findOneAndUpdate with upsert to avoid duplicate key errors
     const user = await MongoUser.findOneAndUpdate(
@@ -27,7 +27,7 @@ export async function syncUserWithDatabase(clerkUser: ClerkUser): Promise<User> 
         email: clerkUser.emailAddresses[0]?.emailAddress || '',
         firstName: clerkUser.firstName || existingUser?.firstName || '',
         lastName: clerkUser.lastName || existingUser?.lastName || '',
-        role: role, // Preserve existing role or use Clerk's metadata
+        role: role, // Preserve the database role
         userType: clerkUser.unsafeMetadata?.userType || existingUser?.userType || 'student', // Default to 'student' if not set
       },
       {

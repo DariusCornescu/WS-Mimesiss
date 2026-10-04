@@ -134,6 +134,13 @@ export default async function AdminDashboard() {
               Setări
             </Link>
             <Link
+              href="/admin/parteneri"
+              className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
+            >
+              <FaUsers className="mr-2 h-4 w-4" />
+              Parteneri și sponsori
+            </Link>
+            <Link
               href="/dashboard"
               className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
             >

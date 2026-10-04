@@ -2,10 +2,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { FaArrowRight } from 'react-icons/fa'
 import type { ProjectCard } from '@/lib/projects'
+import type { Partner } from '@/lib/partner-types'
 import PartnerMarquee from './PartnerMarquee'
 import styles from './AssociationHome.module.css'
 
-export default function AssociationHome({ projects }: { projects: ProjectCard[] }) {
+export default function AssociationHome({ projects, partners = [] }: { projects: ProjectCard[]; partners?: Partner[] }) {
   const congress = projects.find(project => project.kind === 'congress')
   const otherProjects = projects.filter(project => project.kind !== 'congress')
   return (
@@ -56,7 +57,7 @@ export default function AssociationHome({ projects }: { projects: ProjectCard[] 
         <div><p className={styles.eyebrow}>Despre noi</p><h2 id="about-title">Studenți care învață<br />unii de la alții.</h2></div>
         <div><p>ASMM reunește studenții Institutului Medico-Militar și ai Universității de Medicină și Farmacie „Carol Davila”. Organizăm workshopuri practice, conferințe și concursuri științifice în spitalele și centrele de simulare unde se face medicina militară.</p><Link href="/despre" className={styles.textLink}>Descoperă asociația <FaArrowRight aria-hidden="true" /></Link></div>
       </section>
-      <PartnerMarquee />
+      <PartnerMarquee partners={partners} />
       <section className={styles.contact} aria-labelledby="contact-title"><div><p className={styles.contactEyebrow}>Hai să vorbim</p><h2 id="contact-title">Ai o idee? Construim împreună.</h2></div><Link href="/contact" className={styles.button}>Contactează-ne <FaArrowRight aria-hidden="true" /></Link></section>
     </div>
   )
