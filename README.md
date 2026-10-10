@@ -1,179 +1,64 @@
 # Mimesiss
 
-A modern workshop and event management platform built with Next.js 16, TypeScript, Tailwind CSS, MongoDB, and Clerk authentication. Features Stripe payment integration, QR code attendance tracking, and role-based access control.
+**Workshop and event platform: registration, payments and QR check-in in one app.** Attendees sign up for workshops and pay online, each gets a personal QR code, and staff scan it at the door to confirm attendance. Organisers run everything from an admin dashboard. The interface is in Romanian.
 
-## Features
+## What it does
 
-### 🔐 Authentication & Users
-- **Clerk Authentication** - Secure login/signup with Clerk
-- **Role-based Access Control** - Admin, Moderator, and User roles with proper permissions
-- **User Types** - Support for students, pupils (elev), and residents
+**For attendees**
+- Sign up, browse workshops and register, within participant limits and registration windows.
+- Pay online with Stripe.
+- Get a personal QR code to show at the event, and see registration history.
 
-### 📅 Workshop Management
-- **Workshop Creation** - Create workshops and conferences with full details
-- **Registration System** - Users can register for workshops with participant limits
-- **Configurable Settings** - Global registration enable/disable, registration windows, and deadlines
-- **Public/Private Visibility** - Control workshop visibility to public
+**For moderators**
+- Scan attendee QR codes from a phone to confirm attendance, with timestamps.
+- Fall back to manual ticket-number entry on browsers without QR scanning support.
 
-### 💳 Payment Integration
-- **Stripe Payments** - Integrated payment processing with Stripe
-- **Payment Management** - Admin panel for viewing and managing payments
-- **Toggleable Payments** - Enable/disable payments system-wide
+**For admins**
+- Create and edit workshops and conferences, and control which are public.
+- Manage users, roles, payments and tickets.
+- See attendance for every registration and generate workshop reports.
+- Turn registration and payments on or off for the whole site from a settings panel.
 
-### 📱 QR Code & Attendance
-- **User QR Codes** - Each user gets a unique QR code for attendance
-- **QR Scanner** - Moderators can scan QR codes to confirm attendance
-- **Attendance Tracking** - Track who attended which workshop with timestamps
-- **Manual Entry** - Fallback option for manual attendance confirmation
+## How it's built
 
-### 👨‍💼 Admin Dashboard
-- **User Management** - View and manage all users
-- **Workshop Management** - Create, edit, delete workshops
-- **Attendance Overview** - View attendance status for all registrations
-- **Settings Management** - Configure global app settings
-- **Reports & Analytics** - Generate workshop reports
-- **Tickets Management** - Admin ticket system
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router), React 19, TypeScript |
+| Styling | Tailwind CSS |
+| Auth | Clerk, with admin / moderator / user roles stored in the database and checked on the server |
+| Database | MongoDB with Mongoose |
+| Payments | Stripe, with webhook handling |
+| QR codes | `qrcode` to generate, the browser `BarcodeDetector` API to scan |
+| Hosting and CI | Vercel; GitHub Actions runs lint, typecheck and a production build against a MongoDB service |
 
-### 👤 User Dashboard
-- **Personal QR Code** - View and download personal QR code
-- **Registration History** - View all workshop registrations
-- **Profile Management** - Update personal information
+A few design choices:
 
-### 🎫 Moderator Features
-- **QR Code Scanner** - Scan attendee QR codes
-- **Attendance Confirmation** - Confirm user attendance at events
-- **Mobile-friendly Scanner** - Works on mobile devices
+- **Server-side permission checks**: roles live in MongoDB rather than only in the auth provider, and every protected action re-checks them on the server.
+- **Settings-driven behaviour**: event mode, payments, global registration and workshop visibility are switches in the database, so organisers can change them without a deploy.
+- **Scannable QR codes**: the QR colour is chosen for contrast on white, because the UI brand blue was too light to scan reliably.
+- **Graceful fallback**: where `BarcodeDetector` isn't available (Safari, Firefox), the scanner switches to manual lookup.
 
-### 📱 Additional Features
-- **Responsive Design** - Works on all devices
-- **Countdown Timer** - Event countdown on homepage
-- **Gallery** - Photo gallery section
-- **Program Schedule** - Event program page
-- **Contact Page** - Contact information
-- **Multi-language Support** - Romanian language UI
+## Run it
 
-## Tech Stack
+You need Node.js 22+, a MongoDB database, a Clerk account, and a Stripe account for payments.
 
-- **Framework**: Next.js 16 with App Router (Turbopack in dev, webpack for production builds)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Authentication**: Clerk
-- **Database**: MongoDB with Mongoose
-- **Payments**: Stripe
-- **QR Codes**: `qrcode` for generation; the native `BarcodeDetector` Web API for scanning
-- **Icons**: React Icons
-- **Analytics**: Vercel Analytics & Speed Insights
-- **Deployment**: Vercel
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js App Router pages
-│   ├── admin/             # Admin panel (workshops, users, payments, settings, attendance, tickets)
-│   ├── auth/              # Authentication pages (login, signup, forgot-password)
-│   ├── dashboard/         # User dashboard (profile, registrations, moderator)
-│   ├── payment/           # Payment pages (checkout, success, cancel)
-│   ├── workshops/         # Workshop listings and details
-│   ├── api/               # API routes
-│   ├── about/             # About page
-│   ├── contact/           # Contact page
-│   ├── gallery/           # Photo gallery
-│   ├── program/           # Event program
-│   └── qr/                # QR code display pages
-├── components/            # Reusable React components
-│   ├── admin/             # Admin-specific components
-│   ├── dashboard/         # Dashboard components
-│   ├── payments/          # Payment components
-│   └── ui/                # UI components
-├── lib/                   # Utility functions and configurations
-├── models/                # Mongoose models
-├── contexts/              # React contexts
-├── hooks/                 # Custom React hooks
-└── types/                 # TypeScript type definitions
+```bash
+npm install
+# create .env.local with the variables below
+npm run dev                  # http://localhost:3000
 ```
 
-## Getting Started
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Clerk authentication |
+| `MONGODB_URI`, `MONGODB_DB_NAME` | MongoDB connection and database name |
+| `STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` | Stripe payments |
+| `NEXT_PUBLIC_BASE_URL` | App URL, used to build Stripe return URLs |
 
-### Prerequisites
+For a local database: `docker run -d --name mimesiss-mongo -p 27017:27017 mongo:7`. Stripe setup is described in [STRIPE_SETUP.md](STRIPE_SETUP.md).
 
-- Node.js 22+ (see `.nvmrc`)
-- A MongoDB database
-- A Clerk account
-- A Stripe account (for payments)
-
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd workshop
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   
-   Create a `.env.local` file with the following variables:
-   ```env
-   # Clerk Authentication
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-   CLERK_SECRET_KEY=your_clerk_secret_key
-   
-   # MongoDB
-   MONGODB_URI=your_mongodb_connection_string
-   MONGODB_DB_NAME=your_database_name
-   
-   # Stripe
-   STRIPE_SECRET_KEY=your_stripe_secret_key
-   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
-   STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
-   
-   # App URL
-   NEXT_PUBLIC_BASE_URL=http://localhost:3000
-   ```
-
-4. **Run the development server**
-   ```bash
-   npm run dev
-   ```
-
-5. **Open your browser**
-   
-   Navigate to [http://localhost:3000](http://localhost:3000)
-
-## User Roles
-
-| Role | Permissions |
-|------|-------------|
-| **User** | View workshops, register for workshops, manage profile, view personal QR code |
-| **Moderator** | All user permissions + scan QR codes, confirm attendance |
-| **Admin** | All permissions + manage users, workshops, payments, settings |
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key |
-| `CLERK_SECRET_KEY` | Clerk secret key |
-| `MONGODB_URI` | MongoDB connection string |
-| `MONGODB_DB_NAME` | MongoDB database name (useful when the connection string has no database path) |
-| `STRIPE_SECRET_KEY` | Stripe secret key |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
-| `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret |
-| `NEXT_PUBLIC_BASE_URL` | Application URL, used to build Stripe return URLs |
-
-## Available Scripts
-
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production
-- `npm run start` - Start production server
-- `npm run lint` - Run ESLint
+Other scripts: `npm run build`, `npm run lint`, `npm run typecheck`.
 
 ## License
 
-This project is licensed under the MIT License.
-
+MIT.
