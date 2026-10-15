@@ -53,6 +53,33 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
     let previous: { width: number; height: number; progress: number; pinned: boolean } | null = null
     const draw = () => {
       raf = 0
+      const reading = window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches
+      if (reading) {
+        let active = 0
+        frameRefs.current.forEach((frame, index) => {
+          if (!frame) return
+          const bounds = frame.getBoundingClientRect()
+          if (bounds.top < window.innerHeight * .5) active = index
+          frame.style.opacity = '1'
+          frame.style.visibility = 'visible'
+          frame.style.removeProperty('z-index')
+          frame.inert = false
+          frame.removeAttribute('aria-hidden')
+          const visible = bounds.bottom > 64 && bounds.top < window.innerHeight
+          frame.dataset.visible = String(visible)
+          const amount = clamp((window.innerHeight - bounds.top) / (window.innerHeight + bounds.height))
+          frame.style.setProperty('--photo-scale', String(1 + amount * .035))
+          frame.style.setProperty('--photo-x', '0%')
+          frame.style.setProperty('--photo-y', '0%')
+          frame.style.setProperty('--photo-turn', '0deg')
+          frame.style.setProperty('--copy-y', '0px')
+        })
+        const next = Math.min(frames.length - 1, active + 1)
+        if (next > loadedThroughRef.current) { loadedThroughRef.current = next; setLoadedThrough(next) }
+        stage.dataset.activeChapter = String(active)
+        jumpRefs.current.forEach((button, index) => { if (index + 1 === active) button?.setAttribute('aria-current', 'step'); else button?.removeAttribute('aria-current') })
+        return
+      }
       const bounds = track.getBoundingClientRect()
       const height = stage.clientHeight
       const width = stage.clientWidth
@@ -117,7 +144,7 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
     const track = trackRef.current
     const stage = stageRef.current
     if (!track || !stage) return
-    if (!animated) { frameRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
+    if (!animated || window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches) { frameRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
     const preloadThrough = Math.min(frames.length - 1, index + 1)
     if (preloadThrough > loadedThroughRef.current) {
       loadedThroughRef.current = preloadThrough
@@ -147,7 +174,7 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
 
       {frames.map((frame, index) => <article key={`${index}-${frame.photo.src}`} id={`${story.id}-moment-${index}`} ref={element => { frameRefs.current[index] = element }} className={`${styles.frame} ${index === 0 ? styles.intro : ''}`} aria-label={index === 0 ? story.title : frame.label}>
         <div className={styles.ambient} aria-hidden="true">{(index <= loadedThrough || reducedMotion) && <Image src={frame.photo.src} alt="" fill quality={40} sizes="256px" loading={index === 0 ? 'eager' : 'lazy'} style={{ objectPosition: frame.photo.position }} />}</div>
-        <div className={styles.visual}>
+        <div className={styles.visual} style={{ '--photo-ratio': `${frame.photo.width} / ${frame.photo.height}` } as CSSProperties}>
           {(index <= loadedThrough || reducedMotion) ? <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= loadedThrough ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} /> : <noscript><Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" style={{ objectPosition: frame.photo.position }} /></noscript>}
           <div className={styles.imageShade} aria-hidden="true" />
         </div>

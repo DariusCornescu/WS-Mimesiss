@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { access } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { load } from './helpers/load-ts.mjs'
 
 const base = 'src/components/project-stories/lib/'
@@ -49,3 +50,15 @@ test('upload processing and responsive delivery share a working native image run
   assert.equal(metadata.format, 'heif')
   assert.ok(optimized.length < original.length / 4, 'A thumbnail must not fall back to the full-size original')
 })
+
+test('gallery dimensions match the original photographs before lazy loading', async () => {
+  const sharp = (await import('sharp')).default
+  const { photoDimensions } = load(`${base}photo-dimensions.ts`)
+  for (const project of projects) {
+    for (const photo of project.gallery) {
+      const metadata = await sharp(fileURLToPath(new URL(`../public${photo.src}`, import.meta.url))).metadata()
+      assert.deepEqual({ ...photoDimensions[photo.src] }, { width: metadata.width, height: metadata.height }, photo.src)
+    }
+  }
+})
+
