@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties } from 'react'
 import { FiArrowDown, FiArrowRight, FiMaximize2 } from 'react-icons/fi'
 import type { EventStory } from '../lib/event-stories'
@@ -16,7 +16,7 @@ const subscribeToMotion = (onChange: () => void) => {
   return () => preference.removeEventListener('change', onChange)
 }
 const motionSnapshot = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'animated'
-const serverMotionSnapshot = () => 'static'
+const serverMotionSnapshot = () => 'animated'
 
 export default function EventScrollStory({ story, onOpenImage }: { story: EventStory; onOpenImage: (src: string, alt: string) => void }) {
   const trackRef = useRef<HTMLElement>(null)
@@ -24,10 +24,11 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
   const frameRefs = useRef<(HTMLElement | null)[]>([])
   const jumpRefs = useRef<(HTMLButtonElement | null)[]>([])
   const progressRef = useRef<HTMLSpanElement>(null)
+  const [loadedThrough, setLoadedThrough] = useState(1)
+  const loadedThroughRef = useRef(1)
   const motion = useSyncExternalStore(subscribeToMotion, motionSnapshot, serverMotionSnapshot)
-  const mounted = motion !== 'static'
   const reducedMotion = motion === 'reduced'
-  const animated = mounted && !reducedMotion
+  const animated = !reducedMotion
   const frames = [
     { label: 'Început', title: story.title, body: story.subtitle, photo: story.intro },
     ...story.chapters,
@@ -72,7 +73,13 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
       const active = transition >= .5 ? index + 1 : index
       stage.dataset.activeChapter = String(active)
       stage.dataset.progress = progress.toFixed(4)
-      stage.style.setProperty('--spot-shift', `${(progress * 18).toFixed(2)}%`)
+      // A moving gradient repaints the whole screen; keep it stationary on phones.
+      if (!narrow) stage.style.setProperty('--spot-shift', `${(progress * 18).toFixed(2)}%`)
+      const preloadThrough = Math.min(frames.length - 1, index + (progress > .08 ? 2 : 1))
+      if (preloadThrough > loadedThroughRef.current) {
+        loadedThroughRef.current = preloadThrough
+        setLoadedThrough(preloadThrough)
+      }
       frameRefs.current.forEach((frame, frameIndex) => {
         if (!frame) return
         const outgoing = frameIndex === index
@@ -81,6 +88,7 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
         const motion = outgoing ? segment : incoming ? transition - 1 : 0
         frame.style.opacity = String(opacity)
         frame.style.visibility = opacity > .001 ? 'visible' : 'hidden'
+        frame.dataset.visible = String(opacity > .001)
         frame.style.zIndex = frameIndex === active ? '2' : '1'
         frame.style.setProperty('--photo-scale', String(1 + (outgoing ? segment * (narrow ? .035 : .075) : (transition - 1) * .06)))
         frame.style.setProperty('--photo-x', `${story.id === 'cort' ? -motion * (narrow ? 5 : 14) : motion * -1.8}%`)
@@ -110,11 +118,25 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
     const stage = stageRef.current
     if (!track || !stage) return
     if (!animated) { frameRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
+    const preloadThrough = Math.min(frames.length - 1, index + 1)
+    if (preloadThrough > loadedThroughRef.current) {
+      loadedThroughRef.current = preloadThrough
+      setLoadedThrough(preloadThrough)
+    }
     const target = stops[index] + .025
     window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top + (track.offsetHeight - stage.offsetHeight) * target, behavior: 'smooth' })
   }
 
   return <section id={`${story.id}-story`} ref={trackRef} data-event-story={story.id} className={`${styles.track} ${styles[story.id]} ${animated ? styles.animated : styles.staticMode}`} aria-labelledby={`${story.id}-story-title`}>
+    <noscript><style>{`
+      .${styles.track} { height: auto; }
+      .${styles.stage} { position: relative; height: auto; padding: 80px 5% 30px; }
+      .${styles.frame} { position: relative; opacity: 1 !important; visibility: visible !important; margin-bottom: 48px; }
+      .${styles.track} .${styles.visual} { position: relative; inset: auto; height: auto; aspect-ratio: 4 / 3; transform: none; }
+      .${styles.visual} img { object-fit: contain; }
+      .${styles.track} .${styles.copy} { position: relative; inset: auto; width: auto; max-height: none; transform: none; }
+      .${styles.ambient}, .${styles.lighting}, .${styles.imageShade}, .${styles.largeNumber}, .${styles.chapters}, .${styles.explore} { display: none; }
+    `}</style></noscript>
     <div ref={stageRef} className={styles.stage}>
       <div className={styles.stageHeader}>
         <span className={styles.signature}>ASMM <span>/</span> {story.title}</span>
@@ -124,9 +146,9 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
       </div>
 
       {frames.map((frame, index) => <article key={`${index}-${frame.photo.src}`} id={`${story.id}-moment-${index}`} ref={element => { frameRefs.current[index] = element }} className={`${styles.frame} ${index === 0 ? styles.intro : ''}`} aria-label={index === 0 ? story.title : frame.label}>
-        <div className={styles.ambient} aria-hidden="true"><Image src={frame.photo.src} alt="" fill quality={85} sizes="100vw" loading={index === 0 ? 'eager' : 'lazy'} style={{ objectPosition: frame.photo.position }} /></div>
+        <div className={styles.ambient} aria-hidden="true">{(index <= loadedThrough || reducedMotion) && <Image src={frame.photo.src} alt="" fill quality={40} sizes="256px" loading="lazy" style={{ objectPosition: frame.photo.position }} />}</div>
         <div className={styles.visual}>
-          <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= 1 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : undefined} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} />
+          {(index <= loadedThrough || reducedMotion) ? <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= loadedThrough ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} /> : <noscript><Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" style={{ objectPosition: frame.photo.position }} /></noscript>}
           <div className={styles.imageShade} aria-hidden="true" />
         </div>
         <div className={styles.copy}>

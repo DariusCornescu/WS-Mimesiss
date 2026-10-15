@@ -5,7 +5,7 @@
 .frame:not(:first-of-type) { opacity: 0; visibility: hidden; }
 .ambient { position: absolute; inset: -5%; opacity: .26; overflow: hidden; }
 .ambient img { object-fit: cover; filter: blur(28px) saturate(.6); }
-.visual { position: absolute; inset: 0; transform: translate3d(var(--photo-x, 0%), var(--photo-y, 0%), 0) scale(var(--photo-scale, 1)) rotateY(var(--photo-turn, 0deg)); transform-origin: center; will-change: transform; }
+.visual { position: absolute; inset: 0; transform: translate3d(var(--photo-x, 0%), var(--photo-y, 0%), 0) scale(var(--photo-scale, 1)) rotateY(var(--photo-turn, 0deg)); transform-origin: center;  }
 .visual img { object-fit: cover; }
 .imageShade { position: absolute; inset: 0; background: linear-gradient(180deg, hsl(var(--background) / .5), transparent 26%, transparent 42%, hsl(var(--background) / .72) 73%, hsl(var(--background)) 100%), linear-gradient(90deg, hsl(var(--background) / .28), transparent 65%); }
 .bal .intro .imageShade { background: linear-gradient(90deg, hsl(var(--background) / .65), transparent 76%), linear-gradient(180deg, hsl(var(--background) / .4), transparent 20%, hsl(var(--background) / .16) 40%, hsl(var(--background) / .76) 78%, hsl(var(--background))); }
@@ -178,3 +178,5 @@
   .staticMode .copy, .staticMode.cort .copy, .staticMode.cort .intro .copy { inset: auto; width: auto; max-height: none; }
   .staticMode .visual { inset: auto; }
 }
+
+.animated .frame[data-visible="true"] .visual { will-change: transform; }

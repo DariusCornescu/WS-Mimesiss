@@ -35,3 +35,17 @@ test('all story photographs and 3D textures are included in the production asset
     await access(new URL(`../public${source}`, import.meta.url))
   }
 })
+
+test('upload processing and responsive delivery share a working native image runtime', async () => {
+  const sharp = (await import('sharp')).default
+  const { readFile } = await import('node:fs/promises')
+  const { optimizeImage } = await import('next/dist/server/image-optimizer.js')
+  const original = await readFile(new URL('../public/icons/asmm.png', import.meta.url))
+  // Exercise both paths in one process, as the production server does.
+  await sharp(original).resize(512).webp().toBuffer()
+  const optimized = await optimizeImage({ buffer: original, contentType: 'image/avif', quality: 75, width: 384 })
+  const metadata = await sharp(optimized).metadata()
+  assert.equal(metadata.width, 384)
+  assert.equal(metadata.format, 'heif')
+  assert.ok(optimized.length < original.length / 4, 'A thumbnail must not fall back to the full-size original')
+})
