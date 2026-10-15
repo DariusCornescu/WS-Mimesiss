@@ -1,0 +1,134 @@
+.track { position: relative; height: 580svh; margin: 0 calc(0px - min(34px, 3vw)); color: hsl(var(--foreground)); }
+.stage { position: sticky; top: 0; height: 100svh; min-height: 0; overflow: clip; isolation: isolate; background: hsl(var(--background)); border: 1px solid hsl(var(--border) / .35); }
+.ambient { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .7; }
+.backdrop { position: absolute; inset: 0; }
+.loadedBackdrop { opacity: 0; }
+.world { position: absolute; inset: 0; }
+.world canvas { display: block; width: 100%; height: 100%; }
+.photoTargets { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.scenePhoto { position: absolute; display: block; visibility: hidden; border: 0; padding: 0; background: transparent; cursor: zoom-in; pointer-events: auto; }
+.scenePhoto > span { position: absolute; display: inline-flex; gap: 8px; align-items: center; bottom: 8%; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 9px 12px; background: hsl(var(--background) / .9); border: 0; border-radius: 0; color: hsl(var(--foreground)); font-size: 12px; opacity: calc(var(--photo-label-opacity, 1) * var(--target-label-opacity, 1)); }
+.intro { position: absolute; z-index: 2; right: 3%; top: 6%; width: min(66%, 860px); padding: 22px 26px; border-radius: 0; background: linear-gradient(105deg, hsl(var(--background) / .9), hsl(var(--background) / .82)); pointer-events: none; }
+.sceneError { position: relative; z-index: 3; grid-column: 1 / -1; padding: 16px; color: hsl(var(--foreground)); background: hsl(var(--card)); font-size: 16px; line-height: 1.7; }
+.eyebrow { font-size: 11px; line-height: 1.8; color: hsl(var(--brand-sand)); letter-spacing: .12em; text-transform: uppercase; }
+.intro h1 { margin: 16px 0 18px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(58px, 6.8vw, 96px); font-weight: 400; line-height: .95; letter-spacing: -.055em; }
+.tagline { max-width: 720px; font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(23px, 2.05vw, 28px); line-height: 1.4; color: hsl(var(--foreground)); text-shadow: 0 2px 15px hsl(var(--background)); }
+.scrollPrompt { display: flex; align-items: center; gap: 12px; margin-top: 22px; font-size: 13px; color: hsl(var(--brand-sand)); }
+.copyPanel { position: absolute; z-index: 3; top: 16%; right: 4%; width: min(44%, 540px); max-height: calc(84svh - 92px); overflow: auto; padding: clamp(26px, 3vw, 42px); border: 0; border-radius: 0; background: linear-gradient(110deg, hsl(var(--background) / .93), hsl(var(--background) / .75)); opacity: 0; transform: translateY(18px); will-change: opacity, transform; }
+.copyPanel h2 { margin: 18px 0 22px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(29px, 3.3vw, 46px); font-weight: 400; line-height: 1.12; letter-spacing: -.035em; }
+.chapterBody { color: hsl(var(--muted-foreground)); font-size: 17px; line-height: 1.75; }
+.viewPhoto { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; margin-top: 18px; color: hsl(var(--brand-sand)); font-size: 13px; cursor: pointer; }
+.staticPhoto { display: none; }
+.stage button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 5px; }
+.chapters { position: absolute; z-index: 4; bottom: 22px; left: 5%; right: 5%; display: flex; align-items: center; gap: 14px; }
+.chapters button { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 10px 8px; color: hsl(var(--foreground) / .72); font-size: 12px; border: 0; border-bottom: 1px solid transparent; border-radius: 0; background: transparent; text-shadow: 0 2px 8px hsl(var(--background)); cursor: pointer; }
+.chapters button > span:first-child { color: hsl(var(--accent)); font-variant-numeric: tabular-nums; }
+.chapters button[aria-current], .chapters button:hover { color: hsl(var(--foreground)); border-bottom-color: hsl(var(--brand-sand) / .55); }
+.progress { position: absolute; z-index: 4; bottom: 0; left: 0; right: 0; height: 2px; background: hsl(var(--border) / .5); overflow: hidden; }
+.progress span { display: block; width: 100%; height: 100%; background: hsl(var(--accent)); transform-origin: 0 50%; transform: scaleX(0); }
+
+.staticMode { height: auto; }
+.staticMode .stage { position: relative; height: auto; min-height: 0; overflow: hidden; padding: 34px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; }
+.staticMode .ambient { opacity: .22; }
+.staticMode .world, .staticMode .photoTargets { display: none; }
+.staticMode .intro { position: relative; top: auto; left: auto; right: auto; width: 100%; grid-column: 1 / -1; padding: 16px 0; background: transparent; opacity: 1 !important; }
+.staticMode .tagline { max-width: 630px; }
+.staticMode .scrollPrompt { display: none; }
+.staticMode .copyPanel { position: relative; top: auto; right: auto; bottom: auto; width: 100%; max-width: none; max-height: none; overflow: visible; padding: 24px; background: hsl(var(--background) / .95); opacity: 1 !important; transform: none !important; will-change: auto; scroll-margin-top: 24px; }
+.staticMode .copyPanel h2 { font-size: 32px; }
+.staticMode .staticPhoto { display: block; width: 100%; height: 300px; margin-bottom: 24px; background: hsl(var(--card)); cursor: zoom-in; }
+.staticPhoto img { width: 100%; height: 100%; object-fit: contain; }
+.staticMode .chapters { position: relative; bottom: auto; left: auto; right: auto; grid-column: 1 / -1; grid-row: 3; flex-wrap: wrap; }
+.staticMode .progress { display: none; }
+
+@media (max-width: 1000px) {
+  .intro { right: 4%; width: 84%; }
+  .intro h1 { font-size: 67px; }
+  .tagline { max-width: 100%; font-size: 24px; }
+  .copyPanel { right: 3%; width: 45%; padding: 24px; }
+  .copyPanel h2 { font-size: 32px; }
+  .chapterBody { font-size: 16px; }
+}
+@media (max-width: 700px) {
+  .track { margin: 0 -16px; height: 440svh; }
+  .stage { min-height: 0; }
+  .ambient { opacity: .45; }
+  .intro { top: 70px; left: 6%; width: 88%; padding: 16px; }
+  .intro .eyebrow { font-size: 10px; letter-spacing: .07em; }
+  .intro h1 { margin: 12px 0 16px; font-size: clamp(47px, 12vw, 74px); }
+  .tagline { max-width: 100%; font-size: 23px; line-height: 1.4; }
+  .scrollPrompt { margin-top: 18px; font-size: 13px; }
+  .copyPanel { top: auto; bottom: 76px; right: 5%; width: 90%; max-width: none; max-height: calc(100svh - 150px); padding: 20px; }
+  .copyPanel .eyebrow { font-size: 11px; letter-spacing: .06em; }
+  .copyPanel h2 { margin: 12px 0 16px; font-size: clamp(26px, 6.4vw, 36px); }
+  .chapterBody { font-size: 16px; line-height: 1.65; }
+  .viewPhoto { margin-top: 12px; }
+  .chapters { left: 5%; right: 5%; bottom: 17px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .chapters button { justify-content: center; padding: 10px; }
+  .chapters button > span:last-child { display: none; }
+  .staticMode { height: auto; }
+  .staticMode .stage { grid-template-columns: minmax(0, 1fr); padding: 24px 20px; gap: 24px; }
+  .staticMode .copyPanel { padding: 20px; }
+  .staticMode .copyPanel h2 { font-size: 29px; }
+  .staticMode .staticPhoto { height: 320px; }
+}
+@media (max-width: 700px) and (max-height: 699px) {
+  .copyPanel { max-height: min(calc(100svh - 166px), 50svh); padding: 18px; background: hsl(var(--background) / .94); }
+  .copyPanel h2 { font-size: 26px; margin: 10px 0 12px; }
+  .intro { top: 76px; padding: 14px; }
+  .intro h1 { font-size: clamp(44px, 11vw, 64px); }
+}
+@media (min-width: 701px) and (max-height: 700px) {
+  .copyPanel { top: 84px; max-height: calc(100svh - 165px); padding: 24px; }
+  .copyPanel h2 { margin: 12px 0 16px; font-size: 30px; }
+  .chapterBody { font-size: 16px; line-height: 1.65; }
+  .intro { top: 84px; padding: 18px; }
+  .intro h1 { font-size: clamp(48px, 7vw, 84px); margin: 14px 0 18px; }
+  .tagline { font-size: 25px; line-height: 1.4; }
+  .scrollPrompt { margin-top: 20px; }
+  .chapters { gap: 8px; }
+  .chapters button { padding: 10px 12px; }
+}
+@media (max-width: 1000px) and (max-height: 600px) {
+  .track { margin: 0 -16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .track { height: auto; }
+  .stage { position: relative; height: auto; min-height: 0; overflow: hidden; padding: 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  .world { display: none; }
+  .intro, .copyPanel { position: relative; inset: auto; width: 100%; opacity: 1 !important; transform: none !important; will-change: auto; }
+  .scrollPrompt, .progress { display: none; }
+  .staticPhoto { display: block; width: 100%; height: 320px; margin-bottom: 22px; }
+}
+
+.intro .eyebrow { white-space: nowrap; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.5; letter-spacing: .055em; }
+.titleSpace { min-height: 60px; }
+@media (max-width: 700px) { .intro .eyebrow { white-space: normal; font-size: 14px; letter-spacing: .025em; } .titleSpace { min-height: 36px; } }
+
+.tagline > span { display: block; }
+@media (min-width: 1001px) { .tagline > span:last-child { white-space: nowrap; font-size: min(2.05vw, 28px); } }
+
+@media (max-width: 700px) {
+  .intro { top: max(20px, env(safe-area-inset-top)); padding: 16px; }
+  .tagline { font-size: clamp(20px, 5.4vw, 23px); line-height: 1.35; }
+  .tagline > span:first-child { white-space: nowrap; }
+  .copyPanel { bottom: calc(88px + env(safe-area-inset-bottom)); max-height: min(48svh, calc(100svh - 220px)); }
+  .chapters { bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .chapters button { display: grid; gap: 4px; min-height: 56px; padding: 8px 0; font-size: 11px; }
+  .chapters button > span:last-child { display: block; font-size: 10px; }
+  .staticMode .intro { top: auto; }
+  .staticMode .copyPanel { bottom: auto; max-height: none; }
+  .staticMode .chapters { bottom: auto; }
+}
+@media (max-width: 1000px) and (max-height: 500px) and (orientation: landscape) {
+  .intro { top: 18px; left: auto; right: 3%; width: 49%; max-height: calc(100svh - 96px); padding: 16px; overflow: auto; }
+  .intro .eyebrow { white-space: normal; font-size: 13px; }
+  .intro h1 { font-size: clamp(36px, 5.5vw, 50px); margin: 10px 0 12px; }
+  .tagline { font-size: 20px; line-height: 1.3; }
+  .tagline > span:first-child { white-space: normal; }
+  .scrollPrompt { margin-top: 12px; }
+  .copyPanel { top: 18px; right: 3%; left: auto; bottom: auto; width: 47%; padding: 16px; max-height: calc(100svh - 106px); }
+  .copyPanel h2 { font-size: 26px; }
+  .chapters { bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .staticMode .intro, .staticMode .copyPanel { inset: auto; width: 100%; max-height: none; }
+}

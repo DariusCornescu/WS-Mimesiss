@@ -19,6 +19,13 @@
    * `218 11% 65%` renders #9CA3B0 — each one 8-bit level off the brand hex.
    */
   :root {
+    --story-background: 340 6.977% 8.431%;
+    --story-foreground: 33.103 52.727% 89.216%;
+    --story-card: 340 10% 11.765%;
+    --story-muted: 345 10.256% 15.294%;
+    --story-muted-foreground: 7.059 10.828% 69.216%;
+    --story-accent: 4.839 49.206% 75.294%;
+    --story-border: 353.684 10.383% 35.882%;
     --background: 240 3% 6%;               /* #0F0F10 */
     --foreground: 0 0% 100%;               /* #FFFFFF */
     --card: 240 3% 6%;                     /* #0F0F10 */
@@ -275,3 +282,5 @@ ol.regulament-list > li::before {
     transform: none;
   }
 }
+
+.public-site:has([data-project-story]) > header { position: relative; }
