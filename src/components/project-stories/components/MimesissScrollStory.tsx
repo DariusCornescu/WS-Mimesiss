@@ -53,16 +53,17 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
     const host = worldRef.current
     if (staticMode || !host || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
     let cancelled = false
+    const abort = new AbortController()
     let controller: NeuralSpace | null = null
     const fail = () => { if (!cancelled) setSceneError('Scena 3D nu a putut fi afișată. Poți explora fotografiile și textele în prezentarea de mai jos.') }
-    import('../lib/neural-space').then(module => module.createNeuralSpace(host, photoRefs.current, fail)).then(space => {
+    import('../lib/neural-space').then(module => module.createNeuralSpace(host, photoRefs.current, fail, abort.signal)).then(space => {
       if (cancelled) { space.dispose(); return }
       controller = space
       spaceRef.current = space
       setSceneReady(true)
       renderRef.current()
     }).catch(fail)
-    return () => { cancelled = true; controller?.dispose(); if (spaceRef.current === controller) spaceRef.current = null }
+    return () => { cancelled = true; abort.abort(); controller?.dispose(); if (spaceRef.current === controller) spaceRef.current = null }
   }, [staticMode])
 
   useEffect(() => {

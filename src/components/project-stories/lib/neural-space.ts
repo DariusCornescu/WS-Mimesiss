@@ -1,5 +1,4 @@
 import * as THREE from 'three'
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js'
 import { BRAND } from '@/lib/brand'
 import { mimesissScenePhotos } from './mimesiss-scene'
 
@@ -11,89 +10,36 @@ const departures = [.31, .55, .79, 1.1]
 const clamp = (value: number) => THREE.MathUtils.clamp(value, 0, 1)
 const smooth = (value: number) => value * value * (3 - 2 * value)
 const locations = [new THREE.Vector3(-5, -.5, 0), new THREE.Vector3(7, 1.2, -28), new THREE.Vector3(-3, -.8, -58), new THREE.Vector3(5, .5, -90)]
-const shape = { x: 4.7, y: 3.5, z: 1.35 }
 
 const yieldToBrowser = () => {
   const scheduler = (window as Window & { scheduler?: { yield: () => Promise<void> } }).scheduler
   return scheduler ? scheduler.yield() : new Promise<void>(resolve => window.setTimeout(resolve, 0))
 }
 
-function seededRandom(seed: number) {
-  let state = seed >>> 0
-  return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296 }
-}
-
-function taperedBranch(points: THREE.Vector3[], radius: number, segments: number, sides: number) {
-  const curve = new THREE.CatmullRomCurve3(points)
-  const geometry = new THREE.TubeGeometry(curve, segments, 1, sides, false)
-  const positions = geometry.getAttribute('position')
-  const point = new THREE.Vector3()
-  for (let ring = 0; ring <= segments; ring++) {
-    const t = ring / segments
-    const center = curve.getPointAt(t)
-    const thickness = .015 + radius * Math.pow(1 - t, .85)
-    for (let side = 0; side <= sides; side++) {
-      const index = ring * (sides + 1) + side
-      point.fromBufferAttribute(positions, index).sub(center).multiplyScalar(thickness).add(center)
-      positions.setXYZ(index, point.x, point.y, point.z)
-    }
-  }
-  geometry.computeVertexNormals()
-  return geometry
-}
-
-function organicBody(detail: number) {
-  const geometry = new THREE.SphereGeometry(1, detail, Math.round(detail * .65))
-  const positions = geometry.getAttribute('position')
-  for (let index = 0; index < positions.count; index++) {
-    const point = new THREE.Vector3().fromBufferAttribute(positions, index)
-    const ripple = 1 + .045 * Math.sin(point.x * 8 + point.y * 3) * Math.cos(point.y * 7 - point.z * 4)
-    positions.setXYZ(index, point.x * shape.x * ripple, point.y * shape.y * ripple, point.z * shape.z * ripple)
-  }
-  geometry.computeVertexNormals()
-  return geometry
-}
-
-async function neurites(seed: number, count: number, detailed: boolean) {
-  const random = seededRandom(seed)
-  const geometries: THREE.BufferGeometry[] = []
-  for (let branch = 0; branch < count; branch++) {
-    const angle = branch / count * Math.PI * 2 + (random() - .5) * .28
-    const direction = new THREE.Vector3(Math.cos(angle), Math.sin(angle), (random() - .5) * .45)
-    const root = new THREE.Vector3(direction.x * shape.x * .77, direction.y * shape.y * .77, -.3)
-    const length = 7 + random() * 7
-    const points = [root, root.clone().addScaledVector(direction, 2), root.clone().addScaledVector(direction, length * .55).add(new THREE.Vector3((random() - .5) * 3, (random() - .5) * 3, (random() - .5) * 5)), root.clone().addScaledVector(direction, length).add(new THREE.Vector3((random() - .5) * 4, (random() - .5) * 4, (random() - .5) * 8))]
-    geometries.push(taperedBranch(points, detailed ? .35 + random() * .15 : .22, detailed ? 26 : 16, detailed ? 6 : 4))
-    if (detailed) {
-      for (let fork = 0; fork < 2; fork++) {
-        const origin = points[2].clone()
-        const forkAngle = angle + (fork === 0 ? -.55 : .6)
-        const reach = 4 + random() * 4
-        const end = origin.clone().add(new THREE.Vector3(Math.cos(forkAngle) * reach, Math.sin(forkAngle) * reach, (random() - .5) * 7))
-        const middle = origin.clone().lerp(end, .5).add(new THREE.Vector3(0, (random() - .5) * 2, 1))
-        geometries.push(taperedBranch([origin, middle, end], .11, 14, 4))
-      }
-    }
-    await yieldToBrowser()
-  }
-  const merged = mergeGeometries(geometries)!
-  geometries.forEach(geometry => geometry.dispose())
-  return merged
-}
-
 const photoSize = (index: number) => index === 0 ? { width: 6.7, height: 6.6 } : { width: 8.35, height: 6.05 }
 
-function photographGeometry(index: number) {
-  const size = photoSize(index)
-  const geometry = new THREE.PlaneGeometry(size.width, size.height, 28, 22)
-  const positions = geometry.getAttribute('position')
-  for (let index = 0; index < positions.count; index++) {
-    const x = positions.getX(index) / shape.x
-    const y = positions.getY(index) / shape.y
-    positions.setZ(index, shape.z * Math.sqrt(Math.max(.06, 1 - x * x - y * y)) + .12)
-  }
-  geometry.computeVertexNormals()
-  return geometry
+type GeometryPayload = { attributes: Record<string, { array: Float32Array; itemSize: number }>; index: Uint16Array | Uint32Array }
+function loadGeometry(signal: AbortSignal): Promise<Record<string, THREE.BufferGeometry>> {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./neural-geometry.worker.ts', import.meta.url))
+    const finish = () => { worker.terminate(); signal.removeEventListener('abort', abort) }
+    const abort = () => { finish(); reject(new DOMException('Scene loading cancelled', 'AbortError')) }
+    if (signal.aborted) { abort(); return }
+    signal.addEventListener('abort', abort, { once: true })
+    worker.onerror = () => { finish(); reject(new Error('Scene geometry worker failed.')) }
+    worker.onmessage = (event: MessageEvent<{ geometries?: [string, GeometryPayload][]; error?: string }>) => {
+      finish()
+      if (!event.data.geometries) { reject(new Error(event.data.error)); return }
+      resolve(Object.fromEntries(event.data.geometries.map(([name, data]) => {
+        const geometry = new THREE.BufferGeometry()
+        Object.entries(data.attributes).forEach(([key, attribute]) => geometry.setAttribute(key, new THREE.BufferAttribute(attribute.array, attribute.itemSize)))
+        geometry.setIndex(new THREE.BufferAttribute(data.index, 1))
+        geometry.computeBoundingSphere()
+        return [name, geometry]
+      })))
+    }
+    worker.postMessage(null)
+  })
 }
 
 function photographMaterial(texture: THREE.Texture, index: number, introTexture: THREE.Texture) {
@@ -142,19 +88,30 @@ function photographMaterial(texture: THREE.Texture, index: number, introTexture:
   })
 }
 
-export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButtonElement | null)[], onContextLost: () => void): Promise<NeuralSpace> {
+export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButtonElement | null)[], onContextLost: () => void, signal: AbortSignal): Promise<NeuralSpace> {
+  const geometryPromise = loadGeometry(signal)
   const loader = new THREE.TextureLoader()
+  const mobile = window.matchMedia('(max-width: 700px)').matches
   const assets = ['/project-stories/neural-space/membrane.webp', ...locations.map((_, index) => `/project-stories/neural-space/photo-${index + 1}.webp`), '/project-stories/neural-space/mimesiss-intro-logo.png']
-  const loaded = await Promise.allSettled(assets.map(src => loader.loadAsync(src)))
+  const [geometryResult, textureResult] = await Promise.allSettled([
+    geometryPromise,
+    Promise.allSettled(assets.map(src => loader.loadAsync(mobile && src.endsWith('.webp') ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src))),
+  ])
+  const loaded = textureResult.status === 'fulfilled' ? textureResult.value : []
+  const geometry = geometryResult.status === 'fulfilled' ? geometryResult.value : {}
+  if (signal.aborted || geometryResult.status === 'rejected' || loaded.some(result => result.status === 'rejected')) {
+    Object.values(geometry).forEach(item => item.dispose())
+    loaded.forEach(result => { if (result.status === 'fulfilled') result.value.dispose() })
+    throw new Error('Scene loading interrupted or failed.')
+  }
   const textures = loaded.flatMap(result => result.status === 'fulfilled' ? [result.value] : [])
-  if (loaded.some(result => result.status === 'rejected')) { textures.forEach(texture => texture.dispose()); throw new Error('The neural scene images could not be loaded.') }
   textures.forEach(texture => { texture.colorSpace = THREE.SRGBColorSpace })
   const membrane = textures[0]
   membrane.wrapS = membrane.wrapT = THREE.RepeatWrapping
   membrane.repeat.set(2, 2)
   let renderer: THREE.WebGLRenderer
   try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'low-power' }) }
-  catch (error) { textures.forEach(texture => texture.dispose()); throw error }
+  catch (error) { textures.forEach(texture => texture.dispose()); Object.values(geometry).forEach(item => item.dispose()); throw error }
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.25
@@ -179,45 +136,22 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
     group.position.copy(location)
     group.rotation.y = [-.08, .12, -.06, .05][index]
     group.rotation.z = [-.045, .02, -.025, .025][index]
-    group.add(new THREE.Mesh(organicBody(44), material), new THREE.Mesh(await neurites(300 + index, 9, true), material))
-    const photograph = new THREE.Mesh(photographGeometry(index), photographMaterial(textures[index + 1], index, textures[textures.length - 1]))
+    group.add(new THREE.Mesh(geometry.body, material), new THREE.Mesh(geometry['branches' + index], material))
+    const photograph = new THREE.Mesh(geometry['photo' + index], photographMaterial(textures[index + 1], index, textures[textures.length - 1]))
     photograph.renderOrder = 1
     group.add(photograph)
     scene.add(group)
     groups.push(group)
     photographs.push(photograph)
   }
-  const random = seededRandom(1862)
-  const backgroundBodies: THREE.BufferGeometry[] = []
-  const backgroundBranches: THREE.BufferGeometry[] = []
-  for (let index = 0; index < 22; index++) {
-    const group = new THREE.Group()
-    group.position.set((index % 2 ? -1 : 1) * (14 + random() * 15), (random() - .5) * 24, 8 - index * 6.8)
-    group.rotation.set(random(), random(), random() * Math.PI)
-    group.scale.setScalar(.55 + random() * .55)
-    group.updateMatrix()
-    backgroundBodies.push(organicBody(16).applyMatrix4(group.matrix))
-    backgroundBranches.push((await neurites(800 + index, 6, false)).applyMatrix4(group.matrix))
-  }
-  const mergedBodies = mergeGeometries(backgroundBodies)!
-  const mergedBranches = mergeGeometries(backgroundBranches)!
-  backgroundBodies.forEach(geometry => geometry.dispose())
-  backgroundBranches.forEach(geometry => geometry.dispose())
-  scene.add(new THREE.Mesh(mergedBodies, material), new THREE.Mesh(mergedBranches, material))
-  const connections: THREE.BufferGeometry[] = []
-  locations.slice(1).forEach((location, index) => {
-    const from = locations[index].clone().add(new THREE.Vector3(3.5, -2, -1))
-    const to = location.clone().add(new THREE.Vector3(-3.5, -2, -1))
-    const middle = from.clone().lerp(to, .5).add(new THREE.Vector3(7, -5, -3))
-    connections.push(taperedBranch([from, middle, to], .28, 36, 6))
-  })
-  const mergedConnections = mergeGeometries(connections)!
-  connections.forEach(geometry => geometry.dispose())
-  scene.add(new THREE.Mesh(mergedConnections, material))
+  scene.add(new THREE.Mesh(geometry.backgroundBodies, material), new THREE.Mesh(geometry.backgroundBranches, material), new THREE.Mesh(geometry.connections, material))
   scene.updateMatrixWorld(true)
+  scene.traverse(object => { object.matrixAutoUpdate = false })
+  cameraLight.matrixAutoUpdate = true
   let disposed = false
   const instance = crypto.randomUUID()
   let lastSize = ''
+  let lastFrame = ''
   const lost = (event: Event) => { event.preventDefault(); if (!disposed) onContextLost() }
   renderer.domElement.addEventListener('webglcontextlost', lost)
   const view = (index: number, layout: NeuralLayout) => {
@@ -235,7 +169,10 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
     return locations[index].clone().add(new THREE.Vector3(offsetX, offsetY, distance))
   }
   const update = (progress: number, layout: NeuralLayout) => {
-    if (disposed) return
+    if (disposed || signal.aborted) return
+    const frameKey = [progress, layout.width, layout.height, layout.narrow, layout.landscape, layout.panelHeight, layout.introBottom].join(':')
+    if (frameKey === lastFrame) return
+    lastFrame = frameKey
     const size = `${layout.width}:${layout.height}:${layout.narrow}:${layout.landscape}`
     if (size !== lastSize) {
       lastSize = size
@@ -327,6 +264,7 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
   }
   try {
     for (const texture of textures) {
+      if (signal.aborted) { dispose(); throw new DOMException('Scene loading cancelled', 'AbortError') }
       renderer.initTexture(texture)
       await yieldToBrowser()
     }
@@ -335,5 +273,6 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
     dispose()
     throw error
   }
+  if (signal.aborted) { dispose(); throw new DOMException('Scene loading cancelled', 'AbortError') }
   return { update, dispose }
 }
