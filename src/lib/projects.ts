@@ -80,7 +80,7 @@ export async function getPublishedProjects(): Promise<ProjectCard[]> {
       description: doc.description,
       coverImage: doc.coverImage,
       kind: doc.kind,
-      href: isCongress ? '/congres' : `/proiecte/${doc.slug}`,
+      href: isCongress ? '/proiecte/mimesiss' : `/proiecte/${doc.slug}`,
       span: isCongress ? FEATURED_SPAN : i === all.length - 1 ? lastSpan : '',
     }
   })

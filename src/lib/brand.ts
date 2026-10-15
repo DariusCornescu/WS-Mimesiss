@@ -8,6 +8,8 @@
  * Keep these in sync with the :root block in globals.css.
  */
 export const BRAND = {
+  /** Scoped project-story palette; mirrors --story-* in globals.css. */
+  story: { background: '#171415', foreground: '#F2E5D5', accent: '#DFA6A1', mutedForeground: '#B9AAA8' },
   /** --primary  220 100% 70% */
   primary: '#6699FF',
   /**

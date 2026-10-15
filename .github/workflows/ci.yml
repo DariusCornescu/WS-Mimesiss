@@ -41,6 +41,9 @@ jobs:
         if: ${{ !cancelled() }}
         run: npm run typecheck
 
+      - name: Project story routes and assets
+        run: npm run test:stories
+
   build:
     name: Production build
     runs-on: ubuntu-latest
@@ -115,7 +118,7 @@ jobs:
             sleep 1
           done
           FAILED=0
-          for path in / /congres/program /contact /congres/reg /congres/info; do
+          for path in / /congres/program /contact /congres/reg /congres/info /proiecte /proiecte/mimesiss /proiecte/balul-bobocilor /proiecte/cortul-imm; do
             CODE=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:3000${path}")
             echo "${path} -> ${CODE}"
             [ "$CODE" = "200" ] || FAILED=1
