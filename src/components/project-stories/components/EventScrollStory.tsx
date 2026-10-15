@@ -124,9 +124,9 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
       </div>
 
       {frames.map((frame, index) => <article key={`${index}-${frame.photo.src}`} id={`${story.id}-moment-${index}`} ref={element => { frameRefs.current[index] = element }} className={`${styles.frame} ${index === 0 ? styles.intro : ''}`} aria-label={index === 0 ? story.title : frame.label}>
-        <div className={styles.ambient} aria-hidden="true"><Image src={frame.photo.src} alt="" fill unoptimized sizes="100vw" loading={index === 0 ? 'eager' : 'lazy'} style={{ objectPosition: frame.photo.position }} /></div>
+        <div className={styles.ambient} aria-hidden="true"><Image src={frame.photo.src} alt="" fill quality={85} sizes="100vw" loading={index === 0 ? 'eager' : 'lazy'} style={{ objectPosition: frame.photo.position }} /></div>
         <div className={styles.visual}>
-          <Image src={frame.photo.src} alt={frame.photo.alt} fill unoptimized sizes="(max-width: 700px) 100vw, 90vw" loading={index <= 1 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : undefined} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} />
+          <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= 1 ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : undefined} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} />
           <div className={styles.imageShade} aria-hidden="true" />
         </div>
         <div className={styles.copy}>

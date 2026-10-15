@@ -33,7 +33,7 @@ export default function InlineAlbum({ photos, onOpenImage }: { photos: StoryProj
   }, [playing, visible, interacting, photos.length])
   const photo = photos[index]
   return <div ref={ref} className={styles.album} data-playing={playing} data-in-view={visible} data-interacting={interacting} onFocusCapture={() => setInteracting(true)} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) setInteracting(false) }} aria-label="Momente de la Balul bobocilor">
-    <button {...swipe} className={styles.photo} type="button" onClick={() => onOpenImage(photo.src, photo.alt)} aria-label={`Mărește fotografia: ${photo.alt}`}><Image src={photo.src} alt={photo.alt} width={1200} height={450} unoptimized draggable={false} /><span><FiZoomIn aria-hidden="true" /> Vezi momentul</span></button>
+    <button {...swipe} className={styles.photo} type="button" onClick={() => onOpenImage(photo.src, photo.alt)} aria-label={`Mărește fotografia: ${photo.alt}`}><Image src={photo.src} alt={photo.alt} width={1200} height={450} quality={85} sizes="(max-width: 700px) 100vw, 80vw" draggable={false} /><span><FiZoomIn aria-hidden="true" /> Vezi momentul</span></button>
     <div className={styles.captionSpace} aria-hidden="true" />
     <div className={styles.controls}>
       <button type="button" aria-label="Momentul anterior" onClick={() => setIndex(value => (value - 1 + photos.length) % photos.length)}><FiChevronLeft aria-hidden="true" /></button>
