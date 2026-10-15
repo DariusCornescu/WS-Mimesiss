@@ -146,7 +146,7 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
       </div>
 
       {frames.map((frame, index) => <article key={`${index}-${frame.photo.src}`} id={`${story.id}-moment-${index}`} ref={element => { frameRefs.current[index] = element }} className={`${styles.frame} ${index === 0 ? styles.intro : ''}`} aria-label={index === 0 ? story.title : frame.label}>
-        <div className={styles.ambient} aria-hidden="true">{(index <= loadedThrough || reducedMotion) && <Image src={frame.photo.src} alt="" fill quality={40} sizes="256px" loading="lazy" style={{ objectPosition: frame.photo.position }} />}</div>
+        <div className={styles.ambient} aria-hidden="true">{(index <= loadedThrough || reducedMotion) && <Image src={frame.photo.src} alt="" fill quality={40} sizes="256px" loading={index === 0 ? 'eager' : 'lazy'} style={{ objectPosition: frame.photo.position }} />}</div>
         <div className={styles.visual}>
           {(index <= loadedThrough || reducedMotion) ? <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= loadedThrough ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} /> : <noscript><Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" style={{ objectPosition: frame.photo.position }} /></noscript>}
           <div className={styles.imageShade} aria-hidden="true" />
