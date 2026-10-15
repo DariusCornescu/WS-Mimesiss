@@ -325,5 +325,15 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
       delete host.dataset.introLogoOpacity
     }
   }
+  try {
+    for (const texture of textures) {
+      renderer.initTexture(texture)
+      await yieldToBrowser()
+    }
+    await renderer.compileAsync(scene, camera)
+  } catch (error) {
+    dispose()
+    throw error
+  }
   return { update, dispose }
 }

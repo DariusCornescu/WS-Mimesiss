@@ -144,7 +144,7 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
 
   return <section ref={trackRef} className={`${styles.track} ${staticMode ? styles.staticMode : ''}`} aria-labelledby="mimesiss-scroll-title">
     <div ref={stageRef} className={styles.stage}>
-      <div className={styles.backdrop} aria-hidden="true"><Image src="/project-stories/neural-space/concept.webp" alt="" width={1586} height={992} unoptimized priority className={`${styles.ambient} ${sceneReady && !staticMode ? styles.loadedBackdrop : ''}`} /></div>
+      <div className={styles.backdrop} aria-hidden="true"><Image src="/project-stories/neural-space/concept.webp" alt="" width={1586} height={992} sizes="100vw" quality={85} loading="eager" fetchPriority="high" className={`${styles.ambient} ${sceneReady && !staticMode ? styles.loadedBackdrop : ''}`} /></div>
       <div ref={worldRef} className={styles.world} aria-hidden="true" />
       <div className={styles.photoTargets} aria-label="Fotografii din congres">
         {mimesissScenePhotos.map((photo, index) => <button key={photo.src} ref={element => { photoRefs.current[index] = element }} className={styles.scenePhoto} type="button" onClick={() => { const selected = index === 0 && introLogoActiveRef.current ? introLogo : photo; onOpenImage(selected.src, selected.alt) }} aria-label={index === 0 ? 'Mărește sigla MIMESISS' : `Mărește fotografia: ${photo.alt}`}><span><FiMaximize2 aria-hidden="true" /><span data-photo-label>{index === 0 ? 'MIMESISS' : chapters[index].label}</span></span></button>)}
