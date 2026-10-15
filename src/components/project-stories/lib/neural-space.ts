@@ -13,6 +13,11 @@ const smooth = (value: number) => value * value * (3 - 2 * value)
 const locations = [new THREE.Vector3(-5, -.5, 0), new THREE.Vector3(7, 1.2, -28), new THREE.Vector3(-3, -.8, -58), new THREE.Vector3(5, .5, -90)]
 const shape = { x: 4.7, y: 3.5, z: 1.35 }
 
+const yieldToBrowser = () => {
+  const scheduler = (window as Window & { scheduler?: { yield: () => Promise<void> } }).scheduler
+  return scheduler ? scheduler.yield() : new Promise<void>(resolve => window.setTimeout(resolve, 0))
+}
+
 function seededRandom(seed: number) {
   let state = seed >>> 0
   return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296 }
@@ -22,13 +27,14 @@ function taperedBranch(points: THREE.Vector3[], radius: number, segments: number
   const curve = new THREE.CatmullRomCurve3(points)
   const geometry = new THREE.TubeGeometry(curve, segments, 1, sides, false)
   const positions = geometry.getAttribute('position')
+  const point = new THREE.Vector3()
   for (let ring = 0; ring <= segments; ring++) {
     const t = ring / segments
     const center = curve.getPointAt(t)
     const thickness = .015 + radius * Math.pow(1 - t, .85)
     for (let side = 0; side <= sides; side++) {
       const index = ring * (sides + 1) + side
-      const point = new THREE.Vector3().fromBufferAttribute(positions, index).sub(center).multiplyScalar(thickness).add(center)
+      point.fromBufferAttribute(positions, index).sub(center).multiplyScalar(thickness).add(center)
       positions.setXYZ(index, point.x, point.y, point.z)
     }
   }
@@ -48,7 +54,7 @@ function organicBody(detail: number) {
   return geometry
 }
 
-function neurites(seed: number, count: number, detailed: boolean) {
+async function neurites(seed: number, count: number, detailed: boolean) {
   const random = seededRandom(seed)
   const geometries: THREE.BufferGeometry[] = []
   for (let branch = 0; branch < count; branch++) {
@@ -68,6 +74,7 @@ function neurites(seed: number, count: number, detailed: boolean) {
         geometries.push(taperedBranch([origin, middle, end], .11, 14, 4))
       }
     }
+    await yieldToBrowser()
   }
   const merged = mergeGeometries(geometries)!
   geometries.forEach(geometry => geometry.dispose())
@@ -167,19 +174,19 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
   scene.add(rim)
   const groups: THREE.Group[] = []
   const photographs: THREE.Mesh[] = []
-  locations.forEach((location, index) => {
+  for (const [index, location] of locations.entries()) {
     const group = new THREE.Group()
     group.position.copy(location)
     group.rotation.y = [-.08, .12, -.06, .05][index]
     group.rotation.z = [-.045, .02, -.025, .025][index]
-    group.add(new THREE.Mesh(organicBody(44), material), new THREE.Mesh(neurites(300 + index, 9, true), material))
+    group.add(new THREE.Mesh(organicBody(44), material), new THREE.Mesh(await neurites(300 + index, 9, true), material))
     const photograph = new THREE.Mesh(photographGeometry(index), photographMaterial(textures[index + 1], index, textures[textures.length - 1]))
     photograph.renderOrder = 1
     group.add(photograph)
     scene.add(group)
     groups.push(group)
     photographs.push(photograph)
-  })
+  }
   const random = seededRandom(1862)
   const backgroundBodies: THREE.BufferGeometry[] = []
   const backgroundBranches: THREE.BufferGeometry[] = []
@@ -190,7 +197,7 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
     group.scale.setScalar(.55 + random() * .55)
     group.updateMatrix()
     backgroundBodies.push(organicBody(16).applyMatrix4(group.matrix))
-    backgroundBranches.push(neurites(800 + index, 6, false).applyMatrix4(group.matrix))
+    backgroundBranches.push((await neurites(800 + index, 6, false)).applyMatrix4(group.matrix))
   }
   const mergedBodies = mergeGeometries(backgroundBodies)!
   const mergedBranches = mergeGeometries(backgroundBranches)!

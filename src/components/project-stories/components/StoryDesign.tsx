@@ -81,7 +81,7 @@ export default function StoryDesign({ project, onOpenImage }: StoryDesignProps) 
                     <p className={styles.overlayLabel}>MIMESISS · Experiență practică</p>
                     <h3>{section.subtitle}</h3>
                     {sectionParagraphs.slice(0, 2).map((paragraph, paragraphIndex) => <p className={styles.fullOverlayText} key={paragraphIndex}>{paragraph}</p>)}
-                    
+
                   </div>
                 </div>
                 <div className={styles.mobileLongCopy}>{sectionParagraphs.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
