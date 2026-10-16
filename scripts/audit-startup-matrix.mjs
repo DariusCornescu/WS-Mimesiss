@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, unlink } from 'node:fs/promises'
 import path from 'node:path'
 import mongoose from 'mongoose'
 import { MongoMemoryServer } from 'mongodb-memory-server-core'
@@ -13,7 +13,12 @@ if (referenceRoot && !referenceRoot.startsWith(path.resolve('.preview') + path.s
 const variants = [...(referenceRoot ? ['reference'] : []), 'base', 'analytics', 'scene', 'full']
 const runs = Number(process.env.PERFORMANCE_RUNS || 5)
 if (!Number.isInteger(runs) || runs < 3 || runs > 9) throw Error('Use between three and nine runs')
-const generatedFiles = await Promise.all(['tsconfig.json', 'next-env.d.ts'].map(async file => [file, await readFile(file)]))
+const generatedFiles = await Promise.all(['tsconfig.json', 'next-env.d.ts'].map(async file => {
+  try { return [file, await readFile(file)] } catch (error) {
+    if (error.code === 'ENOENT' && file === 'next-env.d.ts') return [file, null]
+    throw error
+  }
+}))
 const db = await MongoMemoryServer.create({ binary: { version: '7.0.24' }, instance: { ip: '127.0.0.1' } })
 const environment = {
   ...process.env,
@@ -135,7 +140,10 @@ finally {
   }
   await mongoose.disconnect()
   await db.stop()
-  for (const [file, contents] of generatedFiles) await writeFile(file, contents)
+  for (const [file, contents] of generatedFiles) {
+    if (contents !== null) await writeFile(file, contents)
+    else await unlink(file).catch(error => { if (error.code !== 'ENOENT') throw error })
+  }
   result.finishedAt = new Date().toISOString()
   await snapshot()
 }
