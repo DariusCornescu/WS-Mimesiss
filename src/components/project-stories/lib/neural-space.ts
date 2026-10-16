@@ -70,13 +70,13 @@ function photographMaterial(texture: THREE.Texture, index: number, introTexture:
         vec2 edge = (vPhotoUv - 0.5) * 2.0;
         float angle = atan(edge.y, edge.x);
         float radius = length(edge) * (1.0 + 0.035 * sin(angle * 5.0) + 0.02 * cos(angle * 7.0));
-        float alpha = 1.0 - smoothstep(0.73, 1.075, radius);
+        float alpha = 1.0 - smoothstep(mix(0.73, 0.94, introMix), mix(1.075, 1.2, introMix), radius);
         if (alpha < 0.015) discard;
         vec4 image = texture2D(photo, offset + vPhotoUv * crop);
         vec2 logoUv = (vPhotoUv - 0.5) / introSize + 0.5;
         vec2 logoEdge = abs(logoUv - 0.5) * 2.0;
-        float logoRadius = length(logoEdge);
-        float logoMask = 1.0 - smoothstep(0.68, 1.12, logoRadius);
+        float logoRadius = max(logoEdge.x, logoEdge.y);
+        float logoMask = 1.0 - smoothstep(0.94, 1.08, logoRadius);
         vec2 croppedLogoUv = vec2(70.0 / 910.0, 234.0 / 584.0) + clamp(logoUv, 0.0, 1.0) * vec2(770.0 / 910.0, 342.0 / 584.0);
         vec3 logo = texture2D(introPhoto, croppedLogoUv).rgb;
         gl_FragColor = vec4(mix(image.rgb * 0.86, logo, introMix), alpha * mix(1.0, logoMask, introMix));
@@ -88,7 +88,7 @@ function photographMaterial(texture: THREE.Texture, index: number, introTexture:
   })
 }
 
-export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButtonElement | null)[], onContextLost: () => void, signal: AbortSignal): Promise<NeuralSpace> {
+export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () => void, signal: AbortSignal): Promise<NeuralSpace> {
   const geometryPromise = loadGeometry(signal)
   const loader = new THREE.TextureLoader()
   const mobile = window.matchMedia('(max-width: 700px)').matches
@@ -181,7 +181,7 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
       camera.aspect = layout.width / layout.height
       camera.updateProjectionMatrix()
     }
-    let position = new THREE.Vector3(layout.narrow ? -3 : 0, layout.narrow ? 7 : 1.4, layout.narrow ? 38 : 17)
+    let position = new THREE.Vector3(layout.narrow ? -3 : -2, layout.narrow ? 7 : 1.8, layout.narrow ? 38 : 20)
     if (layout.narrow) {
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
       const available = Math.max(100, layout.height - (layout.introBottom ?? 300) - 105)
@@ -216,23 +216,6 @@ export async function createNeuralSpace(host: HTMLDivElement, buttons: (HTMLButt
     (photographs[0].material as THREE.ShaderMaterial).uniforms.introMix.value = introMix
     host.dataset.introLogoOpacity = introMix.toFixed(3)
     renderer.render(scene, camera)
-    groups.forEach((group, index) => {
-      const button = buttons[index]
-      if (!button) return
-      const center = group.position.clone().applyMatrix4(camera.matrixWorldInverse)
-      const size = photoSize(index)
-      const x = size.width * .455 * (index === 0 ? 1 + .25 * introMix : 1), y = size.height * .447
-      const corners = [new THREE.Vector3(-x, -y, 1.4), new THREE.Vector3(x, -y, 1.4), new THREE.Vector3(-x, y, 1.4), new THREE.Vector3(x, y, 1.4)]
-      const projected = corners.map(corner => corner.clone().applyMatrix4(group.matrixWorld).project(camera))
-      const xs = projected.map(point => (point.x + 1) / 2 * layout.width)
-      const ys = projected.map(point => (1 - point.y) / 2 * layout.height)
-      const left = Math.min(...xs), top = Math.min(...ys), width = Math.max(...xs) - left, height = Math.max(...ys) - top
-      const visible = center.z < -2 && left + width > 0 && left < layout.width && top + height > 0 && top < layout.height && width >= 44 && height >= 44
-      button.style.visibility = visible ? 'visible' : 'hidden'
-      button.style.zIndex = String(Math.max(0, 1000 + Math.round(center.z)))
-      button.style.setProperty('--target-label-opacity', width > 130 ? '1' : '0')
-      button.style.left = `${left}px`; button.style.top = `${top}px`; button.style.width = `${width}px`; button.style.height = `${height}px`
-    })
     host.dataset.sceneReady = 'true'
     host.dataset.sceneInstance = instance
     host.dataset.engine = 'webgl'

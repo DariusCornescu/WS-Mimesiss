@@ -160,3 +160,6 @@
   .track:not(.staticMode) { height: auto; }
   .track:not(.staticMode) .mobilePanel { display: none; }
 }
+
+.fullName { max-width: 100%; margin: -4px 0 22px; font-size: clamp(14px, 1.4vw, 20px); line-height: 1.4; color: hsl(var(--brand-sand)); text-wrap: balance; }
+.staticMode .staticPhoto { cursor: default; }
