@@ -12,10 +12,9 @@ export type EventStory = {
 }
 
 export const tentStoryPhotos: StoryPhoto[] = [
-  { src: '/project-stories/originals/tent/photo-2026-10-10-10-44-28-2-jpg-0433dbb.webp', alt: 'Vizitatori și studenți militari în fața cortului IMM.', position: '50% 58%', width: 1536, height: 2048 },
-  { src: '/project-stories/originals/tent/photo-2026-10-10-10-44-32-3-jpg-3d9a5ab.webp', alt: 'Un student militar explică o investigație imagistică vizitatorilor.', position: '50% 57%', width: 1536, height: 2048 },
-  { src: '/project-stories/originals/tent/photo-2026-10-10-10-44-31-7-jpg-26254a9.webp', alt: 'Exersarea primului ajutor pe un manechin, în interiorul cortului IMM.', position: '50% 53%', width: 1536, height: 2048 },
-  { src: '/project-stories/originals/tent/photo-2026-10-10-10-44-31-8-jpg-8f5e803.webp', alt: 'O studentă militară discută cu vizitatorii lângă cortul IMM.', position: '50% 55%', width: 1536, height: 2048 },
+  { src: '/project-stories/Poza_5.1.webp', alt: 'Prezentarea unei investigații imagistice la Cortul IMM, într-o ramă de album cu foi suprapuse.', position: '50% 50%', width: 1080, height: 1350 },
+  { src: '/project-stories/Poza_5.2.webp', alt: 'Demonstrație de prim ajutor la Cortul IMM, într-o ramă de album cu foi suprapuse.', position: '50% 50%', width: 1080, height: 1350 },
+  { src: '/project-stories/Poza_5.3.webp', alt: 'Exersarea resuscitării pe un manechin la Cortul IMM, într-o ramă de album cu foi suprapuse.', position: '50% 50%', width: 1080, height: 1350 },
 ]
 
 export function getEventStory(project: StoryProject): EventStory {
@@ -36,10 +35,9 @@ export function getEventStory(project: StoryProject): EventStory {
     id: 'cort', title: 'Cortul IMM', eyebrow: 'La Simularea Admiterii UMFCD', subtitle: project.subtitle,
     intro: { src: '/project-stories/originals/tent/photo-2026-10-10-10-44-29-3-jpg-20a4e92.webp', alt: 'Echipa Institutului Medico Militar în fața cortului.', position: '50% 46%', width: 2048, height: 1536 },
     chapters: [
-      { label: 'Bun venit', title: '', body: '', photo: tentStoryPhotos[0] },
-      { label: 'Descoperă', title: '', body: '', photo: tentStoryPhotos[1] },
-      { label: 'Încearcă', title: '', body: '', photo: tentStoryPhotos[2] },
-      { label: 'Întreabă', title: '', body: '', photo: tentStoryPhotos[3] },
+      { label: 'Descoperă', title: '', body: '', photo: tentStoryPhotos[0] },
+      { label: 'Primul ajutor', title: '', body: '', photo: tentStoryPhotos[1] },
+      { label: 'Exersează', title: '', body: '', photo: tentStoryPhotos[2] },
     ],
   }
 }

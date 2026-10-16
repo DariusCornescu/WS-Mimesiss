@@ -9,7 +9,7 @@ import styles from './EventScrollStory.module.css'
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const smooth = (value: number) => { const t = clamp(value); return t * t * (3 - 2 * t) }
-const stops = [0, .22, .46, .7, .94]
+const storyStops = { bal: [0, .22, .46, .7, .94], cort: [0, .25, .5, .75] }
 const subscribeToMotion = (onChange: () => void) => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
   preference.addEventListener('change', onChange)
@@ -29,6 +29,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
   const motion = useSyncExternalStore(subscribeToMotion, motionSnapshot, serverMotionSnapshot)
   const reducedMotion = motion === 'reduced'
   const animated = !reducedMotion
+  const stops = storyStops[story.id]
   const frames = [
     { label: 'Început', title: story.title, body: story.subtitle, photo: story.intro },
     ...story.chapters,
@@ -113,7 +114,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
     window.addEventListener('resize', schedule)
     draw()
     return () => { resize.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (raf) cancelAnimationFrame(raf) }
-  }, [animated, story.id, frames.length])
+  }, [animated, story.id, frames.length, stops])
 
   const jumpTo = (index: number) => {
     const track = trackRef.current
@@ -154,20 +155,20 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
           {(index <= loadedThrough || reducedMotion) ? <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= loadedThrough ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} /> : <noscript><Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" style={{ objectPosition: frame.photo.position }} /></noscript>}
           <div className={styles.imageShade} aria-hidden="true" />
         </div>
-        <div className={styles.copy}>
-          <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : `${story.id === 'bal' ? 'Momentul' : 'Oprirea'} ${String(index).padStart(2, '0')} / ${frame.label}`}</p>
-          {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM.</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : <div className={styles.titleSpace} aria-hidden="true" />}
+        {(index === 0 || story.id === 'bal' || frame.title || frame.body) && <div className={styles.copy}>
+          <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(index).padStart(2, '0')} / ${frame.label}` : frame.label}</p>
+          {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : <div className={styles.titleSpace} aria-hidden="true" />}
           {frame.body ? <p className={styles.body}>{frame.body}</p> : <div className={styles.bodySpace} aria-hidden="true" />}
           {index === 0 && <button type="button" className={styles.explore} onClick={() => jumpTo(1)}><FiArrowDown aria-hidden="true" />{story.id === 'bal' ? 'Intră în poveste' : 'Descoperă activitățile'}<span>prin scroll</span></button>}
-        </div>
-        {index > 0 && <span className={styles.largeNumber} aria-hidden="true">0{index}</span>}
+        </div>}
+        {story.id === 'bal' && index > 0 && <span className={styles.largeNumber} aria-hidden="true">0{index}</span>}
       </article>)}
 
       <div className={styles.lighting} aria-hidden="true" />
-      <nav className={styles.chapters} aria-label={`Capitole ${story.title}`}>
+      {story.id === 'bal' && <nav className={styles.chapters} aria-label={`Capitole ${story.title}`}>
         {story.chapters.map((chapter, index) => <button key={chapter.label} type="button" ref={element => { jumpRefs.current[index] = element }} onClick={() => jumpTo(index + 1)} aria-label={`Mergi la ${chapter.label}`}><span>0{index + 1}</span><span>{chapter.label}</span></button>)}
         <a href="#story-overview" className={styles.continue} aria-label="Continuă după poveste"><FiArrowRight aria-hidden="true" /></a>
-      </nav>
+      </nav>}
       <div className={styles.progress} aria-hidden="true"><span ref={progressRef} /></div>
     </div>
   </section>

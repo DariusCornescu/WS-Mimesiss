@@ -37,7 +37,7 @@ export default function StoryDesign({ project, onOpenImage }: StoryDesignProps) 
       {isCongress ? <MimesissScrollStory /> : <EventScrollStory key={project.id} story={getEventStory(project)} />}
 
         <section id="story-overview" className={styles.overview} aria-labelledby="story-overview-title">
-          <div className={styles.chapterLabel}>{!isCongress && <span>05</span>}<p>Despre proiect</p><span className={styles.rule} /></div>
+          <div className={styles.chapterLabel}>{project.id === 'bal' && <span>05</span>}<p>Despre proiect</p><span className={styles.rule} /></div>
           {project.id === 'bal' ? <>
             <h2 id="story-overview-title" className={styles.ballOverviewTitle}>{project.title}</h2>
             <div className={styles.ballOverviewGrid}>

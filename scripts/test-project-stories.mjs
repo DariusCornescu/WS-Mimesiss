@@ -26,7 +26,7 @@ test('all story photographs and 3D textures are included in the production asset
     if (project.id !== 'mimesiss') {
       const story = getEventStory(project)
       sources.add(story.intro.src)
-      assert.equal(story.chapters.length, 4)
+      assert.equal(story.chapters.length, project.id === 'bal' ? 4 : 3)
       story.chapters.forEach(chapter => sources.add(chapter.photo.src))
     }
   }
