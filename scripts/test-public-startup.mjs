@@ -73,4 +73,3 @@ test('analytics queues one initial view with original URL and referrer before id
   assert.equal(commands[1][2].page_title, document.title)
   assert.equal(commands[1][2].send_page_view, undefined)
 })
-
