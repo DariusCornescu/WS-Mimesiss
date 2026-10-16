@@ -32,6 +32,7 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
   const renderRef = useRef<() => void>(() => {})
   const introRef = useRef<HTMLDivElement>(null)
   const panelRefs = useRef<(HTMLDivElement | null)[]>([])
+  const readingRefs = useRef<(HTMLDivElement | null)[]>([])
   const photoRefs = useRef<(HTMLButtonElement | null)[]>([])
   const jumpRefs = useRef<(HTMLButtonElement | null)[]>([])
   const progressRef = useRef<HTMLSpanElement>(null)
@@ -91,18 +92,27 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
       const height = stage.clientHeight
       const narrow = window.matchMedia('(max-width: 700px)').matches
       const landscape = width <= 1000 && width > height && height <= 500
+      const reading = window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches
       const travel = Math.max(1, track.offsetHeight - stage.offsetHeight)
       let progress = clamp(-track.getBoundingClientRect().top / travel)
-      if (previousLayout?.pinned && (previousLayout.width !== width || previousLayout.height !== height)) {
+      if (!reading && previousLayout?.pinned && (previousLayout.width !== width || previousLayout.height !== height)) {
         window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top + travel * previousLayout.progress, behavior: 'instant' })
         progress = previousLayout.progress
       }
-      const panelHeight = Math.max(...panelRefs.current.map(panel => panel?.offsetHeight ?? 0))
+      if (reading) {
+        const anchors = [0, ...readingRefs.current.map(panel => panel ? panel.offsetTop - height * .4 : 0)]
+        const values = [0, ...stops]
+        const scroll = Math.max(0, 64 - track.getBoundingClientRect().top)
+        let segment = anchors.findLastIndex(anchor => scroll >= anchor)
+        segment = Math.max(0, Math.min(segment, anchors.length - 2))
+        progress = values[segment] + (values[segment + 1] - values[segment]) * between(scroll, anchors[segment], anchors[segment + 1])
+      }
+      const panelHeight = reading ? height * .42 : Math.max(...panelRefs.current.map(panel => panel?.offsetHeight ?? 0))
       const stageBounds = stage.getBoundingClientRect()
       const trackBounds = track.getBoundingClientRect()
       previousLayout = { width, height, progress, pinned: trackBounds.top <= 0 && trackBounds.bottom >= height }
       const introBottom = (introRef.current?.offsetTop ?? 0) + (introRef.current?.offsetHeight ?? 0)
-      if (stageBounds.bottom > 0 && stageBounds.top < window.innerHeight) spaceRef.current?.update(progress, { width, height, narrow: narrow && !landscape, landscape, panelHeight, introBottom })
+      if (stageBounds.bottom > 0 && stageBounds.top < window.innerHeight) spaceRef.current?.update(progress, { width, height, narrow: reading || narrow && !landscape, landscape: !reading && landscape, panelHeight, introBottom })
       stage.style.setProperty('--photo-label-opacity', String(1 - between(progress, .035, .11)))
       introLogoActiveRef.current = progress < .11
       const firstPhoto = photoRefs.current[0]
@@ -112,7 +122,7 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
       if (introRef.current) introRef.current.style.opacity = String(1 - between(progress, .035, .11))
       panelRefs.current.forEach((panel, index) => {
         if (!panel) return
-        const opacity = between(progress, arrivals[index], arrivals[index] + .045) * (1 - between(progress, departures[index], departures[index] + .04))
+        const opacity = reading ? 0 : between(progress, arrivals[index], arrivals[index] + .045) * (1 - between(progress, departures[index], departures[index] + .04))
         panel.style.opacity = String(opacity)
         panel.style.transform = `translateY(${((1 - opacity) * 18).toFixed(1)}px)`
         panel.inert = opacity < .85
@@ -127,6 +137,7 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
     renderRef.current = schedule
     const observer = new ResizeObserver(schedule)
     observer.observe(stage)
+    readingRefs.current.forEach(panel => { if (panel) observer.observe(panel) })
     if (introRef.current) observer.observe(introRef.current)
     panelRefs.current.forEach(panel => { if (panel) observer.observe(panel) })
     window.addEventListener('scroll', schedule, { passive: true })
@@ -136,6 +147,11 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
   }, [staticMode])
 
   const jumpTo = (index: number) => {
+    if (!staticMode && window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches) {
+      const panel = readingRefs.current[index]
+      if (panel) window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top - (stageRef.current?.clientHeight ?? 0) * .4 - 64, behavior: 'smooth' })
+      return
+    }
     if (staticMode) { panelRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
     const track = trackRef.current
     const stage = stageRef.current
@@ -166,6 +182,16 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
       </div>)}
       <nav className={styles.chapters} aria-label="Momente din MIMESISS">{chapters.map((chapter, index) => <button key={chapter.label} ref={element => { jumpRefs.current[index] = element }} type="button" onClick={() => jumpTo(index)} aria-label={`Mergi la ${chapter.label}`}><span>{String(index + 1).padStart(2, '0')}</span><span>{chapter.label}</span></button>)}</nav>
       <div className={styles.progress} aria-hidden="true"><span ref={progressRef} /></div>
+    </div>
+    <div className={styles.reading}>
+      {chapters.map((chapter, index) => <div key={chapter.label} ref={element => { readingRefs.current[index] = element }} className={styles.readingChapter}>
+        <div className={styles.readingCopy}>
+          <p className={styles.eyebrow}>{String(index + 1).padStart(2, '0')} · {chapter.label}</p>
+          {chapter.title && <h2>{chapter.title}</h2>}
+          <p className={styles.chapterBody}>{chapter.body}</p>
+          <button type="button" className={styles.viewPhoto} onClick={() => onOpenImage(mimesissScenePhotos[index].src, mimesissScenePhotos[index].alt)}>Vezi fotografia <FiArrowRight aria-hidden="true" /></button>
+        </div>
+      </div>)}
     </div>
   </section>
 }

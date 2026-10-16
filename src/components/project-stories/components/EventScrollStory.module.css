@@ -180,3 +180,17 @@
 }
 
 .animated .frame[data-visible="true"] .visual { will-change: transform; }
+
+@media (max-width: 700px), (max-width: 1000px) and (max-height: 500px) {
+  .animated { height: auto; }
+  .animated .stage { position: relative; height: auto; overflow: clip; }
+  .animated .stageHeader { position: relative; padding: 12px 20px; }
+  .animated .frame { position: relative; display: flex; flex-direction: column; min-height: 70svh; padding-bottom: 48px; opacity: 1; visibility: visible; scroll-margin-top: 80px; }
+  .animated .visual, .animated.cort .visual, .animated.cort .intro .visual { position: relative; inset: auto; height: auto; aspect-ratio: var(--photo-ratio, 3 / 2); max-height: 65svh; margin: 0 12px; flex-shrink: 0; }
+  .animated .visual img, .animated.cort .intro .visual img { object-fit: contain; }
+  .animated .copy, .animated.cort .copy, .animated.cort .intro .copy { position: relative; inset: auto; width: auto; max-height: none; overflow: visible; margin: 24px 24px 0; padding: 0; transform: none; }
+  .animated .imageShade, .animated .lighting, .animated .largeNumber, .animated .progress { display: none; }
+  .animated .chapters { position: relative; inset: auto; margin: 0 20px; flex-wrap: wrap; }
+  .animated .titleSpace { min-height: 0; }
+  .animated .bodySpace { min-height: 24px; }
+}
