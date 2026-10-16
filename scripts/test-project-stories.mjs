@@ -62,3 +62,25 @@ test('gallery dimensions match the original photographs before lazy loading', as
   }
 })
 
+
+test('mobile chapters clear the view before camera travel and preserve long text reading time', () => {
+  const { mobileStoryFrame } = load(base + 'mobile-story-timing.ts')
+  const height = 780
+  const chapters = [{ top: 1200, bottom: 1580 }, { top: 2100, bottom: 2320 }, { top: 3000, bottom: 3820 }, { top: 4200, bottom: 4440 }]
+  const stops = [.25, .49, .73, .96]
+  const frame = scroll => mobileStoryFrame(scroll, height, chapters, stops)
+  const firstArrival = 1200 - height * .4
+  assert.equal(frame(firstArrival).progress, stops[0])
+  assert.equal(frame(firstArrival).opacities[0], 1)
+  const fading = frame(1000)
+  assert.equal(fading.progress, stops[0], 'Hold the camera while the text is fading out')
+  assert.ok(fading.opacities[0] > 0 && fading.opacities[0] < 1)
+  const traveling = frame(1300)
+  assert.equal(traveling.opacities[0], 0)
+  assert.equal(traveling.opacities[1], 0)
+  assert.ok(traveling.progress > stops[0] && traveling.progress < stops[1])
+  const longReading = frame(3100)
+  assert.equal(longReading.opacities[2], 1, 'Do not hide a tall chapter before its final lines can be read')
+  assert.equal(longReading.progress, stops[2])
+  assert.equal(frame(firstArrival).opacities[0], 1, 'Scrolling back restores the text')
+})
