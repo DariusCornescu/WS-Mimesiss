@@ -1,3 +1,4 @@
+import { editableStoryKeys, type ProjectStoryCopy } from '@/lib/project-story-copy'
 import { tentSceneKeys, type TentStoryCopy } from '@/lib/tent-story-copy'
 import type { StoryProject } from './content'
 
@@ -18,7 +19,7 @@ export const tentStoryPhotos: StoryPhoto[] = [
   { src: '/project-stories/Poza_5.3.webp', alt: 'Exersarea resuscitării pe un manechin la Cortul IMM, într-o ramă de album cu foi suprapuse.', position: '50% 50%', width: 1080, height: 1350 },
 ]
 
-export function getEventStory(project: StoryProject, copy?: TentStoryCopy): EventStory {
+export function getEventStory(project: StoryProject, copy?: TentStoryCopy, storyCopy?: ProjectStoryCopy): EventStory {
   if (project.id === 'bal') {
     const photo = (index: number, position = '50% 45%'): StoryPhoto => ({ ...project.gallery[index], position, width: 2400, height: 1600 })
     return {
@@ -29,7 +30,7 @@ export function getEventStory(project: StoryProject, copy?: TentStoryCopy): Even
         { label: 'Dans', title: '', body: '', photo: photo(3, '50% 44%') },
         { label: 'Spectacol', title: '', body: '', photo: photo(2, '50% 42%') },
         { label: 'Împreună', title: '', body: project.description[2], photo: photo(4, '50% 42%') },
-      ],
+      ].map((chapter, index) => ({ ...chapter, ...storyCopy?.[editableStoryKeys['balul-bobocilor'][index]] })),
     }
   }
   return {

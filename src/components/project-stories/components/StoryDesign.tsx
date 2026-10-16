@@ -1,5 +1,6 @@
 'use client'
 
+import type { ProjectStoryCopy } from '@/lib/project-story-copy'
 import type { TentStoryCopy } from '@/lib/tent-story-copy'
 import Image from 'next/image'
 import InlineAlbum from './InlineAlbum'
@@ -11,6 +12,7 @@ import styles from './StoryDesign.module.css'
 
 type StoryDesignProps = {
   tentCopy?: TentStoryCopy
+  storyCopy?: ProjectStoryCopy
   project: StoryProject
 }
 
@@ -19,7 +21,7 @@ function paragraphs(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : value.split(/\n\s*\n/).filter(Boolean)
 }
 
-export default function StoryDesign({ project, tentCopy }: StoryDesignProps) {
+export default function StoryDesign({ project, tentCopy, storyCopy }: StoryDesignProps) {
   const isCongress = project.id === 'mimesiss'
 
   const photo = (src: string, alt: string, className = '', eager = false) => {
@@ -34,7 +36,7 @@ export default function StoryDesign({ project, tentCopy }: StoryDesignProps) {
 
   return (
     <div className={`${styles.story} ${!isCongress ? styles.eventStory : ''}`}>
-      {isCongress ? <MimesissScrollStory /> : <EventScrollStory key={project.id} story={getEventStory(project, tentCopy)} />}
+      {isCongress ? <MimesissScrollStory copy={storyCopy} /> : <EventScrollStory key={project.id} story={getEventStory(project, tentCopy, storyCopy)} />}
 
         <section id="story-overview" className={styles.overview} aria-labelledby="story-overview-title">
           <div className={styles.chapterLabel}>{project.id === 'bal' && <span>05</span>}<p>Despre proiect</p><span className={styles.rule} /></div>
@@ -52,7 +54,8 @@ export default function StoryDesign({ project, tentCopy }: StoryDesignProps) {
 
       {project.sections?.filter(section => !isCongress || section.title !== 'Conferințe').map((section, index) => {
         const isWorkshop = /workshop|atelier/i.test(section.title)
-        const sectionParagraphs = paragraphs(section.description)
+        const edited = isWorkshop ? storyCopy?.workshopuri : undefined
+        const sectionParagraphs = paragraphs(edited ? edited.body : section.description)
 
         return (
           <section className={`${styles.chapter} ${isWorkshop ? styles.workshopChapter : ''}`} key={`${section.title}-${index}`} aria-labelledby={`story-chapter-${index}`}>
@@ -64,7 +67,7 @@ export default function StoryDesign({ project, tentCopy }: StoryDesignProps) {
                   {photo(section.image, section.imageAlt, styles.workshopFigure)}
                   <div className={styles.workshopCopy}>
                     <p className={styles.overlayLabel}>MIMESISS · Experiență practică</p>
-                    <h3>{section.subtitle}</h3>
+                    {(edited ? edited.title : section.subtitle) && <h3>{edited ? edited.title : section.subtitle}</h3>}
                     {sectionParagraphs.slice(0, 2).map((paragraph, paragraphIndex) => <p className={styles.fullOverlayText} key={paragraphIndex}>{paragraph}</p>)}
 
                   </div>
@@ -77,7 +80,7 @@ export default function StoryDesign({ project, tentCopy }: StoryDesignProps) {
                 {photo(section.image, section.imageAlt, styles.chapterFigure)}
                 <div className={styles.chapterCopy}>
                   <p className={styles.overlayLabel}>MIMESISS · {section.title}</p>
-                  <h3>{section.subtitle}</h3>
+                  {(edited ? edited.title : section.subtitle) && <h3>{edited ? edited.title : section.subtitle}</h3>}
                   {sectionParagraphs.map((paragraph, paragraphIndex) => <p key={paragraphIndex}>{paragraph}</p>)}
                 </div>
               </div>

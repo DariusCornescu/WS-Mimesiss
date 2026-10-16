@@ -177,3 +177,8 @@
 }
 
 .copyPanel > .eyebrow + .chapterBody { margin-top: 12px; }
+
+.track:not(.staticMode) { height: max(580svh, calc(var(--story-passage-count, 4) * 100svh + 180svh)); }
+.copyPanel[data-empty="true"], .mobilePanel[data-empty="true"] { background: transparent; padding: 0; }
+.copyPanel[data-empty="true"] > :not(.staticPhoto), .mobilePanel[data-empty="true"] > * { display: none; }
+.chapterBody { white-space: pre-line; overflow-wrap: anywhere; }

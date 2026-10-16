@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation'
 import { ProjectDetail } from '@/components/asociatie/ProjectPages'
 import { getProjectBySlug } from '@/lib/projects'
+import { getProjectStoryCopy } from '@/lib/editable-project-content'
 import { getTentStoryCopy } from '@/lib/project-story-content'
 import ProjectStoryPage from '@/components/project-stories/ProjectStoryPage'
 import { projects } from '@/components/project-stories/lib/content'
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: { params: Promise<{slug:strin
 export default async function Page({ params }: {params:Promise<{slug:string}>}) {
   const slug = (await params).slug
   const storyId = storyIdForSlug(slug)
-  if (storyId) return <ProjectStoryPage projectId={storyId} tentCopy={storyId === 'cort' ? await getTentStoryCopy() : undefined} />
+  if (storyId) return <ProjectStoryPage projectId={storyId} tentCopy={storyId === 'cort' ? await getTentStoryCopy() : undefined} storyCopy={storyId !== 'cort' ? await getProjectStoryCopy(storyId === 'bal' ? 'balul-bobocilor' : 'mimesiss') : undefined} />
   const project = await getProjectBySlug(slug)
   if (!project) notFound()
   if (project.kind === 'congress') redirect('/congres')

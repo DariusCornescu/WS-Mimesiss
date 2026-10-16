@@ -44,6 +44,8 @@ export default async function AdminProiectePage() {
         <Link href="/admin/proiecte/cortul-imm" className="mimesiss-btn-secondary sm:w-auto">Editează textele</Link>
       </section>
 
+      {([{ slug: 'mimesiss', title: 'MIMESISS' }, { slug: 'balul-bobocilor', title: 'Balul bobocilor' }]).map(story => <section key={story.slug} className="mimesiss-card p-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between"><div><h2 className="font-semibold">{story.title} · Povestea animată</h2><p className="text-sm text-muted-foreground mt-1">Editează textele de lângă fotografiile fiecărei scene.</p></div><Link href={'/admin/proiecte/poveste/' + story.slug} className="mimesiss-btn-secondary sm:w-auto">Editează textele</Link></section>)}
+
       {projects.length === 0 ? (
         <div className="mimesiss-card p-8 text-center">
           <p className="text-muted-foreground">

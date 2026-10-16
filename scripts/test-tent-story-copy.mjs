@@ -84,3 +84,58 @@ test('failed storage surfaces an error without a success message or cache invali
   assert.ok(!result.error.includes('Database detail'))
   assert.ok(!events.some(e => e[0] === 'tag' || e[0] === 'path'))
 })
+
+const projectCopy = load('src/lib/project-story-copy.ts', { './tent-story-copy': copyModule })
+function projectAction({ denied = false, failure = false } = {}) {
+  const events = []
+  const action = load('src/app/admin/proiecte/poveste/actions.ts', {
+    'next/cache': { updateTag: tag => events.push(['tag', tag]), revalidatePath: path => events.push(['path', path]) },
+    '@/lib/auth': { AuthError, requireRole: async () => { events.push(['auth']); if (denied) throw new AuthError('Acces interzis'); return { clerkId: 'test-admin' } } },
+    '@/lib/mongodb': async () => events.push(['db']),
+    '@/models/ProjectStoryContent': { ProjectStoryContent: { findOneAndUpdate: async (...args) => { events.push(['write', ...args]); if (failure) throw new Error('private detail') } } },
+    '@/lib/project-story-copy': projectCopy, '@/lib/tent-story-copy': copyModule,
+    '@/lib/editable-project-content': { projectStoryTag: slug => 'project-story-copy-' + slug },
+  }).saveProjectStoryCopy
+  return { action, events }
+}
+const projectForm = slug => { const data = new FormData(); for (const key of projectCopy.editableStoryKeys[slug]) for (const field of ['title', 'body']) data.set(key + '.' + field, ''); return data }
+test('all story editors enforce authorization, known projects and complete forms before writing', async () => {
+  const denied = projectAction({ denied: true })
+  assert.equal((await denied.action('mimesiss', {}, projectForm('mimesiss'))).success, false)
+  assert.deepEqual(denied.events, [['auth']])
+  const unknown = projectAction()
+  assert.equal((await unknown.action('constructor', {}, new FormData())).success, false)
+  assert.deepEqual(unknown.events, [['auth']])
+  const invalid = projectAction(); const data = projectForm('mimesiss'); data.set('participanti.body', 'x'.repeat(1201))
+  assert.equal((await invalid.action('mimesiss', {}, data)).success, false)
+  assert.deepEqual(invalid.events, [['auth']])
+})
+test('project saves isolate the document, cache tag and public path and allow clearing text', async () => {
+  for (const slug of ['mimesiss', 'balul-bobocilor']) {
+    const { action, events } = projectAction(); const data = projectForm(slug)
+    data.set('impreuna.title', '  Titlu  ')
+    assert.equal((await action(slug, {}, data)).success, true)
+    const write = events.find(e => e[0] === 'write')
+    assert.equal(write[1].slug, slug)
+    assert.equal(write[2].$set.sections.find(s => s.key === 'impreuna').title, 'Titlu')
+    assert.equal(write[2].$set.sections.find(s => s.key === 'impreuna').body, '')
+    assert.equal(write[3].runValidators, true)
+    assert.ok(events.some(e => e[0] === 'tag' && e[1] === 'project-story-copy-' + slug))
+    assert.ok(events.some(e => e[0] === 'path' && e[1] === '/proiecte/' + slug))
+  }
+  const failed = projectAction({ failure: true })
+  const result = await failed.action('mimesiss', {}, projectForm('mimesiss'))
+  assert.equal(result.success, false)
+  assert.ok(!result.error.includes('private'))
+  assert.ok(!failed.events.some(e => e[0] === 'tag'))
+})
+
+test('compact passages separate long headings and preserve every word without an inner scroll', () => {
+  const title = 'T'.repeat(80), body = 'Text pentru verificarea continutului. '.repeat(30).trim()
+  const parts = copyModule.compactStoryPassages(body, title)
+  assert.equal(parts[0].title, title)
+  assert.equal(parts[0].body, '')
+  assert.equal(parts.slice(1).map(p => p.body).join(' '), body)
+  assert.ok(parts.every(p => p.body.length <= 180))
+  assert.equal(copyModule.compactStoryPassages('', '').length, 1)
+})

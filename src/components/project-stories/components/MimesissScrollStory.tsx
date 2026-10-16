@@ -1,35 +1,33 @@
 'use client'
 
 import Image from 'next/image'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { FiArrowDown } from 'react-icons/fi'
-import { projects, statement } from '../lib/content'
+import type { CSSProperties } from 'react'
+import { editableStoryKeys, type ProjectStoryCopy } from '@/lib/project-story-copy'
+import { mimesissChapters } from '@/lib/project-story-defaults'
+import { compactStoryPassages } from '@/lib/tent-story-copy'
+import { projects } from '../lib/content'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
 import { mobileStoryFrame, mobileStoryMoments } from '../lib/mobile-story-timing'
 import type { NeuralSpace } from '../lib/neural-space'
 import styles from './MimesissScrollStory.module.css'
 
 const project = projects.find(item => item.id === 'mimesiss')!
-const conference = project.sections?.find(section => section.title === 'Conferințe')
-const sentences = conference?.description.split(/(?<=\.)\s+/) ?? project.description
-const chapters = [
-  { label: 'Conferințe', title: conference?.subtitle ?? 'Idei care deschid noi perspective', body: sentences[0] },
-  { label: 'Participanți', title: '', body: project.description[1] },
-  { label: 'Perspective', title: '', body: sentences.slice(1).join(' ') },
-  { label: 'Împreună', title: '', body: statement },
-]
-const mobilePassages = chapters.flatMap((chapter, chapterIndex) => {
-  const parts = chapter.body.length > 400 ? chapter.body.split(/(?<=\.)\s+/) : [chapter.body]
-  return parts.map((body, part) => ({ ...chapter, body, chapterIndex, part, parts: parts.length }))
-})
-const mobileMoments = mobileStoryMoments(mobilePassages.map(passage => passage.chapterIndex))
 const stops = [.25, .49, .73, .96]
 const arrivals = [.19, .43, .67, .9]
 const departures = [.31, .55, .79, 1.1]
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 const between = (value: number, start: number, end: number) => clamp((value - start) / (end - start))
 
-export default function MimesissScrollStory() {
+export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy }) {
+  const chapters = useMemo(() => mimesissChapters.map((chapter, index) => ({ ...chapter, ...copy?.[editableStoryKeys.mimesiss[index]] })), [copy])
+  const mobilePassages = useMemo(() => chapters.flatMap((chapter, chapterIndex) => {
+    const parts = compactStoryPassages(chapter.body, chapter.title)
+    return parts.map((copy, part) => ({ ...chapter, ...copy, chapterIndex, part, parts: parts.length }))
+  }), [chapters])
+  const desktopPassages = mobilePassages
+  const mobileMoments = useMemo(() => mobileStoryMoments(mobilePassages.map(passage => passage.chapterIndex)), [mobilePassages])
   const trackRef = useRef<HTMLElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const worldRef = useRef<HTMLDivElement>(null)
@@ -118,7 +116,13 @@ export default function MimesissScrollStory() {
       if (introRef.current) introRef.current.style.opacity = String(1 - between(progress, .035, .11))
       panelRefs.current.forEach((panel, index) => {
         if (!panel) return
-        const opacity = reading ? 0 : between(progress, arrivals[index], arrivals[index] + .045) * (1 - between(progress, departures[index], departures[index] + .04))
+        const passage = desktopPassages[index]
+        const start = arrivals[passage.chapterIndex]
+        const end = Math.min(1.04, departures[passage.chapterIndex] + .04)
+        const partSpan = (end - start) / passage.parts
+        const partStart = start + passage.part * partSpan
+        const fade = Math.min(.035, partSpan * .2)
+        const opacity = reading ? 0 : between(progress, partStart, partStart + fade) * (1 - between(progress, partStart + partSpan - fade, partStart + partSpan))
         panel.style.opacity = String(opacity)
         panel.style.transform = `translateY(${((1 - opacity) * 18).toFixed(1)}px)`
         panel.inert = opacity < .85
@@ -137,9 +141,9 @@ export default function MimesissScrollStory() {
     window.addEventListener('resize', schedule)
     draw()
     return () => { renderRef.current = () => {}; observer.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (frame) window.cancelAnimationFrame(frame) }
-  }, [staticMode])
+  }, [staticMode, desktopPassages, mobileMoments])
 
-  return <section ref={trackRef} className={`${styles.track} ${staticMode ? styles.staticMode : ''}`} aria-labelledby="mimesiss-scroll-title">
+  return <section ref={trackRef} style={{ '--story-passage-count': mobilePassages.length } as CSSProperties} className={`${styles.track} ${staticMode ? styles.staticMode : ''}`} aria-labelledby="mimesiss-scroll-title">
     <div ref={stageRef} className={styles.stage}>
       <div ref={worldRef} className={styles.world} aria-hidden="true" />
       <div ref={introRef} className={styles.intro}>
@@ -150,13 +154,13 @@ export default function MimesissScrollStory() {
         <p className={styles.scrollPrompt}><FiArrowDown aria-hidden="true" />Descoperă prin scroll</p>
       </div>
       {sceneError && <p className={styles.sceneError} role="status">{sceneError}</p>}
-      {chapters.map((chapter, index) => <div key={chapter.label} ref={element => { panelRefs.current[index] = element }} className={styles.copyPanel} aria-hidden={!staticMode} inert={!staticMode}>
-        <figure className={styles.staticPhoto}><Image src={mimesissScenePhotos[index].src} alt={mimesissScenePhotos[index].alt} width={mimesissScenePhotos[index].width} height={mimesissScenePhotos[index].height} unoptimized /></figure>
+      {(staticMode ? chapters.map((chapter, chapterIndex) => ({ ...chapter, chapterIndex })) : desktopPassages).map((chapter, index) => <div key={index} ref={element => { panelRefs.current[index] = element }} className={styles.copyPanel} data-empty={!chapter.title && !chapter.body} aria-hidden={!staticMode} inert={!staticMode}>
+        <figure className={styles.staticPhoto}><Image src={mimesissScenePhotos[chapter.chapterIndex].src} alt={mimesissScenePhotos[chapter.chapterIndex].alt} width={mimesissScenePhotos[chapter.chapterIndex].width} height={mimesissScenePhotos[chapter.chapterIndex].height} unoptimized /></figure>
         <p className={styles.eyebrow}>{chapter.label}</p>
         {chapter.title && <h2>{chapter.title}</h2>}
         <p className={styles.chapterBody}>{chapter.body}</p>
       </div>)}
-      {mobilePassages.map((passage, index) => <div key={index} ref={element => { mobilePanelRefs.current[index] = element }} className={styles.mobilePanel} aria-hidden inert>
+      {mobilePassages.map((passage, index) => <div key={index} ref={element => { mobilePanelRefs.current[index] = element }} className={styles.mobilePanel} data-empty={!passage.title && !passage.body} aria-hidden inert>
         <p className={styles.eyebrow}>{passage.label}</p>
         {passage.title && <h2>{passage.title}</h2>}
         <p className={styles.chapterBody}>{passage.body}</p>
