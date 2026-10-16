@@ -38,13 +38,12 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
   const progressRef = useRef<HTMLSpanElement>(null)
   const introLogoActiveRef = useRef(true)
   const [automaticStatic, setAutomaticStatic] = useState(false)
-  const [sceneReady, setSceneReady] = useState(false)
   const [sceneError, setSceneError] = useState<string | null>(null)
   const staticMode = automaticStatic || sceneError !== null
 
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => { setAutomaticStatic(preference.matches); setSceneReady(false) }
+    const sync = () => { setAutomaticStatic(preference.matches) }
     sync()
     preference.addEventListener('change', sync)
     return () => preference.removeEventListener('change', sync)
@@ -61,7 +60,6 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
       if (cancelled) { space.dispose(); return }
       controller = space
       spaceRef.current = space
-      setSceneReady(true)
       renderRef.current()
     }).catch(fail)
     return () => { cancelled = true; abort.abort(); controller?.dispose(); if (spaceRef.current === controller) spaceRef.current = null }
@@ -161,7 +159,6 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
 
   return <section ref={trackRef} className={`${styles.track} ${staticMode ? styles.staticMode : ''}`} aria-labelledby="mimesiss-scroll-title">
     <div ref={stageRef} className={styles.stage}>
-      <div className={styles.backdrop} aria-hidden="true"><Image src="/project-stories/neural-space/concept.webp" alt="" width={1586} height={992} sizes="100vw" quality={85} loading="eager" fetchPriority="high" className={`${styles.ambient} ${sceneReady && !staticMode ? styles.loadedBackdrop : ''}`} /></div>
       <div ref={worldRef} className={styles.world} aria-hidden="true" />
       <div className={styles.photoTargets} aria-label="Fotografii din congres">
         {mimesissScenePhotos.map((photo, index) => <button key={photo.src} ref={element => { photoRefs.current[index] = element }} className={styles.scenePhoto} type="button" onClick={() => { const selected = index === 0 && introLogoActiveRef.current ? introLogo : photo; onOpenImage(selected.src, selected.alt) }} aria-label={index === 0 ? 'Mărește sigla MIMESISS' : `Mărește fotografia: ${photo.alt}`}><span><FiMaximize2 aria-hidden="true" /><span data-photo-label>{index === 0 ? 'MIMESISS' : chapters[index].label}</span></span></button>)}
