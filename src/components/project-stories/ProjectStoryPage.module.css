@@ -22,34 +22,19 @@
 .congressLinks a, .more a { display: inline-flex; align-items: center; gap: 20px; min-height: 44px; }
 .gallery { padding: 40px 0 64px; }
 .gallery h2 { font: 400 clamp(32px, 4vw, 48px) Georgia, serif; margin-bottom: 28px; }
-.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-.grid button { overflow: hidden; cursor: zoom-in; background: hsl(var(--card)); }
-.grid img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
-.dialog { position: fixed; inset: 0; width: min(1100px, 96vw); height: 92dvh; max-width: 100%; max-height: 100%; padding: 56px 16px 16px; background: hsl(var(--background)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); }
-.dialog::backdrop { background: hsl(var(--background) / .94); }
-.dialog > img { width: 100%; height: 100%; object-fit: contain; }
-.close { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; display: grid; place-items: center; cursor: pointer; }
 .page :is(a, button):focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 4px; }
 @media (max-width: 700px) {
   .content { padding: 0 16px; }
   .navigation { padding: 6px 12px; gap: 14px; justify-content: space-between; }
   .navigation a { font-size: 12px; }
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .dialog { width: 100%; height: 100dvh; padding-top: calc(56px + env(safe-area-inset-top)); border: 0; }
-  .close { top: calc(8px + env(safe-area-inset-top)); }
 }
 
 @media (max-width: 700px), (max-width: 1000px) and (max-height: 500px) {
   .navigation { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; height: 64px; padding: 8px; background: hsl(var(--background) / .98); }
   .navigation a { justify-content: center; text-align: center; padding: 4px; font-size: 13px; line-height: 1.2; min-height: 48px; }
   .navigation a[aria-current] { background: hsl(var(--muted)); font-weight: 600; border-radius: 4px 4px 0 0; }
-  .grid { grid-template-columns: 1fr; gap: 20px; }
-  .grid img { aspect-ratio: auto; object-fit: contain; }
 }
-.grid { align-items: start; }
-.grid img { object-fit: contain; aspect-ratio: auto; }
-.dialog { overflow: clip; padding-bottom: 76px; }
-.dialog > img { touch-action: pan-y pinch-zoom; }
-.photoControls { position: absolute; bottom: max(12px, env(safe-area-inset-bottom)); left: 16px; right: 16px; display: flex; align-items: center; justify-content: center; gap: 28px; }
-.photoControls button { display: grid; place-items: center; width: 48px; height: 48px; background: hsl(var(--muted)); border-radius: 50%; }
-.photoControls span { font-size: 14px; font-variant-numeric: tabular-nums; }
+
+.galleryHeading { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; margin-bottom: 24px; }
+.galleryHeading h2 { margin-bottom: 0; }
+.galleryHeading > span { font-size: 13px; color: hsl(var(--muted-foreground)); }
