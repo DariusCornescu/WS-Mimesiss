@@ -44,6 +44,9 @@ jobs:
       - name: Project story routes and assets
         run: npm run test:stories
 
+      - name: Public startup and session isolation
+        run: npm run test:startup
+
   build:
     name: Production build
     runs-on: ubuntu-latest
