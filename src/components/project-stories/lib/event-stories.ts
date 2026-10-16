@@ -1,3 +1,4 @@
+import { tentSceneKeys, type TentStoryCopy } from '@/lib/tent-story-copy'
 import type { StoryProject } from './content'
 
 export type StoryPhoto = { src: string; alt: string; position: string; width: number; height: number }
@@ -17,7 +18,7 @@ export const tentStoryPhotos: StoryPhoto[] = [
   { src: '/project-stories/Poza_5.3.webp', alt: 'Exersarea resuscitării pe un manechin la Cortul IMM, într-o ramă de album cu foi suprapuse.', position: '50% 50%', width: 1080, height: 1350 },
 ]
 
-export function getEventStory(project: StoryProject): EventStory {
+export function getEventStory(project: StoryProject, copy?: TentStoryCopy): EventStory {
   if (project.id === 'bal') {
     const photo = (index: number, position = '50% 45%'): StoryPhoto => ({ ...project.gallery[index], position, width: 2400, height: 1600 })
     return {
@@ -38,6 +39,6 @@ export function getEventStory(project: StoryProject): EventStory {
       { label: 'Descoperă', title: '', body: '', photo: tentStoryPhotos[0] },
       { label: 'Primul ajutor', title: '', body: '', photo: tentStoryPhotos[1] },
       { label: 'Exersează', title: '', body: '', photo: tentStoryPhotos[2] },
-    ],
+    ].map((chapter, index) => ({ ...chapter, ...copy?.[tentSceneKeys[index]] })),
   }
 }

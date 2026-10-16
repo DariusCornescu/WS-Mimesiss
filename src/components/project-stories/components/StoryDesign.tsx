@@ -1,5 +1,6 @@
 'use client'
 
+import type { TentStoryCopy } from '@/lib/tent-story-copy'
 import Image from 'next/image'
 import InlineAlbum from './InlineAlbum'
 import MimesissScrollStory from './MimesissScrollStory'
@@ -10,6 +11,7 @@ import type { StoryProject } from '../lib/content'
 import styles from './StoryDesign.module.css'
 
 type StoryDesignProps = {
+  tentCopy?: TentStoryCopy
   project: StoryProject
   onOpenImage: (src: string, alt: string) => void
 }
@@ -19,7 +21,7 @@ function paragraphs(value: string | string[] | undefined): string[] {
   return Array.isArray(value) ? value : value.split(/\n\s*\n/).filter(Boolean)
 }
 
-export default function StoryDesign({ project, onOpenImage }: StoryDesignProps) {
+export default function StoryDesign({ project, onOpenImage, tentCopy }: StoryDesignProps) {
   const isCongress = project.id === 'mimesiss'
 
   const photo = (src: string, alt: string, className = '', eager = false) => {
@@ -34,7 +36,7 @@ export default function StoryDesign({ project, onOpenImage }: StoryDesignProps) 
 
   return (
     <div className={`${styles.story} ${!isCongress ? styles.eventStory : ''}`}>
-      {isCongress ? <MimesissScrollStory /> : <EventScrollStory key={project.id} story={getEventStory(project)} />}
+      {isCongress ? <MimesissScrollStory /> : <EventScrollStory key={project.id} story={getEventStory(project, tentCopy)} />}
 
         <section id="story-overview" className={styles.overview} aria-labelledby="story-overview-title">
           <div className={styles.chapterLabel}>{project.id === 'bal' && <span>05</span>}<p>Despre proiect</p><span className={styles.rule} /></div>

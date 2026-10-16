@@ -1,5 +1,6 @@
 'use client'
 
+import type { TentStoryCopy } from '@/lib/tent-story-copy'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -14,7 +15,7 @@ import styles from './ProjectStoryPage.module.css'
 
 const PhotoViewer = dynamic(() => import('@/components/ui/PhotoViewer'), { ssr: false })
 
-export default function ProjectStoryPage({ projectId }: { projectId: ProjectId }) {
+export default function ProjectStoryPage({ projectId, tentCopy }: { projectId: ProjectId; tentCopy?: TentStoryCopy }) {
   const project = projects.find(item => item.id === projectId)!
   const [photo, setPhoto] = useState<GalleryPhoto | null>(null)
   const gallery = useMemo(() => project.gallery.map(item => ({ ...item, ...photoDimensions[item.src] })), [project])
@@ -25,7 +26,7 @@ export default function ProjectStoryPage({ projectId }: { projectId: ProjectId }
       {projects.map(item => <Link key={item.id} href={storyRoutes[item.id]} aria-current={item.id === projectId ? 'page' : undefined}>{item.id === 'cort' ? 'Cortul IMM' : item.title}</Link>)}
     </nav>
     <div className={styles.content}>
-      <StoryDesign project={project} onOpenImage={(src, alt) => setPhoto({ src, alt })} />
+      <StoryDesign project={project} tentCopy={tentCopy} onOpenImage={(src, alt) => setPhoto({ src, alt })} />
       {projectId === 'mimesiss' && <nav className={styles.congressLinks} aria-label="Participare la congres"><Link href="/congres">Informații despre congres <FiArrowRight aria-hidden="true" /></Link><Link href="/congres/workshops">Ateliere și înscrieri <FiArrowRight aria-hidden="true" /></Link></nav>}
       {projectId !== 'bal' && <section className={styles.gallery} aria-label={'Galerie '+project.title}><div className={styles.galleryHeading}><h2>Galerie</h2><span>{gallery.length} fotografii</span></div><PhotoGrid photos={gallery} onSelect={item => setPhoto(item)} /></section>}
       <nav className={styles.more} aria-label="Alte proiecte">{projects.filter(item => item.id !== projectId).map(item => <Link key={item.id} href={storyRoutes[item.id]}>{item.id === 'cort' ? 'Cortul IMM' : item.title}<FiArrowRight aria-hidden="true" /></Link>)}</nav>

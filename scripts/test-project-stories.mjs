@@ -7,7 +7,7 @@ import { load } from './helpers/load-ts.mjs'
 const base = 'src/components/project-stories/lib/'
 const scenes = load(`${base}mimesiss-scene.ts`)
 const { projects } = load(`${base}content.ts`, { './mimesiss-scene': scenes })
-const { getEventStory } = load(`${base}event-stories.ts`)
+const { getEventStory } = load(`${base}event-stories.ts`, { '@/lib/tent-story-copy': load('src/lib/tent-story-copy.ts') })
 const { storyRoutes, storyIdForSlug } = load(`${base}routes.ts`)
 
 test('each published story has a unique route and unrelated project slugs stay dynamic', () => {

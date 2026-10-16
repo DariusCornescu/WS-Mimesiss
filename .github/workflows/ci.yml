@@ -102,6 +102,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-
 
+      - name: Story content persistence
+        run: node --test scripts/test-tent-story-storage.mjs
+
       - name: Build
         run: npm run build
 

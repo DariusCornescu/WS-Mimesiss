@@ -1,7 +1,8 @@
 'use client'
 
+import { storyCopyPassages } from '@/lib/tent-story-copy'
 import Image from 'next/image'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties } from 'react'
 import { FiArrowDown, FiArrowRight } from 'react-icons/fi'
 import type { EventStory } from '../lib/event-stories'
@@ -9,7 +10,7 @@ import styles from './EventScrollStory.module.css'
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const smooth = (value: number) => { const t = clamp(value); return t * t * (3 - 2 * t) }
-const storyStops = { bal: [0, .22, .46, .7, .94], cort: [0, .25, .5, .75] }
+const ballStops = [0, .22, .46, .7, .94]
 const subscribeToMotion = (onChange: () => void) => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
   preference.addEventListener('change', onChange)
@@ -29,11 +30,13 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
   const motion = useSyncExternalStore(subscribeToMotion, motionSnapshot, serverMotionSnapshot)
   const reducedMotion = motion === 'reduced'
   const animated = !reducedMotion
-  const stops = storyStops[story.id]
   const frames = [
     { label: 'Început', title: story.title, body: story.subtitle, photo: story.intro },
-    ...story.chapters,
+    ...story.chapters.flatMap(chapter => story.id === 'bal' ? [chapter] : storyCopyPassages(chapter.body, chapter.title).map((body, part) => ({ ...chapter, title: part === 0 ? chapter.title : '', body }))),
   ]
+
+  const frameCount = frames.length
+  const stops = useMemo(() => story.id === 'bal' ? ballStops : Array.from({ length: frameCount }, (_, index) => index / frameCount), [story.id, frameCount])
 
   useEffect(() => {
     const track = trackRef.current
@@ -131,7 +134,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
     window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top - top + (track.offsetHeight - stage.offsetHeight) * target, behavior: 'smooth' })
   }
 
-  return <section id={`${story.id}-story`} ref={trackRef} data-event-story={story.id} className={`${styles.track} ${styles[story.id]} ${animated ? styles.animated : styles.staticMode}`} aria-labelledby={`${story.id}-story-title`}>
+  return <section id={`${story.id}-story`} ref={trackRef} data-event-story={story.id} style={{ '--story-frame-count': frames.length } as CSSProperties} className={`${styles.track} ${styles[story.id]} ${animated ? styles.animated : styles.staticMode}`} aria-labelledby={`${story.id}-story-title`}>
     <noscript><style>{`
       .${styles.track} { height: auto; }
       .${styles.stage} { position: relative; height: auto; padding: 80px 5% 30px; }
@@ -156,9 +159,9 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
           <div className={styles.imageShade} aria-hidden="true" />
         </div>
         {(index === 0 || story.id === 'bal' || frame.title || frame.body) && <div className={styles.copy}>
-          <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(index).padStart(2, '0')} / ${frame.label}` : frame.label}</p>
-          {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : <div className={styles.titleSpace} aria-hidden="true" />}
-          {frame.body ? <p className={styles.body}>{frame.body}</p> : <div className={styles.bodySpace} aria-hidden="true" />}
+          {(index === 0 || story.id === 'bal') && <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(index).padStart(2, '0')} / ${frame.label}` : frame.label}</p>}
+          {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : story.id === 'bal' ? <div className={styles.titleSpace} aria-hidden="true" /> : null}
+          {frame.body ? <p className={styles.body}>{frame.body}</p> : story.id === 'bal' ? <div className={styles.bodySpace} aria-hidden="true" /> : null}
           {index === 0 && <button type="button" className={styles.explore} onClick={() => jumpTo(1)}><FiArrowDown aria-hidden="true" />{story.id === 'bal' ? 'Intră în poveste' : 'Descoperă activitățile'}<span>prin scroll</span></button>}
         </div>}
         {story.id === 'bal' && index > 0 && <span className={styles.largeNumber} aria-hidden="true">0{index}</span>}
