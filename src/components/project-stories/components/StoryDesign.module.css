@@ -217,3 +217,13 @@
 }
 
 .captionSpace { min-height: 36px; }
+
+.workshopStage { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: clamp(28px, 4vw, 60px); align-items: start; }
+.workshopCopy { position: relative; inset: auto; width: auto; padding: 0; color: hsl(var(--muted-foreground)); font-size: 16px; line-height: 1.8; overflow-wrap: anywhere; }
+.workshopCopy h3 { margin-top: 18px; }
+@media (max-width: 760px) {
+  .workshopStage { grid-template-columns: 1fr; gap: 24px; }
+  .workshopCopy h3 { font-size: 29px; }
+  .workshopCopy .fullOverlayText { display: block; }
+  .mobileLongCopy { display: none; }
+}

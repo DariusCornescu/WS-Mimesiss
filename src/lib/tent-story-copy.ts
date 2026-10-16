@@ -26,13 +26,13 @@ export function readTentCopy(form: FormData): TentStoryCopy {
   return copy
 }
 
-export function storyCopyPassages(body: string, hasTitle: boolean | string): string[] {
+export function storyCopyPassages(body: string, hasTitle: boolean | string, maxLength = 220): string[] {
   if (!body.trim()) return ['']
   const passages: string[] = []
   let remaining = body.trim()
   while (remaining) {
     const firstLimit = typeof hasTitle === 'string' && hasTitle.length <= 50 ? 180 : 120
-    const limit = passages.length === 0 && hasTitle ? firstLimit : 220
+    const limit = passages.length === 0 && hasTitle ? Math.min(firstLimit, maxLength) : maxLength
     if (remaining.length <= limit) { passages.push(remaining); break }
     const target = remaining.length - limit < 60 ? Math.ceil(remaining.length / 2) : limit
     let end = remaining.lastIndexOf(' ', target)
@@ -41,4 +41,12 @@ export function storyCopyPassages(body: string, hasTitle: boolean | string): str
     remaining = remaining.slice(end).trim()
   }
   return passages
+}
+
+export function compactStoryPassages(body: string, title: string): StoryCopy[] {
+  if (title && title.length + body.length > 160) return [
+    { title, body: '' },
+    ...storyCopyPassages(body, false, 180).map(body => ({ title: '', body })),
+  ]
+  return storyCopyPassages(body, title, 180).map((body, part) => ({ title: part === 0 ? title : '', body }))
 }

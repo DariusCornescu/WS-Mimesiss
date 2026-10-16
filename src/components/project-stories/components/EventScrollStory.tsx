@@ -1,6 +1,6 @@
 'use client'
 
-import { storyCopyPassages } from '@/lib/tent-story-copy'
+import { compactStoryPassages, storyCopyPassages } from '@/lib/tent-story-copy'
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties } from 'react'
@@ -10,7 +10,6 @@ import styles from './EventScrollStory.module.css'
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
 const smooth = (value: number) => { const t = clamp(value); return t * t * (3 - 2 * t) }
-const ballStops = [0, .22, .46, .7, .94]
 const subscribeToMotion = (onChange: () => void) => {
   const preference = window.matchMedia('(prefers-reduced-motion: reduce)')
   preference.addEventListener('change', onChange)
@@ -30,13 +29,13 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
   const motion = useSyncExternalStore(subscribeToMotion, motionSnapshot, serverMotionSnapshot)
   const reducedMotion = motion === 'reduced'
   const animated = !reducedMotion
-  const frames = [
-    { label: 'Început', title: story.title, body: story.subtitle, photo: story.intro },
-    ...story.chapters.flatMap(chapter => story.id === 'bal' ? [chapter] : storyCopyPassages(chapter.body, chapter.title).map((body, part) => ({ ...chapter, title: part === 0 ? chapter.title : '', body }))),
-  ]
+  const frames = useMemo(() => [
+    { label: 'Început', title: story.title, body: story.subtitle, photo: story.intro, chapterIndex: -1 },
+    ...story.chapters.flatMap((chapter, chapterIndex) => (story.id === 'bal' ? compactStoryPassages(chapter.body, chapter.title) : storyCopyPassages(chapter.body, chapter.title).map((body, part) => ({ title: part === 0 ? chapter.title : '', body }))).map(copy => ({ ...chapter, chapterIndex, ...copy }))),
+  ], [story])
 
   const frameCount = frames.length
-  const stops = useMemo(() => story.id === 'bal' ? ballStops : Array.from({ length: frameCount }, (_, index) => index / frameCount), [story.id, frameCount])
+  const stops = useMemo(() => Array.from({ length: frameCount }, (_, index) => index / frameCount), [frameCount])
 
   useEffect(() => {
     const track = trackRef.current
@@ -105,7 +104,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
         frame.setAttribute('aria-hidden', String(frameIndex !== active))
       })
       jumpRefs.current.forEach((button, chapterIndex) => {
-        if (chapterIndex + 1 === active) button?.setAttribute('aria-current', 'step')
+        if (frames[active]?.chapterIndex === chapterIndex) button?.setAttribute('aria-current', 'step')
         else button?.removeAttribute('aria-current')
       })
       if (progressRef.current) progressRef.current.style.transform = `scaleX(${progress})`
@@ -117,7 +116,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
     window.addEventListener('resize', schedule)
     draw()
     return () => { resize.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (raf) cancelAnimationFrame(raf) }
-  }, [animated, story.id, frames.length, stops])
+  }, [animated, story.id, frames, stops])
 
   const jumpTo = (index: number) => {
     const track = trackRef.current
@@ -158,10 +157,10 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
           {(index <= loadedThrough || reducedMotion) ? <Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" loading={index <= loadedThrough ? 'eager' : 'lazy'} fetchPriority={index === 0 ? 'high' : 'low'} draggable={false} style={{ objectPosition: frame.photo.position } as CSSProperties} /> : <noscript><Image src={frame.photo.src} alt={frame.photo.alt} fill quality={85} sizes="100vw" style={{ objectPosition: frame.photo.position }} /></noscript>}
           <div className={styles.imageShade} aria-hidden="true" />
         </div>
-        {(index === 0 || story.id === 'bal' || frame.title || frame.body) && <div className={styles.copy}>
-          {(index === 0 || story.id === 'bal') && <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(index).padStart(2, '0')} / ${frame.label}` : frame.label}</p>}
-          {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : story.id === 'bal' ? <div className={styles.titleSpace} aria-hidden="true" /> : null}
-          {frame.body ? <p className={styles.body}>{frame.body}</p> : story.id === 'bal' ? <div className={styles.bodySpace} aria-hidden="true" /> : null}
+        {(index === 0 || frame.title || frame.body) && <div className={styles.copy}>
+          {(index === 0 || story.id === 'bal') && <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(frame.chapterIndex + 1).padStart(2, '0')} / ${frame.label}` : frame.label}</p>}
+          {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : null}
+          {frame.body ? <p className={styles.body}>{frame.body}</p> : null}
           {index === 0 && <button type="button" className={styles.explore} onClick={() => jumpTo(1)}><FiArrowDown aria-hidden="true" />{story.id === 'bal' ? 'Intră în poveste' : 'Descoperă activitățile'}<span>prin scroll</span></button>}
         </div>}
         {story.id === 'bal' && index > 0 && <span className={styles.largeNumber} aria-hidden="true">0{index}</span>}
@@ -169,7 +168,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
 
       <div className={styles.lighting} aria-hidden="true" />
       {story.id === 'bal' && <nav className={styles.chapters} aria-label={`Capitole ${story.title}`}>
-        {story.chapters.map((chapter, index) => <button key={chapter.label} type="button" ref={element => { jumpRefs.current[index] = element }} onClick={() => jumpTo(index + 1)} aria-label={`Mergi la ${chapter.label}`}><span>0{index + 1}</span><span>{chapter.label}</span></button>)}
+        {story.chapters.map((chapter, index) => <button key={chapter.label} type="button" ref={element => { jumpRefs.current[index] = element }} onClick={() => jumpTo(frames.findIndex(frame => frame.chapterIndex === index))} aria-label={`Mergi la ${chapter.label}`}><span>0{index + 1}</span><span>{chapter.label}</span></button>)}
         <a href="#story-overview" className={styles.continue} aria-label="Continuă după poveste"><FiArrowRight aria-hidden="true" /></a>
       </nav>}
       <div className={styles.progress} aria-hidden="true"><span ref={progressRef} /></div>
