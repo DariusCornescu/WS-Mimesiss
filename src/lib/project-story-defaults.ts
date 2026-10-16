@@ -8,7 +8,7 @@ const conference = congress.sections?.find(section => section.title === 'Conferi
 const sentences = conference?.description.split(/(?<=\.)\s+/) ?? congress.description
 export const mimesissChapters = [
   { label: 'Conferințe', title: conference?.subtitle ?? 'Idei care deschid noi perspective', body: sentences[0] },
-  { label: 'Participanți', title: '', body: congress.description[1] },
+  { label: 'Participanți', title: '', body: congress.description[1] + ' Schimbul de idei și experiențele comune întăresc comunitatea ASMM.' },
   { label: 'Perspective', title: '', body: sentences.slice(1).join(' ') },
   { label: 'Împreună', title: '', body: statement },
 ]
