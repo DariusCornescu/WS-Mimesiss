@@ -99,8 +99,7 @@
 }
 
 .intro .eyebrow { white-space: nowrap; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.5; letter-spacing: .055em; }
-.titleSpace { min-height: 60px; }
-@media (max-width: 700px) { .intro .eyebrow { white-space: normal; font-size: 14px; letter-spacing: .025em; } .titleSpace { min-height: 36px; } }
+@media (max-width: 700px) { .intro .eyebrow { white-space: normal; font-size: 14px; letter-spacing: .025em; } }
 
 .tagline > span { display: block; }
 @media (min-width: 1001px) { .tagline > span:last-child { white-space: nowrap; font-size: min(2.05vw, 28px); } }
@@ -176,3 +175,5 @@
   .track:not(.staticMode) .intro, .track:not(.staticMode) .mobilePanel { right: 3%; width: 45%; }
   .track:not(.staticMode) .mobilePanel { bottom: 24px; }
 }
+
+.copyPanel > .eyebrow + .chapterBody { margin-top: 12px; }

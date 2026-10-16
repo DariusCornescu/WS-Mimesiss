@@ -153,7 +153,7 @@ export default function MimesissScrollStory() {
       {chapters.map((chapter, index) => <div key={chapter.label} ref={element => { panelRefs.current[index] = element }} className={styles.copyPanel} aria-hidden={!staticMode} inert={!staticMode}>
         <figure className={styles.staticPhoto}><Image src={mimesissScenePhotos[index].src} alt={mimesissScenePhotos[index].alt} width={mimesissScenePhotos[index].width} height={mimesissScenePhotos[index].height} unoptimized /></figure>
         <p className={styles.eyebrow}>{chapter.label}</p>
-        {chapter.title ? <h2>{chapter.title}</h2> : <div className={styles.titleSpace} aria-hidden="true" />}
+        {chapter.title && <h2>{chapter.title}</h2>}
         <p className={styles.chapterBody}>{chapter.body}</p>
       </div>)}
       {mobilePassages.map((passage, index) => <div key={index} ref={element => { mobilePanelRefs.current[index] = element }} className={styles.mobilePanel} aria-hidden inert>
