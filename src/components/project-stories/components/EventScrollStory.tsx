@@ -158,7 +158,7 @@ export default function EventScrollStory({ story }: { story: EventStory }) {
           <div className={styles.imageShade} aria-hidden="true" />
         </div>
         {(index === 0 || frame.title || frame.body) && <div className={styles.copy}>
-          {(index === 0 || story.id === 'bal') && <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(index).padStart(2, '0')} / ${frame.label}` : frame.label}</p>}
+          {(index === 0 || story.id === 'bal') && <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : story.id === 'bal' ? `Momentul ${String(frame.chapterIndex + 1).padStart(2, '0')} / ${frame.label}` : frame.label}</p>}
           {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : null}
           {frame.body ? <p className={styles.body}>{frame.body}</p> : null}
           {index === 0 && <button type="button" className={styles.explore} onClick={() => jumpTo(1)}><FiArrowDown aria-hidden="true" />{story.id === 'bal' ? 'Intră în poveste' : 'Descoperă activitățile'}<span>prin scroll</span></button>}
