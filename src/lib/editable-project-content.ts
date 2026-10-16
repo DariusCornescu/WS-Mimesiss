@@ -19,7 +19,7 @@ export async function readProjectStoryCopy(slug: EditableStorySlug): Promise<Pro
 }
 // Public title and description only; independent keys and tags per project, expired on admin save.
 const readers = {
-  mimesiss: unstable_cache(() => readProjectStoryCopy('mimesiss'), ['project-story-copy-mimesiss'], { tags: [projectStoryTag('mimesiss')], revalidate: 300 }),
+  mimesiss: unstable_cache(() => readProjectStoryCopy('mimesiss'), ['project-story-copy-mimesiss-v2'], { tags: [projectStoryTag('mimesiss')], revalidate: 300 }),
   'balul-bobocilor': unstable_cache(() => readProjectStoryCopy('balul-bobocilor'), ['project-story-copy-balul-bobocilor'], { tags: [projectStoryTag('balul-bobocilor')], revalidate: 300 }),
 }
 export function getProjectStoryCopy(slug: EditableStorySlug) { return readers[slug]() }

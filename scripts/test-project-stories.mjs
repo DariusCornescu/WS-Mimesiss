@@ -82,3 +82,26 @@ test('fixed mobile passages hold the same neuron and clear the view before trave
   assert.equal(frame(moments[3].enter + .035).opacities[3], 1)
   assert.equal(frame(first.enter + .035).opacities[0], 1, 'Scrolling back restores the passage')
 })
+
+test('neural story copy keeps Perspectives in one desktop block and at most two compact passages', () => {
+  const tentCopy = load('src/lib/tent-story-copy.ts')
+  const projectCopy = load('src/lib/project-story-copy.ts', { './tent-story-copy': tentCopy })
+  const defaults = load('src/lib/project-story-defaults.ts', {
+    '@/components/project-stories/lib/content': { projects, statement: 'Statement' },
+    '@/components/project-stories/lib/mimesiss-scene': scenes,
+    '@/components/project-stories/lib/event-stories': { getEventStory },
+    './project-story-copy': projectCopy,
+  })
+  const { neuralStoryPassages } = load(base + 'neural-story-copy.ts', { '@/lib/tent-story-copy': tentCopy })
+  const conference = defaults.mimesissChapters[0]
+  assert.equal(conference.title, '')
+  assert.equal(neuralStoryPassages(conference, false).length, 1)
+  for (const chapter of defaults.mimesissChapters) {
+    const desktop = neuralStoryPassages(chapter, false), compact = neuralStoryPassages(chapter, true)
+    assert.equal(desktop.length, 1)
+    assert.ok(compact.length <= 2)
+    assert.equal(desktop.map(part => part.body).join(' '), chapter.body)
+    assert.equal(compact.map(part => part.body).join(' '), chapter.body)
+    assert.ok(desktop.concat(compact).every(part => part.body.length > 0))
+  }
+})
