@@ -53,43 +53,18 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
     let previous: { width: number; height: number; progress: number; pinned: boolean } | null = null
     const draw = () => {
       raf = 0
-      const reading = window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches
-      if (reading) {
-        let active = 0
-        frameRefs.current.forEach((frame, index) => {
-          if (!frame) return
-          const bounds = frame.getBoundingClientRect()
-          if (bounds.top < window.innerHeight * .5) active = index
-          frame.style.opacity = '1'
-          frame.style.visibility = 'visible'
-          frame.style.removeProperty('z-index')
-          frame.inert = false
-          frame.removeAttribute('aria-hidden')
-          const visible = bounds.bottom > 64 && bounds.top < window.innerHeight
-          frame.dataset.visible = String(visible)
-          const amount = clamp((window.innerHeight - bounds.top) / (window.innerHeight + bounds.height))
-          frame.style.setProperty('--photo-scale', String(1 + amount * .035))
-          frame.style.setProperty('--photo-x', '0%')
-          frame.style.setProperty('--photo-y', '0%')
-          frame.style.setProperty('--photo-turn', '0deg')
-          frame.style.setProperty('--copy-y', '0px')
-        })
-        const next = Math.min(frames.length - 1, active + 1)
-        if (next > loadedThroughRef.current) { loadedThroughRef.current = next; setLoadedThrough(next) }
-        stage.dataset.activeChapter = String(active)
-        jumpRefs.current.forEach((button, index) => { if (index + 1 === active) button?.setAttribute('aria-current', 'step'); else button?.removeAttribute('aria-current') })
-        return
-      }
+      const mobile = window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches
+      const top = mobile ? 64 : 0
       const bounds = track.getBoundingClientRect()
       const height = stage.clientHeight
       const width = stage.clientWidth
       const travel = Math.max(1, track.offsetHeight - height)
-      let progress = clamp(-bounds.top / travel)
+      let progress = clamp((top - bounds.top) / travel)
       if (previous?.pinned && (previous.width !== width || previous.height !== height)) {
         progress = previous.progress
-        window.scrollTo({ top: window.scrollY + bounds.top + progress * travel, behavior: 'instant' })
+        window.scrollTo({ top: window.scrollY + bounds.top - top + progress * travel, behavior: 'instant' })
       }
-      previous = { width, height, progress, pinned: bounds.top <= 0 && bounds.bottom >= height }
+      previous = { width, height, progress, pinned: bounds.top <= top && bounds.bottom >= height + top }
       if (bounds.bottom < 0 || bounds.top > window.innerHeight) return
       const narrow = width < 700
       let index = stops.findLastIndex(stop => progress >= stop)
@@ -144,14 +119,15 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
     const track = trackRef.current
     const stage = stageRef.current
     if (!track || !stage) return
-    if (!animated || window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches) { frameRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
+    if (!animated) { frameRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
     const preloadThrough = Math.min(frames.length - 1, index + 1)
     if (preloadThrough > loadedThroughRef.current) {
       loadedThroughRef.current = preloadThrough
       setLoadedThrough(preloadThrough)
     }
+    const top = window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches ? 64 : 0
     const target = stops[index] + .025
-    window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top + (track.offsetHeight - stage.offsetHeight) * target, behavior: 'smooth' })
+    window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top - top + (track.offsetHeight - stage.offsetHeight) * target, behavior: 'smooth' })
   }
 
   return <section id={`${story.id}-story`} ref={trackRef} data-event-story={story.id} className={`${styles.track} ${styles[story.id]} ${animated ? styles.animated : styles.staticMode}`} aria-labelledby={`${story.id}-story-title`}>

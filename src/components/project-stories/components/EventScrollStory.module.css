@@ -182,15 +182,24 @@
 .animated .frame[data-visible="true"] .visual { will-change: transform; }
 
 @media (max-width: 700px), (max-width: 1000px) and (max-height: 500px) {
-  .animated { height: auto; }
-  .animated .stage { position: relative; height: auto; overflow: clip; }
-  .animated .stageHeader { position: relative; padding: 12px 20px; }
-  .animated .frame { position: relative; display: flex; flex-direction: column; min-height: 70svh; padding-bottom: 48px; opacity: 1; visibility: visible; scroll-margin-top: 80px; }
-  .animated .visual, .animated.cort .visual, .animated.cort .intro .visual { position: relative; inset: auto; height: auto; aspect-ratio: var(--photo-ratio, 3 / 2); max-height: 65svh; margin: 0 12px; flex-shrink: 0; }
-  .animated .visual img, .animated.cort .intro .visual img { object-fit: contain; }
-  .animated .copy, .animated.cort .copy, .animated.cort .intro .copy { position: relative; inset: auto; width: auto; max-height: none; overflow: visible; margin: 24px 24px 0; padding: 0; transform: none; }
-  .animated .imageShade, .animated .lighting, .animated .largeNumber, .animated .progress { display: none; }
-  .animated .chapters { position: relative; inset: auto; margin: 0 20px; flex-wrap: wrap; }
-  .animated .titleSpace { min-height: 0; }
-  .animated .bodySpace { min-height: 24px; }
+  .animated { height: 520svh; }
+  .animated .stage { top: 64px; height: calc(100svh - 64px); }
+  .animated .copy, .animated.cort .copy, .animated.cort .intro .copy { max-height: none; overflow: visible; }
+  .animated .titleSpace, .animated .bodySpace { min-height: 0; }
+  .animated .copy .body { font-size: 15px; line-height: 1.5; }
+  .animated .ambient img { filter: none; }
+}
+@media (max-width: 700px) {
+  .animated .visual, .animated.cort .visual, .animated.cort .intro .visual { inset: 48px 12px auto; height: 48%; }
+  .animated .copy, .animated.cort .copy, .animated.cort .intro .copy { left: 6%; width: 88%; bottom: calc(88px + env(safe-area-inset-bottom)); }
+  .animated .copy h1, .animated.cort .copy h1 { font-size: clamp(36px, 10vw, 52px); }
+  .animated .eyebrow { margin-bottom: 8px; }
+  .animated .chapters { left: 6%; right: 6%; gap: 10px; }
+}
+@media (max-width: 700px) and (max-height: 690px) {
+  .animated .visual, .animated.cort .visual, .animated.cort .intro .visual { top: 40px; height: 40%; }
+  .animated .copy h1, .animated.cort .copy h1 { font-size: 34px; }
+  .animated .copy .body { font-size: 13px; line-height: 1.4; margin-top: 8px; }
+  .animated .eyebrow { font-size: 9px; }
+  .animated .explore, .animated .enlarge { margin-top: 6px; }
 }
