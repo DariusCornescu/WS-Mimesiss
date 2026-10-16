@@ -162,10 +162,10 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     const photoHeight = Math.min(layout.height * .36, available)
     const distance = layout.narrow
       ? Math.max(size.width / (.88 * 2 * tangent * aspect), size.height / (photoHeight / layout.height * 2 * tangent)) + 1.4
-      : layout.landscape ? size.height / (.65 * 2 * tangent) + 1.4 : 10
-    const screenY = layout.narrow ? (20 + photoHeight / 2) / layout.height : layout.landscape ? .43 : .5
+      : Math.max(size.width / (.46 * 2 * tangent * aspect), size.height / ((layout.landscape ? .65 : .78) * 2 * tangent)) + 1.4
+    const screenY = layout.narrow ? (20 + photoHeight / 2) / layout.height : .5
     const offsetY = (screenY * 2 - 1) * (distance - 1.4) * tangent
-    const offsetX = layout.narrow ? 0 : (layout.landscape ? .5 : .19) * (distance - 1.4) * tangent * aspect
+    const offsetX = layout.narrow ? 0 : .46 * (distance - 1.4) * tangent * aspect
     return locations[index].clone().add(new THREE.Vector3(offsetX, offsetY, distance))
   }
   const update = (progress: number, layout: NeuralLayout) => {
@@ -181,7 +181,9 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
       camera.aspect = layout.width / layout.height
       camera.updateProjectionMatrix()
     }
-    let position = new THREE.Vector3(layout.narrow ? -3 : -2, layout.narrow ? 7 : 1.8, layout.narrow ? 38 : 20)
+    const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
+    const introDistance = Math.max(6.7 * 1.25 / (.46 * 2 * tangent * camera.aspect), 6.6 / ((layout.landscape ? .65 : .75) * 2 * tangent)) + 1.4
+    let position = locations[0].clone().add(new THREE.Vector3(.46 * (introDistance - 1.4) * tangent * camera.aspect, 0, introDistance))
     if (layout.narrow) {
       const tangent = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2))
       const available = Math.max(100, layout.height - (layout.introBottom ?? 300) - 105)

@@ -163,3 +163,16 @@
 
 .fullName { max-width: 100%; margin: -4px 0 22px; font-size: clamp(14px, 1.4vw, 20px); line-height: 1.4; color: hsl(var(--brand-sand)); text-wrap: balance; }
 .staticMode .staticPhoto { cursor: default; }
+
+@media (min-width: 701px) and (min-height: 501px) {
+  .track:not(.staticMode) .intro, .track:not(.staticMode) .copyPanel { left: auto; right: 3%; width: 43%; padding: 24px; }
+  .track:not(.staticMode) .intro { top: 8%; }
+  .track:not(.staticMode) .intro .eyebrow { white-space: normal; font-size: clamp(15px, 1.3vw, 20px); }
+  .track:not(.staticMode) .intro h1 { font-size: clamp(44px, 5.4vw, 78px); }
+  .track:not(.staticMode) .tagline, .track:not(.staticMode) .tagline > span:last-child { white-space: normal; font-size: clamp(20px, 1.65vw, 25px); }
+}
+
+@media (max-width: 1000px) and (max-height: 500px) and (orientation: landscape) {
+  .track:not(.staticMode) .intro, .track:not(.staticMode) .mobilePanel { right: 3%; width: 45%; }
+  .track:not(.staticMode) .mobilePanel { bottom: 24px; }
+}
