@@ -203,3 +203,13 @@
   .animated .eyebrow { font-size: 9px; }
   .animated .explore, .animated .enlarge { margin-top: 6px; }
 }
+
+.cort .frame:not(.intro) { background: hsl(var(--brand-header)); }
+.cort .frame:not(.intro) .ambient, .cort .frame:not(.intro) .imageShade { display: none; }
+.cort .frame:not(.intro) .visual { inset: 8% 20% 10%; }
+.cort .frame:not(.intro) .visual img { object-fit: contain; object-position: center; }
+@media (max-width: 700px), (max-width: 1000px) and (max-height: 500px) {
+  .animated.cort .frame:not(.intro) .visual { inset: 56px 6% 24px; height: auto; }
+}
+.staticMode.cort .frame:not(.intro) { display: block; padding: 18px; }
+.staticMode.cort .frame:not(.intro) .visual { inset: auto; height: auto; aspect-ratio: 4 / 5; max-height: none; }
