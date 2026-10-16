@@ -8,7 +8,9 @@ import { load } from './helpers/load-ts.mjs'
 const directory = path.resolve(process.argv[2] || '.preview/startup-matrix')
 const lighthouse = process.argv[3]
 if (!lighthouse) throw Error('Pass the installed Lighthouse CLI path as the second argument')
-const variants = ['base', 'analytics', 'scene', 'full']
+const referenceRoot = process.env.PERFORMANCE_REFERENCE_ROOT ? path.resolve(process.env.PERFORMANCE_REFERENCE_ROOT) : null
+if (referenceRoot && !referenceRoot.startsWith(path.resolve('.preview') + path.sep)) throw Error('Reference checkout must stay inside .preview')
+const variants = [...(referenceRoot ? ['reference'] : []), 'base', 'analytics', 'scene', 'full']
 const runs = Number(process.env.PERFORMANCE_RUNS || 5)
 if (!Number.isInteger(runs) || runs < 3 || runs > 9) throw Error('Use between three and nine runs')
 const generatedFiles = await Promise.all(['tsconfig.json', 'next-env.d.ts'].map(async file => [file, await readFile(file)]))
@@ -23,20 +25,20 @@ const environment = {
   STRIPE_WEBHOOK_SECRET: 'whsec_ciplaceholdernotarealsecret',
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_test_ciplaceholdernotarealkey',
 }
-const result = { startedAt: new Date().toISOString(), scope: 'Interleaved local production-build diagnostics, isolated MongoDB, fake CI-format provider keys. Not production or signed-in provider validation. Informational GETs bypass authentication context; protected/personalized routes do not. Analytics collection endpoints blocked during all audits; script execution remains enabled in the relevant variants. Vercel collection scripts may be unavailable on localhost.', variants, runsPerVariant: runs, checks: [], measurements: [], orders: [] }
+const result = { sourceCommit: process.env.GITHUB_SHA || null, referenceCommit: process.env.PERFORMANCE_REFERENCE_COMMIT || null, runtime: process.version, platform: process.platform, startedAt: new Date().toISOString(), scope: 'Interleaved local production-build diagnostics, isolated MongoDB, fake CI-format provider keys. Not production or signed-in provider validation. Informational GETs bypass authentication context; protected/personalized routes do not. Analytics collection endpoints blocked during all audits; script execution remains enabled in the relevant variants. Vercel collection scripts may be unavailable on localhost.', variants, runsPerVariant: runs, checks: [], measurements: [], orders: [] }
 const servers = []
 const origins = Object.fromEntries(variants.map((variant, i) => [variant, `http://localhost:${3120 + i}`]))
-function command(args, env, quiet = false) {
+function command(args, env, quiet = false, cwd = process.cwd()) {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, args, { env, stdio: quiet ? 'ignore' : 'inherit', windowsHide: true })
+    const child = spawn(process.execPath, args, { env, cwd, stdio: quiet ? 'ignore' : 'inherit', windowsHide: true })
     child.once('error', reject)
     child.once('exit', code => code === 0 ? resolve() : reject(Error(`${args[0]} exited with ${code}`)))
   })
 }
 async function snapshot() { await writeFile(path.join(directory, 'matrix.json'), JSON.stringify(result, null, 2)) }
-async function start(variant, env) {
+async function start(variant, env, cwd = process.cwd()) {
   const port = new URL(origins[variant]).port
-  const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port', port, '--hostname', 'localhost'], { env, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })
+  const server = spawn(process.execPath, ['node_modules/next/dist/bin/next', 'start', '--port', port, '--hostname', 'localhost'], { env, cwd, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true })
   servers.push(server)
   let log = ''
   server.stdout.on('data', data => { log = (log + data).slice(-2000) })
@@ -109,15 +111,17 @@ try {
   await models.AppSettings.create({ workshopVisibleToPublic: false, paymentsEnabled: false })
   await mongoose.disconnect()
   for (const variant of variants) {
-    const env = { ...environment, PERFORMANCE_DIAGNOSTIC: variant, NEXT_PUBLIC_BASE_URL: origins[variant] }
+    const env = { ...environment, PERFORMANCE_DIAGNOSTIC: variant === 'reference' ? 'full' : variant, NEXT_PUBLIC_BASE_URL: origins[variant] }
     console.log('Building ' + variant)
-    await command(['node_modules/next/dist/bin/next', 'build', '--webpack'], env)
-    await start(variant, env)
+    const cwd = variant === 'reference' ? referenceRoot : process.cwd()
+    await command(['node_modules/next/dist/bin/next', 'build', '--webpack'], env, false, cwd)
+    await start(variant, env, cwd)
     await snapshot()
   }
   const orders = [['base', 'analytics', 'scene', 'full'], ['full', 'scene', 'analytics', 'base'], ['analytics', 'full', 'base', 'scene'], ['scene', 'base', 'full', 'analytics'], ['full', 'base', 'analytics', 'scene']]
   for (let run = 1; run <= runs; run++) {
-    const order = orders[(run - 1) % orders.length]
+    const order = [...orders[(run - 1) % orders.length]]
+    if (referenceRoot) { if (run % 2) order.unshift('reference'); else order.push('reference') }
     result.orders.push(order)
     for (const variant of order) await audit(variant, run)
   }
