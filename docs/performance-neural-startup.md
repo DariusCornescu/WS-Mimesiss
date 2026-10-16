@@ -64,3 +64,76 @@ the composition independent of WebGL readiness.
 Raw reports, the revised iteration, request lists and screenshots are retained
 locally under `output/scene-startup-2026-10-16/`. Browser checks do not establish
 scroll FPS, field INP or results for the public production domain.
+
+## Optimization sequence, 17 October 2026
+
+Keep Google Analytics, Vercel Analytics and Speed Insights. Retain the animated
+stories, editable project copy, image quality and protected account flows.
+Do not postpone work merely beyond an audit window or detect audit clients.
+
+1. Establish a trustworthy reference. Run five interleaved mobile audits of a
+   frozen reference and the candidate on one isolated runner. Compare content
+   alone, content plus Analytics, content plus 3D and the complete page. Reject
+   authentication redirects and incomplete series; investigate CPU variation.
+   Keep the raw traces and source revisions. Diagnostic build flags cannot run
+   on production Vercel deployments.
+2. Reduce application work. Informational GET/HEAD navigation now avoids the
+   authentication handshake. Personalized workshop pages, mutations, session,
+   account and admin routes retain authentication. Project composition and copy
+   now render on the server, while scroll and gallery controls remain interactive.
+   Below-fold project gallery images are lazy; the separate congress gallery
+   keeps its first visible image prioritized. Measure this change against the
+   frozen reference before attributing any score gain to it.
+3. Address the largest remaining trace costs individually. Inspect application
+   hydration, Analytics execution and renderer initialization separately. If 3D
+   initialization remains a large main-thread task, prototype rendering in a
+   worker using OffscreenCanvas with a compatible fallback, then compare first
+   scroll, rapid chapter changes and navigation cleanup. The current geometry
+   worker does not move the renderer itself off the main thread.
+4. Validate Analytics changes against actual reporting needs. All three services
+   stay enabled. A worker-based Analytics prototype must verify initial page
+   views, client navigation, original referrer, engagement and page exit; it is
+   not accepted if it loses data. Further idle delays are not an optimization
+   of the underlying execution cost.
+5. Re-audit the other public routes using the project's `lighthouserc.cjs` against
+   a production build. Prioritize each route's measured LCP asset, script or
+   server bottleneck. Preserve responsive image dimensions, authoritative
+   registration/payment checks and settings cache invalidation.
+6. Release only after median score >=85, LCP <=2500 ms, TBT <=200 ms and
+   CLS <=0.1, plus mobile/desktop visual and signed-in journey checks. Follow
+   Speed Insights at the 75th percentile for mobile and desktop separately;
+   lab TBT does not establish field INP. Use bounded preview load tests with
+   explicit concurrency, duration, error-rate and latency stop conditions.
+
+The first local diagnostic series contains five runs per variant:
+
+| Variant | Median score | LCP | TBT | Transferred JavaScript |
+| --- | ---: | ---: | ---: | ---: |
+| Content without Analytics or 3D | 88 | 2,386 ms | 295 ms | 169,423 bytes |
+| Content plus Analytics | 71 | 2,422 ms | 1,209 ms | 353,721 bytes |
+| Content plus 3D | 65 | 2,886 ms | 956 ms | 313,980 bytes |
+| Complete page | 69 | 2,438 ms | 1,405 ms | 498,307 bytes |
+
+These are diagnostic controls, not proposed release configurations. CPU index
+spread was 36.2%, so they do not prove exact causal improvements. A subsequent
+local before/after rendering comparison was stopped: TBT spiked in the unchanged
+reference as well. Its partial results are explicitly rejected for comparison.
+The isolated runner includes reference commit
+`04b39f2a6ff26c8851b5ba499ee3f534a957a9e5` to avoid that local confounder.
+
+Local audits use an ephemeral MongoDB and fictitious CI provider keys. Analytics
+collection endpoints are blocked while the script executes; Vercel collection
+scripts may be unavailable on localhost. These tests do not validate provider
+accounts or deployed collection. No production settings or data are changed.
+
+Correctness checks for the rendering change: 32 unit checks pass, production
+build, TypeScript and lint pass, and browser verification at 384 x 824 and
+1280 x 720 preserves the stories. Gallery selection opens the correct image;
+next, zoom and close work. The opening scene loads photos 0 and 1, then prepares
+later photographs as scrolling progresses. No browser console errors were
+observed in that verification. The 85+ target remains unproven.
+
+Implementation references:
+- https://nextjs.org/docs/app/getting-started/server-and-client-components
+- https://web.dev/articles/optimize-long-tasks
+- https://threejs.org/manual/pages/offscreencanvas.html
