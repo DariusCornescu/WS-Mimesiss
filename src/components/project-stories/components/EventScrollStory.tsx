@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { CSSProperties } from 'react'
-import { FiArrowDown, FiArrowRight, FiMaximize2 } from 'react-icons/fi'
+import { FiArrowDown, FiArrowRight } from 'react-icons/fi'
 import type { EventStory } from '../lib/event-stories'
 import styles from './EventScrollStory.module.css'
 
@@ -18,7 +18,7 @@ const subscribeToMotion = (onChange: () => void) => {
 const motionSnapshot = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'animated'
 const serverMotionSnapshot = () => 'animated'
 
-export default function EventScrollStory({ story, onOpenImage }: { story: EventStory; onOpenImage: (src: string, alt: string) => void }) {
+export default function EventScrollStory({ story }: { story: EventStory }) {
   const trackRef = useRef<HTMLElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
   const frameRefs = useRef<(HTMLElement | null)[]>([])
@@ -158,7 +158,7 @@ export default function EventScrollStory({ story, onOpenImage }: { story: EventS
           <p className={styles.eyebrow}>{index === 0 ? story.eyebrow : `${story.id === 'bal' ? 'Momentul' : 'Oprirea'} ${String(index).padStart(2, '0')} / ${frame.label}`}</p>
           {index === 0 ? <h1 id={`${story.id}-story-title`}>{story.id === 'bal' ? <>Balul<br /><em>bobocilor.</em></> : <>Cortul <em>IMM.</em></>}</h1> : frame.title ? <h2>{frame.title}</h2> : <div className={styles.titleSpace} aria-hidden="true" />}
           {frame.body ? <p className={styles.body}>{frame.body}</p> : <div className={styles.bodySpace} aria-hidden="true" />}
-          {index === 0 ? <button type="button" className={styles.explore} onClick={() => jumpTo(1)}><FiArrowDown aria-hidden="true" />{story.id === 'bal' ? 'Intră în poveste' : 'Descoperă activitățile'}<span>prin scroll</span></button> : <button type="button" className={styles.enlarge} onClick={() => onOpenImage(frame.photo.src, frame.photo.alt)}><FiMaximize2 aria-hidden="true" />Vezi fotografia</button>}
+          {index === 0 && <button type="button" className={styles.explore} onClick={() => jumpTo(1)}><FiArrowDown aria-hidden="true" />{story.id === 'bal' ? 'Intră în poveste' : 'Descoperă activitățile'}<span>prin scroll</span></button>}
         </div>
         {index > 0 && <span className={styles.largeNumber} aria-hidden="true">0{index}</span>}
       </article>)}
