@@ -30,7 +30,7 @@ test('all story photographs and 3D textures are included in the production asset
       story.chapters.forEach(chapter => sources.add(chapter.photo.src))
     }
   }
-  for (const file of ['membrane.webp', 'concept.webp', 'mimesiss-intro-logo.webp', 'photo-1.webp', 'photo-2.webp', 'photo-3.webp', 'photo-4.webp']) sources.add(`/project-stories/neural-space/${file}`)
+  for (const file of ['membrane.webp', 'concept.webp', 'intro-desktop.webp', 'intro-mobile.webp', 'mimesiss-intro-logo.webp', 'photo-1.webp', 'photo-2.webp', 'photo-3.webp', 'photo-4.webp']) sources.add(`/project-stories/neural-space/${file}`)
   for (const source of sources) {
     assert.ok(source.startsWith('/project-stories/') && !source.includes('..'))
     await access(new URL(`../public${source}`, import.meta.url))

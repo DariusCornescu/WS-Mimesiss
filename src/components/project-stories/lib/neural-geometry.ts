@@ -82,12 +82,15 @@ function photographGeometry(index: number) {
 }
 
 
-export function buildNeuralGeometry() {
-  const meshes: Record<string, THREE.BufferGeometry> = { body: organicBody(44) }
-  for (let i = 0; i < 4; i++) {
-    meshes['branches' + i] = neurites(300 + i, 9, true)
-    meshes['photo' + i] = photographGeometry(i)
+export type NeuralGeometryStage = 0 | 1 | 2 | 3 | 'background'
+
+export function buildNeuralGeometryStage(stage: NeuralGeometryStage): Record<string, THREE.BufferGeometry> {
+  if (typeof stage === 'number') return {
+    ...(stage === 0 ? { body: organicBody(44) } : {}),
+    ['branches' + stage]: neurites(300 + stage, 9, true),
+    ['photo' + stage]: photographGeometry(stage),
   }
+  const meshes: Record<string, THREE.BufferGeometry> = {}
   const random = seededRandom(1862)
   const bodies = [], branches = []
   for (let i = 0; i < 22; i++) {
@@ -101,6 +104,8 @@ export function buildNeuralGeometry() {
   }
   meshes.backgroundBodies = mergeGeometries(bodies)
   meshes.backgroundBranches = mergeGeometries(branches)
+  bodies.forEach(geometry => geometry.dispose())
+  branches.forEach(geometry => geometry.dispose())
   const connections = locations.slice(1).map((location, i) => {
     const from = locations[i].clone().add(new THREE.Vector3(3.5, -2, -1))
     const to = location.clone().add(new THREE.Vector3(-3.5, -2, -1))
@@ -108,5 +113,6 @@ export function buildNeuralGeometry() {
     return taperedBranch([from, middle, to], .28, 36, 6)
   })
   meshes.connections = mergeGeometries(connections)
+  connections.forEach(geometry => geometry.dispose())
   return meshes
 }

@@ -10,6 +10,7 @@ import { neuralStoryPassages } from '../lib/neural-story-copy'
 import { projects } from '../lib/content'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
 import { mobileStoryFrame, mobileStoryMoments } from '../lib/mobile-story-timing'
+import { afterScenePaint } from '../lib/neural-loading'
 import type { NeuralSpace } from '../lib/neural-space'
 import styles from './MimesissScrollStory.module.css'
 
@@ -59,13 +60,19 @@ export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy 
     const abort = new AbortController()
     let controller: NeuralSpace | null = null
     const fail = () => { if (!cancelled) setSceneError('Scena 3D nu a putut fi afișată. Poți explora fotografiile și textele în prezentarea de mai jos.') }
-    import('../lib/neural-space').then(module => module.createNeuralSpace(host, fail, abort.signal)).then(space => {
+    const start = () => afterScenePaint(abort.signal).then(() => import('../lib/neural-space')).then(module => module.createNeuralSpace(host, fail, abort.signal, () => renderRef.current())).then(space => {
       if (cancelled) { space.dispose(); return }
       controller = space
       spaceRef.current = space
       renderRef.current()
     }).catch(fail)
-    return () => { cancelled = true; abort.abort(); controller?.dispose(); if (spaceRef.current === controller) spaceRef.current = null }
+    const observer = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return
+      observer.disconnect()
+      void start()
+    }, { rootMargin: '240px' })
+    observer.observe(host)
+    return () => { cancelled = true; observer.disconnect(); abort.abort(); controller?.dispose(); if (spaceRef.current === controller) spaceRef.current = null }
   }, [staticMode])
 
   useEffect(() => {
@@ -115,7 +122,14 @@ export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy 
       const trackBounds = track.getBoundingClientRect()
       previousLayout = { width, height, progress, pinned: trackBounds.top <= 0 && trackBounds.bottom >= height }
       const introBottom = (introRef.current?.offsetTop ?? 0) + (introRef.current?.offsetHeight ?? 0)
-      if (stageBounds.bottom > 0 && stageBounds.top < window.innerHeight) spaceRef.current?.update(progress, { width, height, narrow: narrow && !landscape, landscape, panelHeight, introBottom })
+      const visible = document.visibilityState === 'visible' && stageBounds.bottom > 0 && stageBounds.top < window.innerHeight
+      const visualReady = visible && spaceRef.current?.update(progress, { width, height, narrow: narrow && !landscape, landscape, panelHeight, introBottom })
+      if (!visualReady) mobilePanelRefs.current.forEach(panel => {
+        if (!panel) return
+        panel.style.opacity = '0'
+        panel.inert = true
+        panel.setAttribute('aria-hidden', 'true')
+      })
       if (introRef.current) introRef.current.style.opacity = String(1 - between(progress, .035, .11))
       panelRefs.current.forEach((panel, index) => {
         if (!panel) return
@@ -125,7 +139,7 @@ export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy 
         const partSpan = (end - start) / passage.parts
         const partStart = start + passage.part * partSpan
         const fade = Math.min(.035, partSpan * .2)
-        const opacity = reading ? 0 : between(progress, partStart, partStart + fade) * (1 - between(progress, partStart + partSpan - fade, partStart + partSpan))
+        const opacity = reading || !visualReady ? 0 : between(progress, partStart, partStart + fade) * (1 - between(progress, partStart + partSpan - fade, partStart + partSpan))
         panel.style.opacity = String(opacity)
         panel.style.transform = `translateY(${((1 - opacity) * 18).toFixed(1)}px)`
         panel.inert = opacity < .85
@@ -142,13 +156,18 @@ export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy 
     panelRefs.current.forEach(panel => { if (panel) observer.observe(panel) })
     window.addEventListener('scroll', schedule, { passive: true })
     window.addEventListener('resize', schedule)
+    document.addEventListener('visibilitychange', schedule)
     draw()
-    return () => { renderRef.current = () => {}; observer.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); if (frame) window.cancelAnimationFrame(frame) }
+    return () => { renderRef.current = () => {}; observer.disconnect(); window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); document.removeEventListener('visibilitychange', schedule); if (frame) window.cancelAnimationFrame(frame) }
   }, [staticMode, desktopPassages, mobileMoments])
 
   return <section ref={trackRef} style={{ '--story-passage-count': mobilePassages.length } as CSSProperties} className={`${styles.track} ${staticMode ? styles.staticMode : ''}`} aria-labelledby="mimesiss-scroll-title">
     <div ref={stageRef} className={styles.stage}>
       <div ref={worldRef} className={styles.world} aria-hidden="true" />
+      <picture className={styles.poster}>
+        <source media="(max-width: 700px) and (orientation: portrait)" srcSet="/project-stories/neural-space/intro-mobile.webp" />
+        <Image src="/project-stories/neural-space/intro-desktop.webp" alt="" fill unoptimized loading="eager" fetchPriority="high" />
+      </picture>
       <div ref={introRef} className={styles.intro}>
         <p className={styles.eyebrow}>{project.kicker}</p>
         <h1 id="mimesiss-scroll-title">MIMESISS</h1>

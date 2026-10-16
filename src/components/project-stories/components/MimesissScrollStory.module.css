@@ -1,8 +1,12 @@
 .track { position: relative; height: 580svh; margin: 0 calc(0px - min(34px, 3vw)); color: hsl(var(--foreground)); }
 .stage { position: sticky; top: 0; height: 100svh; min-height: 0; overflow: clip; isolation: isolate; background: hsl(var(--background)); border: 1px solid hsl(var(--border) / .35); }
-.world { position: absolute; inset: 0; opacity: 0; transition: opacity .24s ease-out; }
+.world { position: absolute; z-index: 1; inset: 0; opacity: 0; transition: opacity .24s ease-out; }
 .world[data-scene-ready="true"] { opacity: 1; }
 .world canvas { display: block; width: 100%; height: 100%; }
+.poster { position: absolute; z-index: 0; inset: 0; opacity: 1; transition: opacity .24s ease-out, visibility 0s .24s; }
+.poster img { object-fit: cover; }
+.world[data-scene-ready="true"] + .poster { opacity: 0; visibility: hidden; }
+.staticMode .poster { display: none; }
 .photoTargets { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .scenePhoto { position: absolute; display: block; visibility: hidden; border: 0; padding: 0; background: transparent; cursor: zoom-in; pointer-events: auto; }
 .scenePhoto > span { position: absolute; display: inline-flex; gap: 8px; align-items: center; bottom: 8%; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 9px 12px; background: hsl(var(--background) / .9); border: 0; border-radius: 0; color: hsl(var(--foreground)); font-size: 12px; opacity: calc(var(--photo-label-opacity, 1) * var(--target-label-opacity, 1)); }
@@ -89,6 +93,7 @@
   .track { margin: 0 -16px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .poster { display: none; }
   .world { transition: none; }
   .track { height: auto; }
   .stage { position: relative; height: auto; min-height: 0; overflow: hidden; padding: 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }

@@ -1,9 +1,12 @@
 import * as THREE from 'three'
 import { BRAND } from '@/lib/brand'
 import { mimesissScenePhotos } from './mimesiss-scene'
+import type { NeuralGeometryStage } from './neural-geometry'
+import { afterScenePaint, neuralStagePriority, requiredNeuralStages, shouldPrepareNeuralStage } from './neural-loading'
+import { loadNeuralTexture } from './neural-texture'
 
 export type NeuralLayout = { width: number; height: number; narrow: boolean; landscape?: boolean; panelHeight: number; introBottom?: number }
-export type NeuralSpace = { update: (progress: number, layout: NeuralLayout) => void; dispose: () => void }
+export type NeuralSpace = { update: (progress: number, layout: NeuralLayout) => boolean; dispose: () => void }
 
 const arrivals = [.19, .43, .67, .9]
 const departures = [.31, .55, .79, 1.1]
@@ -18,28 +21,44 @@ const yieldToBrowser = () => {
 
 const photoSize = (index: number) => index === 0 ? { width: 6.7, height: 6.6 } : { width: 8.35, height: 6.05 }
 
-type GeometryPayload = { attributes: Record<string, { array: Float32Array; itemSize: number }>; index: Uint16Array | Uint32Array }
-function loadGeometry(signal: AbortSignal): Promise<Record<string, THREE.BufferGeometry>> {
-  return new Promise((resolve, reject) => {
-    const worker = new Worker(new URL('./neural-geometry.worker.ts', import.meta.url))
-    const finish = () => { worker.terminate(); signal.removeEventListener('abort', abort) }
-    const abort = () => { finish(); reject(new DOMException('Scene loading cancelled', 'AbortError')) }
-    if (signal.aborted) { abort(); return }
-    signal.addEventListener('abort', abort, { once: true })
-    worker.onerror = () => { finish(); reject(new Error('Scene geometry worker failed.')) }
-    worker.onmessage = (event: MessageEvent<{ geometries?: [string, GeometryPayload][]; error?: string }>) => {
-      finish()
-      if (!event.data.geometries) { reject(new Error(event.data.error)); return }
-      resolve(Object.fromEntries(event.data.geometries.map(([name, data]) => {
-        const geometry = new THREE.BufferGeometry()
-        Object.entries(data.attributes).forEach(([key, attribute]) => geometry.setAttribute(key, new THREE.BufferAttribute(attribute.array, attribute.itemSize)))
-        geometry.setIndex(new THREE.BufferAttribute(data.index, 1))
-        geometry.computeBoundingSphere()
-        return [name, geometry]
-      })))
-    }
-    worker.postMessage(null)
+type GeometryPayload = { attributes: Record<string, { array: Float32Array; itemSize: number }>; index: Uint16Array | Uint32Array; sphere: { center: [number, number, number]; radius: number } }
+function geometryLoader(signal: AbortSignal) {
+  const worker = new Worker(new URL('./neural-geometry.worker.ts', import.meta.url))
+  const pending = new Map<NeuralGeometryStage, { resolve: (value: Record<string, THREE.BufferGeometry>) => void; reject: (reason: Error) => void }>()
+  let closed = false
+  const dispose = () => {
+    if (closed) return
+    closed = true
+    worker.terminate()
+    signal.removeEventListener('abort', dispose)
+    pending.forEach(job => job.reject(new DOMException('Scene loading cancelled', 'AbortError')))
+    pending.clear()
+  }
+  signal.addEventListener('abort', dispose, { once: true })
+  worker.onerror = () => {
+    pending.forEach(job => job.reject(new Error('Scene geometry worker failed.')))
+    pending.clear()
+    dispose()
+  }
+  worker.onmessage = (event: MessageEvent<{ stage: NeuralGeometryStage; geometries?: [string, GeometryPayload][]; error?: string }>) => {
+    const job = pending.get(event.data.stage)
+    if (!job) return
+    pending.delete(event.data.stage)
+    if (!event.data.geometries) { job.reject(new Error(event.data.error)); return }
+    job.resolve(Object.fromEntries(event.data.geometries.map(([name, data]) => {
+      const geometry = new THREE.BufferGeometry()
+      Object.entries(data.attributes).forEach(([key, attribute]) => geometry.setAttribute(key, new THREE.BufferAttribute(attribute.array, attribute.itemSize)))
+      geometry.setIndex(new THREE.BufferAttribute(data.index, 1))
+      geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(...data.sphere.center), data.sphere.radius)
+      return [name, geometry]
+    })))
+  }
+  const load = (stage: NeuralGeometryStage) => new Promise<Record<string, THREE.BufferGeometry>>((resolve, reject) => {
+    if (closed || signal.aborted) { dispose(); reject(new DOMException('Scene loading cancelled', 'AbortError')); return }
+    pending.set(stage, { resolve, reject })
+    worker.postMessage(stage)
   })
+  return { load, dispose }
 }
 
 function photographMaterial(texture: THREE.Texture, index: number, introTexture: THREE.Texture) {
@@ -88,30 +107,49 @@ function photographMaterial(texture: THREE.Texture, index: number, introTexture:
   })
 }
 
-export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () => void, signal: AbortSignal): Promise<NeuralSpace> {
-  const geometryPromise = loadGeometry(signal)
-  const loader = new THREE.TextureLoader()
+export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () => void, signal: AbortSignal, onInvalidate: () => void = () => {}): Promise<NeuralSpace> {
+  let disposed = false
+  let backgroundReady = false
+  let complete = false
+  let requestedProgress = 0
+  let presentedProgress: number | null = null
+  let resumePreparation: (() => void) | null = null
+  const jobs = geometryLoader(signal)
+  const textures = new Set<THREE.Texture>()
+  const ownedGeometry = new Set<THREE.BufferGeometry>()
   const mobile = window.matchMedia('(max-width: 700px)').matches
-  const assets = ['/project-stories/neural-space/membrane.webp', ...locations.map((_, index) => `/project-stories/neural-space/photo-${index + 1}.webp`), '/project-stories/neural-space/mimesiss-intro-logo.webp']
-  const [geometryResult, textureResult] = await Promise.allSettled([
-    geometryPromise,
-    Promise.allSettled(assets.map(src => loader.loadAsync(mobile && src.endsWith('.webp') && !src.endsWith('mimesiss-intro-logo.webp') ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src))),
+  const resources = () => { jobs.dispose(); ownedGeometry.forEach(item => item.dispose()); textures.forEach(item => item.dispose()) }
+  const loadTexture = async (src: string) => {
+    const url = mobile && !src.endsWith('mimesiss-intro-logo.webp') ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src
+    const texture = await loadNeuralTexture(url, signal)
+    if (disposed || signal.aborted) { texture.dispose(); throw new DOMException('Scene loading cancelled', 'AbortError') }
+    texture.colorSpace = THREE.SRGBColorSpace
+    textures.add(texture)
+    return texture
+  }
+  const loadGeometry = async (stage: NeuralGeometryStage) => {
+    const result = await jobs.load(stage)
+    if (disposed || signal.aborted) { Object.values(result).forEach(item => item.dispose()); throw new DOMException('Scene loading cancelled', 'AbortError') }
+    Object.values(result).forEach(item => ownedGeometry.add(item))
+    return result
+  }
+  const initial = await Promise.allSettled([
+    loadGeometry(0),
+    loadTexture('/project-stories/neural-space/membrane.webp'),
+    loadTexture('/project-stories/neural-space/mimesiss-intro-logo.webp'),
   ])
-  const loaded = textureResult.status === 'fulfilled' ? textureResult.value : []
-  const geometry = geometryResult.status === 'fulfilled' ? geometryResult.value : {}
-  if (signal.aborted || geometryResult.status === 'rejected' || loaded.some(result => result.status === 'rejected')) {
-    Object.values(geometry).forEach(item => item.dispose())
-    loaded.forEach(result => { if (result.status === 'fulfilled') result.value.dispose() })
+  if (signal.aborted || initial[0].status !== 'fulfilled' || initial[1].status !== 'fulfilled' || initial[2].status !== 'fulfilled') {
+    resources()
     throw new Error('Scene loading interrupted or failed.')
   }
-  const textures = loaded.flatMap(result => result.status === 'fulfilled' ? [result.value] : [])
-  textures.forEach(texture => { texture.colorSpace = THREE.SRGBColorSpace })
-  const membrane = textures[0]
+  const geometry = initial[0].value
+  const membrane = initial[1].value
+  const introTexture = initial[2].value
   membrane.wrapS = membrane.wrapT = THREE.RepeatWrapping
   membrane.repeat.set(2, 2)
   let renderer: THREE.WebGLRenderer
   try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'low-power' }) }
-  catch (error) { textures.forEach(texture => texture.dispose()); Object.values(geometry).forEach(item => item.dispose()); throw error }
+  catch (error) { resources(); throw error }
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
   renderer.toneMappingExposure = 1.25
@@ -119,8 +157,7 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
   host.appendChild(renderer.domElement)
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(BRAND.story.background).multiplyScalar(.3)
-  const fog = new THREE.FogExp2(scene.background, .012)
-  scene.fog = fog
+  scene.fog = new THREE.FogExp2(scene.background, .012)
   const camera = new THREE.PerspectiveCamera(46, 1, .1, 200)
   const material = new THREE.MeshStandardMaterial({ map: membrane, bumpMap: membrane, bumpScale: .08, color: BRAND.story.foreground, roughness: .94, metalness: 0 })
   scene.add(new THREE.AmbientLight(BRAND.story.mutedForeground, 2.4))
@@ -129,26 +166,25 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
   const rim = new THREE.DirectionalLight(BRAND.story.foreground, 2.2)
   rim.position.set(-6, 10, 12)
   scene.add(rim)
-  const groups: THREE.Group[] = []
   const photographs: THREE.Mesh[] = []
-  for (const [index, location] of locations.entries()) {
+  const photoReady = [false, false, false, false]
+  const addNeuron = (index: number, meshes: Record<string, THREE.BufferGeometry>, texture: THREE.Texture) => {
     const group = new THREE.Group()
-    group.position.copy(location)
+    group.position.copy(locations[index])
     group.rotation.y = [-.08, .12, -.06, .05][index]
     group.rotation.z = [-.045, .02, -.025, .025][index]
-    group.add(new THREE.Mesh(geometry.body, material), new THREE.Mesh(geometry['branches' + index], material))
-    const photograph = new THREE.Mesh(geometry['photo' + index], photographMaterial(textures[index + 1], index, textures[textures.length - 1]))
+    group.add(new THREE.Mesh(geometry.body, material), new THREE.Mesh(meshes['branches' + index], material))
+    const photograph = new THREE.Mesh(meshes['photo' + index], photographMaterial(texture, index, introTexture))
     photograph.renderOrder = 1
     group.add(photograph)
     scene.add(group)
-    groups.push(group)
-    photographs.push(photograph)
+    scene.updateMatrixWorld(true)
+    group.traverse(object => { object.matrixAutoUpdate = false })
+    photographs[index] = photograph
   }
-  scene.add(new THREE.Mesh(geometry.backgroundBodies, material), new THREE.Mesh(geometry.backgroundBranches, material), new THREE.Mesh(geometry.connections, material))
-  scene.updateMatrixWorld(true)
+  addNeuron(0, geometry, introTexture)
   scene.traverse(object => { object.matrixAutoUpdate = false })
   cameraLight.matrixAutoUpdate = true
-  let disposed = false
   const instance = crypto.randomUUID()
   let lastSize = ''
   let lastFrame = ''
@@ -169,9 +205,14 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     return locations[index].clone().add(new THREE.Vector3(offsetX, offsetY, distance))
   }
   const update = (progress: number, layout: NeuralLayout) => {
-    if (disposed || signal.aborted) return
-    const frameKey = [progress, layout.width, layout.height, layout.narrow, layout.landscape, layout.panelHeight, layout.introBottom].join(':')
-    if (frameKey === lastFrame) return
+    if (disposed || signal.aborted) return false
+    requestedProgress = progress
+    resumePreparation?.()
+    resumePreparation = null
+    const ready = backgroundReady && requiredNeuralStages(progress).every(index => photoReady[index])
+    if (!ready) progress = presentedProgress ?? 0
+    const frameKey = [progress, layout.width, layout.height, layout.narrow, layout.landscape, layout.panelHeight, layout.introBottom, ready].join(':')
+    if (frameKey === lastFrame) return ready
     lastFrame = frameKey
     const size = `${layout.width}:${layout.height}:${layout.narrow}:${layout.landscape}`
     if (size !== lastSize) {
@@ -214,22 +255,29 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     camera.rotation.set(0, yaw, 0)
     camera.updateMatrixWorld(true)
     cameraLight.position.copy(position).add(new THREE.Vector3(-5, 6, -1))
-    const introMix = 1 - smooth(clamp((progress - .05) / .12));
+    const introMix = photoReady[0] ? 1 - smooth(clamp((progress - .05) / .12)) : 1;
     (photographs[0].material as THREE.ShaderMaterial).uniforms.introMix.value = introMix
     host.dataset.introLogoOpacity = introMix.toFixed(3)
     renderer.render(scene, camera)
-    host.dataset.sceneReady = 'true'
+    if (ready) { host.dataset.sceneReady = 'true'; presentedProgress = progress }
+    host.dataset.scenePhase = complete ? 'complete' : ready ? 'interactive' : 'preparing'
+    host.dataset.loadedPhotos = photoReady.flatMap((ready, index) => ready ? [index] : []).join(',')
     host.dataset.sceneInstance = instance
     host.dataset.engine = 'webgl'
     host.dataset.cameraPosition = position.toArray().map(value => value.toFixed(2)).join(',')
     host.dataset.triangles = String(renderer.info.render.triangles)
     host.dataset.drawCalls = String(renderer.info.render.calls)
+    return ready
   }
   const dispose = () => {
     if (disposed) return
     disposed = true
+    resumePreparation?.()
+    resumePreparation = null
+    jobs.dispose()
+    signal.removeEventListener('abort', dispose)
     renderer.domElement.removeEventListener('webglcontextlost', lost)
-    const geometries = new Set<THREE.BufferGeometry>(), materials = new Set<THREE.Material>()
+    const geometries = new Set<THREE.BufferGeometry>(ownedGeometry), materials = new Set<THREE.Material>()
     scene.traverse(object => { if (object instanceof THREE.Mesh) { geometries.add(object.geometry); const list = Array.isArray(object.material) ? object.material : [object.material]; list.forEach(item => materials.add(item)) } })
     geometries.forEach(geometry => geometry.dispose())
     materials.forEach(item => item.dispose())
@@ -239,6 +287,8 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     renderer.domElement.remove()
     if (host.dataset.sceneInstance === instance) {
       delete host.dataset.sceneReady
+      delete host.dataset.scenePhase
+      delete host.dataset.loadedPhotos
       delete host.dataset.sceneInstance
       delete host.dataset.engine
       delete host.dataset.cameraPosition
@@ -247,6 +297,7 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
       delete host.dataset.introLogoOpacity
     }
   }
+  signal.addEventListener('abort', dispose, { once: true })
   try {
     for (const texture of textures) {
       if (signal.aborted) { dispose(); throw new DOMException('Scene loading cancelled', 'AbortError') }
@@ -259,5 +310,45 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     throw error
   }
   if (signal.aborted) { dispose(); throw new DOMException('Scene loading cancelled', 'AbortError') }
+  const changed = () => { lastFrame = ''; onInvalidate() }
+  void (async () => {
+    await afterScenePaint(signal)
+    const [background, firstPhoto] = await Promise.all([
+      loadGeometry('background'),
+      loadTexture('/project-stories/neural-space/photo-1.webp'),
+    ])
+    if (disposed || signal.aborted) return
+    renderer.initTexture(firstPhoto)
+    ;(photographs[0].material as THREE.ShaderMaterial).uniforms.photo.value = firstPhoto
+    photoReady[0] = true
+    scene.add(new THREE.Mesh(background.backgroundBodies, material), new THREE.Mesh(background.backgroundBranches, material), new THREE.Mesh(background.connections, material))
+    scene.updateMatrixWorld(true)
+    backgroundReady = true
+    changed()
+    await yieldToBrowser()
+    while (!disposed && !signal.aborted && photoReady.some(ready => !ready)) {
+      const index = neuralStagePriority(requestedProgress).find(index => !photoReady[index] && shouldPrepareNeuralStage(index, requestedProgress))
+      if (index === undefined) {
+        await new Promise<void>(resolve => { resumePreparation = resolve })
+        continue
+      }
+      const [meshes, texture] = await Promise.all([
+        loadGeometry(index as NeuralGeometryStage),
+        loadTexture('/project-stories/neural-space/photo-' + (index + 1) + '.webp'),
+      ])
+      if (disposed || signal.aborted) return
+      renderer.initTexture(texture)
+      await yieldToBrowser()
+      if (disposed || signal.aborted) return
+      addNeuron(index, meshes, texture)
+      photoReady[index] = true
+      changed()
+      await yieldToBrowser()
+    }
+    if (disposed || signal.aborted) return
+    jobs.dispose()
+    complete = true
+    changed()
+  })().catch(() => { if (!disposed && !signal.aborted) { onContextLost(); dispose() } })
   return { update, dispose }
 }
