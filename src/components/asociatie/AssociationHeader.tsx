@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { FaBars, FaChevronDown, FaTimes, FaUser } from 'react-icons/fa'
+import { FaBars, FaChevronDown, FaTimes, FaUser, FaArrowRight } from 'react-icons/fa'
 import styles from './AssociationHeader.module.css'
 
 const links = [
@@ -14,6 +14,12 @@ const links = [
   { href: '/proiecte', label: 'Proiecte' },
   { href: '/congres', label: 'MIMESISS' },
   { href: '/contact', label: 'Contact' },
+]
+
+const projectLinks = [
+  { href: '/proiecte/mimesiss', label: 'MIMESISS', image: '/project-stories/neural-space/photo-1.webp' },
+  { href: '/proiecte/balul-bobocilor', label: 'Balul bobocilor', image: '/project-stories/originals/ball/img-9112-355bf49.webp' },
+  { href: '/proiecte/cortul-imm', label: 'Cortul IMM', image: '/project-stories/originals/tent/photo-2026-10-10-10-44-29-3-jpg-20a4e92.webp' },
 ]
 
 const congressLinks = [
@@ -32,7 +38,7 @@ export default function AssociationHeader() {
   const [openPath, setOpenPath] = useState<string | null>(null)
   const [congressOpen, setCongressOpen] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
-  const menuPanelRef = useRef<HTMLDivElement>(null)
+  const menuPanelRef = useRef<HTMLDialogElement>(null)
   const open = openPath === pathname
   const inCongress = pathname.startsWith('/congres')
 
@@ -51,45 +57,30 @@ export default function AssociationHeader() {
 
   useEffect(() => {
     if (!open) return
-
+    const panel = menuPanelRef.current
+    if (!panel) return
+    const menuButton = menuButtonRef.current
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-
-    const panel = menuPanelRef.current
-    const initialFocusable = panel?.querySelectorAll<HTMLElement>(
-      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )
-    initialFocusable?.[0]?.focus()
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setOpenPath(null)
-        setCongressOpen(false)
-        menuButtonRef.current?.focus()
-        return
-      }
-
+    panel.showModal()
+    panel.querySelector<HTMLButtonElement>('button[aria-label="Închide meniul"]')?.focus()
+    const keepFocus = (event: KeyboardEvent) => {
       if (event.key !== 'Tab') return
-      const focusable = panel?.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      )
-      if (!focusable?.length) return
-      const first = focusable[0]
-      const last = focusable[focusable.length - 1]
-
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault()
-        first.focus()
-      }
+      const items = [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]')].filter(item => item.getClientRects().length)
+      const first = items[0], last = items[items.length - 1]
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
     }
-
-    document.addEventListener('keydown', handleKeyDown)
+    panel.addEventListener('keydown', keepFocus)
+    const desktop = window.matchMedia('(min-width: 1141px)')
+    const closeOnDesktop = () => { if (desktop.matches) { setOpenPath(null); setCongressOpen(false) } }
+    desktop.addEventListener('change', closeOnDesktop)
     return () => {
+      panel.removeEventListener('keydown', keepFocus)
+      panel.close()
+      menuButton?.focus({ preventScroll: true })
       document.body.style.overflow = previousOverflow
-      document.removeEventListener('keydown', handleKeyDown)
+      desktop.removeEventListener('change', closeOnDesktop)
     }
   }, [open])
 
@@ -146,82 +137,32 @@ export default function AssociationHeader() {
         </nav>
       )}
 
-      {open && (
-        <div className={styles.mobileLayer}>
-          <button type="button" className={styles.backdrop} aria-label="Închide meniul" onClick={closeMenu} />
-          <div
-            ref={menuPanelRef}
-            id="association-menu"
-            className={styles.mobilePanel}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Navigație mobilă"
-          >
-            <div className={styles.mobileHeader}>
-              <Link href="/" aria-label="ASMM — Acasă" className={styles.mobileLogo} onClick={closeMenu}>
-                <Image src="/icons/asmm.png" alt="" width={210} height={55} />
-              </Link>
-              <button
-                type="button"
-                aria-label="Închide meniul"
-                className={styles.closeButton}
-                onClick={() => {
-                  closeMenu()
-                  menuButtonRef.current?.focus()
-                }}
-              >
-                <FaTimes aria-hidden="true" />
-              </button>
-            </div>
-
-            <nav aria-label="Navigație principală mobilă" className={styles.mobileNav}>
-              {links.map(({ href, label }) => href === '/congres' ? (
-                <div key={href} className={styles.mobileCongressGroup}>
-                  <button
-                    type="button"
-                    className={styles.mobileCongressToggle}
-                    aria-expanded={congressOpen}
-                    aria-controls="mobile-congress-links"
-                    data-active={inCongress || undefined}
-                    onClick={() => setCongressOpen((current) => !current)}
-                  >
-                    <span>{label}</span>
-                    <FaChevronDown aria-hidden="true" />
-                  </button>
-                  {congressOpen && (
-                    <div id="mobile-congress-links" className={styles.mobileCongressLinks}>
-                      <p className={styles.mobileCongressIntro}>Descoperă congresul, programul și atelierele.</p>
-                      {congressLinks.map(({ href: congressHref, label: congressLabel }) => (
-                        <Link key={congressHref} href={congressHref} aria-current={isCongressActive(congressHref) ? 'page' : undefined} onClick={closeMenu}>
-                          {congressLabel}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link key={href} href={href} aria-current={isPrimaryActive(href) ? 'page' : undefined} onClick={closeMenu}>
-                  {label}
-                </Link>
-              ))}
-            </nav>
-
-            <div className={styles.mobileAuth}>
-              <SignedOut>
-                <Link href="/auth/login" onClick={closeMenu}>Conectare</Link>
-                <Link href="/auth/signup" className={styles.mobileSignUp} onClick={closeMenu}>Creează cont</Link>
-              </SignedOut>
-              <SignedIn>
-                <Link href="/dashboard" className={styles.mobileAccountLink} onClick={closeMenu}>
-                  <FaUser aria-hidden="true" />
-                  Contul meu
-                </Link>
-                <UserButton />
-              </SignedIn>
-            </div>
-          </div>
+      {open && <dialog ref={menuPanelRef} id="association-menu" className={styles.mobilePanel} aria-label="Navigație mobilă" onCancel={closeMenu} onClick={event => { if (event.target === event.currentTarget) closeMenu() }}>
+        <div className={styles.mobileHeader}>
+          <Link href="/" aria-label="ASMM — Acasă" className={styles.mobileLogo} onClick={closeMenu}><Image src="/icons/asmm.png" alt="" width={210} height={55} /></Link>
+          <button type="button" aria-label="Închide meniul" className={styles.closeButton} onClick={closeMenu}><FaTimes aria-hidden="true" /></button>
         </div>
-      )}
+        <div className={styles.mobileScroll}>
+          <nav aria-label="Navigație principală mobilă" className={styles.mobileNav}>
+            {links.filter(link => !['/proiecte', '/congres'].includes(link.href)).map(({ href, label }) => <Link key={href} href={href} aria-current={isPrimaryActive(href) ? 'page' : undefined} onClick={closeMenu}>{label}</Link>)}
+          </nav>
+          <section className={styles.mobileProjects} aria-labelledby="mobile-projects-title">
+            <div className={styles.mobileSectionHeading}><h2 id="mobile-projects-title">Proiectele noastre</h2><Link href="/proiecte" onClick={closeMenu}>Vezi toate <FaArrowRight aria-hidden="true" /></Link></div>
+            <nav aria-label="Proiecte ASMM" className={styles.mobileProjectLinks}>
+              {projectLinks.map(project => <Link key={project.href} href={project.href} aria-current={pathname === project.href ? 'page' : undefined} onClick={closeMenu}><Image src={project.image} alt="" width={54} height={54} sizes="54px" /><span>{project.label}</span><FaArrowRight aria-hidden="true" /></Link>)}
+            </nav>
+          </section>
+          <div className={styles.mobileCongressGroup}>
+            <button type="button" className={styles.mobileCongressToggle} aria-expanded={congressOpen} aria-controls="mobile-congress-links" data-active={inCongress || undefined} onClick={() => setCongressOpen(current => !current)}><span>Congresul MIMESISS</span><FaChevronDown aria-hidden="true" /></button>
+            {congressOpen && <nav id="mobile-congress-links" className={styles.mobileCongressLinks} aria-label="Navigație congres mobilă">{congressLinks.map(({ href, label }) => <Link key={href} href={href} aria-current={isCongressActive(href) ? 'page' : undefined} onClick={closeMenu}>{label}</Link>)}</nav>}
+          </div>
+          <nav className={styles.mobileShortcuts} aria-label="Acces rapid"><Link href="/congres/workshops" onClick={closeMenu}>Ateliere <FaArrowRight aria-hidden="true" /></Link><Link href="/congres/gallery" onClick={closeMenu}>Galerie foto <FaArrowRight aria-hidden="true" /></Link></nav>
+        </div>
+        <div className={styles.mobileAuth}>
+          <SignedOut><Link href="/auth/login" onClick={closeMenu}>Conectare</Link><Link href="/auth/signup" className={styles.mobileSignUp} onClick={closeMenu}>Creează cont</Link></SignedOut>
+          <SignedIn><Link href="/dashboard" className={styles.mobileAccountLink} onClick={closeMenu}><FaUser aria-hidden="true" />Contul meu</Link><UserButton /></SignedIn>
+        </div>
+      </dialog>}
     </header>
   )
 }

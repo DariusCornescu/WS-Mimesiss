@@ -1,0 +1,6 @@
+.grid { columns: 3; column-gap: 16px; }
+.grid button { display: block; position: relative; width: 100%; margin-bottom: 16px; break-inside: avoid; overflow: hidden; border-radius: 8px; background: hsl(var(--card)); cursor: zoom-in; }
+.grid img { display: block; width: 100%; height: auto; }
+.grid button > span { position: absolute; bottom: 8px; right: 8px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: hsl(var(--foreground)); background: hsl(var(--background) / .75); }
+.grid button:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 4px; }
+@media (max-width: 700px) { .grid { columns: 2; column-gap: 12px; } .grid button { margin-bottom: 12px; } }

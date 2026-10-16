@@ -110,79 +110,43 @@
 .mobileLayer { display: none; }
 
 @media (max-width: 1140px) {
-  .headerInner { min-height: 86px; }
   .logo { flex-basis: 220px; }
-  .desktopNav,
-  .signInLink,
-  .signUpLink { display: none; }
+  .desktopNav, .signInLink, .signUpLink { display: none; }
   .authControls { margin-left: auto; }
-  .menuButton {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border: 1px solid hsl(var(--brand-sand) / .45);
-    border-radius: 8px;
-    color: hsl(var(--brand-ivory));
-  }
+  .menuButton, .closeButton { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border: 1px solid hsl(var(--brand-sand) / .3); border-radius: 50%; color: hsl(var(--brand-ivory)); }
   .congressNav { display: none; }
-  .mobileLayer { position: fixed; inset: 0; z-index: 70; display: flex; justify-content: flex-end; }
-  .backdrop { position: absolute; inset: 0; background: hsl(var(--background) / .74); }
-  .mobilePanel {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    width: min(390px, 100%);
-    height: 100dvh;
-    overflow-y: auto;
-    background: hsl(var(--brand-header));
-    box-shadow: -14px 0 34px hsl(var(--background) / .25);
-  }
-  .mobileHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid hsl(var(--brand-sand) / .2); }
-  .mobileLogo { width: 210px; }
+  .mobilePanel { color-scheme: dark; --background: var(--story-background); --foreground: var(--story-foreground); --muted: var(--story-muted); --muted-foreground: var(--story-muted-foreground); --border: var(--story-border); position: fixed; inset: 0 0 0 auto; width: min(420px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; overflow: hidden; background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: -14px 0 34px hsl(var(--background) / .25); }
+  .mobilePanel[open] { display: flex; flex-direction: column; }
+  .mobilePanel::backdrop { background: hsl(var(--background) / .75); }
+  .mobileHeader { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 16px; padding: max(16px, env(safe-area-inset-top)) 20px 16px; border-bottom: 1px solid hsl(var(--border)); }
+  .mobileLogo { width: 190px; }
   .mobileLogo img { display: block; width: 100%; height: auto; }
-  .closeButton { display: grid; place-items: center; width: 40px; height: 40px; border: 1px solid hsl(var(--brand-sand) / .45); border-radius: 8px; }
-  .mobileNav { display: grid; gap: 4px; padding: 22px; }
-  .mobileNav a,
-  .mobileAuth a { display: block; padding: 11px 12px; border-radius: 8px; color: hsl(var(--brand-ivory)); font-weight: 600; }
-  .mobileNav a:hover,
-  .mobileNav a[aria-current='page'],
-  .mobileAuth a:hover { background: hsl(var(--brand-sand) / .16); }
-  .mobileCongressToggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 11px 12px;
-    border-radius: 8px;
-    color: hsl(var(--brand-ivory));
-    font-weight: 600;
-    text-align: left;
-  }
-  .mobileCongressToggle:hover,
-  .mobileCongressToggle[data-active='true'],
-  .mobileCongressToggle[aria-expanded='true'] { background: hsl(var(--brand-sand) / .16); }
+  .mobileScroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 20px 24px; }
+  .mobileNav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .mobileNav a { display: grid; place-items: center; min-height: 48px; padding: 8px; border-radius: 8px; font-size: 13px; background: hsl(var(--muted) / .5); color: hsl(var(--foreground)); }
+  .mobileNav a[aria-current], .mobileProjectLinks a[aria-current] { background: hsl(var(--brand-header) / .5); color: hsl(var(--brand-sand)); }
+  .mobileProjects { margin-top: 24px; }
+  .mobileSectionHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .mobileSectionHeading h2 { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+  .mobileSectionHeading > a { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12px; color: hsl(var(--brand-sand)); }
+  .mobileProjectLinks { display: grid; gap: 6px; }
+  .mobileProjectLinks > a { display: flex; align-items: center; gap: 14px; min-height: 70px; padding: 8px; border-radius: 10px; color: hsl(var(--foreground)); }
+  .mobileProjectLinks img { width: 54px; height: 54px; object-fit: cover; border-radius: 7px; }
+  .mobileProjectLinks span { flex: 1; font-size: 16px; font-weight: 600; }
+  .mobileProjectLinks svg { width: 12px; margin-right: 6px; color: hsl(var(--muted-foreground)); }
+  .mobileCongressGroup { margin-top: 20px; border-top: 1px solid hsl(var(--border)); padding-top: 12px; }
+  .mobileCongressToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 10px 8px; font-weight: 600; font-size: 15px; }
   .mobileCongressToggle svg { transition: transform .2s ease; }
   .mobileCongressToggle[aria-expanded='true'] svg { transform: rotate(180deg); }
-  .mobileCongressLinks {
-    display: grid;
-    gap: 2px;
-    margin: 6px 0 8px 12px;
-    padding: 12px 8px 10px 10px;
-    border-left: 2px solid hsl(var(--brand-sand) / .65);
-    border-radius: 0 8px 8px 0;
-    background: hsl(var(--brand-deep) / .4);
-  }
-  .mobileCongressIntro { padding: 0 10px 6px; color: hsl(var(--brand-sand)); font-size: 12px; line-height: 1.4; }
-  .mobileCongressLinks a { padding: 8px 10px; font-size: 14px; font-weight: 500; }
-  .mobileAuth { display: grid; gap: 6px; margin-top: auto; padding: 18px 22px 24px; border-top: 1px solid hsl(var(--brand-sand) / .2); }
-  .mobileAuth .mobileSignUp { background: hsl(var(--brand-ivory)); color: hsl(var(--brand-deep)); text-align: center; }
-  .mobileAuth .mobileSignUp:hover { background: hsl(var(--brand-sand)); color: hsl(var(--brand-deep)); }
-  .mobileAccountLink { display: flex !important; align-items: center; gap: 10px; }
+  .mobileCongressLinks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 8px 0; padding: 8px; background: hsl(var(--muted) / .4); border-radius: 8px; }
+  .mobileCongressLinks a { display: flex; align-items: center; min-height: 48px; padding: 8px; font-size: 13px; }
+  .mobileCongressLinks a[aria-current] { color: hsl(var(--brand-sand)); text-decoration: underline; text-underline-offset: 5px; }
+  .mobileShortcuts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+  .mobileShortcuts a { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; padding: 12px; border: 1px solid hsl(var(--border)); border-radius: 8px; font-size: 13px; }
+  .mobileShortcuts svg { width: 11px; color: hsl(var(--muted-foreground)); }
+  .mobileAuth { display: flex; align-items: center; flex-shrink: 0; gap: 10px; padding: 16px 20px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid hsl(var(--border)); }
+  .mobileAuth > a { display: flex; flex: 1; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; }
+  .mobileSignUp { background: hsl(var(--brand-ivory)); color: hsl(var(--brand-deep)); }
 }
-
-@media (max-width: 600px) {
-  .headerInner { padding: 12px 16px; }
-  .logo { flex-basis: min(190px, 52vw); }
-  .accountLink { display: none; }
-}
+@media (max-width: 600px) { .headerInner { padding: 10px 16px; min-height: 80px; } .logo { flex-basis: min(190px, 52vw); } .accountLink { display: none; } }
+@media (prefers-reduced-motion: reduce) { .mobileCongressToggle svg { transition: none; } }
