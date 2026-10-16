@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FiArrowDown, FiArrowRight, FiMaximize2 } from 'react-icons/fi'
 import { projects, statement } from '../lib/content'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
+import { mobileStoryFrame } from '../lib/mobile-story-timing'
 import type { NeuralSpace } from '../lib/neural-space'
 import styles from './MimesissScrollStory.module.css'
 
@@ -98,12 +99,24 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
         progress = previousLayout.progress
       }
       if (reading) {
-        const anchors = [0, ...readingRefs.current.map(panel => panel ? panel.offsetTop - height * .4 : 0)]
-        const values = [0, ...stops]
-        const scroll = Math.max(0, 64 - track.getBoundingClientRect().top)
-        let segment = anchors.findLastIndex(anchor => scroll >= anchor)
-        segment = Math.max(0, Math.min(segment, anchors.length - 2))
-        progress = values[segment] + (values[segment + 1] - values[segment]) * between(scroll, anchors[segment], anchors[segment + 1])
+        const trackTop = track.getBoundingClientRect().top
+        const copies = readingRefs.current.map(panel => panel?.firstElementChild as HTMLElement | null)
+        const bounds = copies.map(copy => {
+          const rect = copy?.getBoundingClientRect()
+          return { top: (rect?.top ?? 0) - trackTop, bottom: (rect?.bottom ?? 0) - trackTop }
+        })
+        const mobile = mobileStoryFrame(Math.max(0, 64 - trackTop), height, bounds, stops)
+        progress = mobile.progress
+        copies.forEach((copy, index) => {
+          if (!copy) return
+          copy.style.opacity = String(mobile.opacities[index])
+          copy.inert = mobile.opacities[index] < .02
+        })
+      } else {
+        readingRefs.current.forEach(panel => {
+          const copy = panel?.firstElementChild as HTMLElement | null
+          if (copy) { copy.style.removeProperty('opacity'); copy.inert = false }
+        })
       }
       const panelHeight = reading ? height * .42 : Math.max(...panelRefs.current.map(panel => panel?.offsetHeight ?? 0))
       const stageBounds = stage.getBoundingClientRect()
