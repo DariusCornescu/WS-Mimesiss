@@ -92,10 +92,10 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
   const geometryPromise = loadGeometry(signal)
   const loader = new THREE.TextureLoader()
   const mobile = window.matchMedia('(max-width: 700px)').matches
-  const assets = ['/project-stories/neural-space/membrane.webp', ...locations.map((_, index) => `/project-stories/neural-space/photo-${index + 1}.webp`), '/project-stories/neural-space/mimesiss-intro-logo.png']
+  const assets = ['/project-stories/neural-space/membrane.webp', ...locations.map((_, index) => `/project-stories/neural-space/photo-${index + 1}.webp`), '/project-stories/neural-space/mimesiss-intro-logo.webp']
   const [geometryResult, textureResult] = await Promise.allSettled([
     geometryPromise,
-    Promise.allSettled(assets.map(src => loader.loadAsync(mobile && src.endsWith('.webp') ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src))),
+    Promise.allSettled(assets.map(src => loader.loadAsync(mobile && src.endsWith('.webp') && !src.endsWith('mimesiss-intro-logo.webp') ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src))),
   ])
   const loaded = textureResult.status === 'fulfilled' ? textureResult.value : []
   const geometry = geometryResult.status === 'fulfilled' ? geometryResult.value : {}

@@ -10,6 +10,7 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "test:partners": "node --test scripts/test-partners.mjs",
+    "test:startup": "node --test scripts/test-public-startup.mjs",
     "test:stories": "node --test scripts/test-project-stories.mjs scripts/test-photo-viewer.mjs scripts/test-tent-story-copy.mjs"
   },
   "engines": {
