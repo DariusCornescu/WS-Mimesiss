@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FiArrowDown, FiArrowRight, FiMaximize2 } from 'react-icons/fi'
 import { projects, statement } from '../lib/content'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
-import { mobileStoryFrame } from '../lib/mobile-story-timing'
+import { mobileStoryFrame, mobileStoryMoments } from '../lib/mobile-story-timing'
 import type { NeuralSpace } from '../lib/neural-space'
 import styles from './MimesissScrollStory.module.css'
 
@@ -18,6 +18,11 @@ const chapters = [
   { label: 'Perspective', title: '', body: sentences.slice(1).join(' ') },
   { label: 'Împreună', title: '', body: statement },
 ]
+const mobilePassages = chapters.flatMap((chapter, chapterIndex) => {
+  const parts = chapter.body.length > 400 ? chapter.body.split(/(?<=\.)\s+/) : [chapter.body]
+  return parts.map((body, part) => ({ ...chapter, body, chapterIndex, part, parts: parts.length }))
+})
+const mobileMoments = mobileStoryMoments(mobilePassages.map(passage => passage.chapterIndex))
 const stops = [.25, .49, .73, .96]
 const arrivals = [.19, .43, .67, .9]
 const departures = [.31, .55, .79, 1.1]
@@ -33,7 +38,7 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
   const renderRef = useRef<() => void>(() => {})
   const introRef = useRef<HTMLDivElement>(null)
   const panelRefs = useRef<(HTMLDivElement | null)[]>([])
-  const readingRefs = useRef<(HTMLDivElement | null)[]>([])
+  const mobilePanelRefs = useRef<(HTMLDivElement | null)[]>([])
   const photoRefs = useRef<(HTMLButtonElement | null)[]>([])
   const jumpRefs = useRef<(HTMLButtonElement | null)[]>([])
   const progressRef = useRef<HTMLSpanElement>(null)
@@ -99,31 +104,22 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
         progress = previousLayout.progress
       }
       if (reading) {
-        const trackTop = track.getBoundingClientRect().top
-        const copies = readingRefs.current.map(panel => panel?.firstElementChild as HTMLElement | null)
-        const bounds = copies.map(copy => {
-          const rect = copy?.getBoundingClientRect()
-          return { top: (rect?.top ?? 0) - trackTop, bottom: (rect?.bottom ?? 0) - trackTop }
-        })
-        const mobile = mobileStoryFrame(Math.max(0, 64 - trackTop), height, bounds, stops)
+        const mobile = mobileStoryFrame(clamp((64 - track.getBoundingClientRect().top) / travel), mobileMoments, stops)
         progress = mobile.progress
-        copies.forEach((copy, index) => {
-          if (!copy) return
-          copy.style.opacity = String(mobile.opacities[index])
-          copy.inert = mobile.opacities[index] < .02
-        })
-      } else {
-        readingRefs.current.forEach(panel => {
-          const copy = panel?.firstElementChild as HTMLElement | null
-          if (copy) { copy.style.removeProperty('opacity'); copy.inert = false }
+        mobilePanelRefs.current.forEach((panel, index) => {
+          if (!panel) return
+          const opacity = mobile.opacities[index]
+          panel.style.opacity = String(opacity)
+          panel.inert = opacity < .85
+          panel.setAttribute('aria-hidden', String(opacity < .1))
         })
       }
-      const panelHeight = reading ? height * .42 : Math.max(...panelRefs.current.map(panel => panel?.offsetHeight ?? 0))
+      const panelHeight = Math.max(...(reading ? mobilePanelRefs : panelRefs).current.map(panel => panel?.offsetHeight ?? 0))
       const stageBounds = stage.getBoundingClientRect()
       const trackBounds = track.getBoundingClientRect()
       previousLayout = { width, height, progress, pinned: trackBounds.top <= 0 && trackBounds.bottom >= height }
       const introBottom = (introRef.current?.offsetTop ?? 0) + (introRef.current?.offsetHeight ?? 0)
-      if (stageBounds.bottom > 0 && stageBounds.top < window.innerHeight) spaceRef.current?.update(progress, { width, height, narrow: reading || narrow && !landscape, landscape: !reading && landscape, panelHeight, introBottom })
+      if (stageBounds.bottom > 0 && stageBounds.top < window.innerHeight) spaceRef.current?.update(progress, { width, height, narrow: narrow && !landscape, landscape, panelHeight, introBottom })
       stage.style.setProperty('--photo-label-opacity', String(1 - between(progress, .035, .11)))
       introLogoActiveRef.current = progress < .11
       const firstPhoto = photoRefs.current[0]
@@ -148,7 +144,7 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
     renderRef.current = schedule
     const observer = new ResizeObserver(schedule)
     observer.observe(stage)
-    readingRefs.current.forEach(panel => { if (panel) observer.observe(panel) })
+    mobilePanelRefs.current.forEach(panel => { if (panel) observer.observe(panel) })
     if (introRef.current) observer.observe(introRef.current)
     panelRefs.current.forEach(panel => { if (panel) observer.observe(panel) })
     window.addEventListener('scroll', schedule, { passive: true })
@@ -159,8 +155,10 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
 
   const jumpTo = (index: number) => {
     if (!staticMode && window.matchMedia('(max-width: 700px), (max-width: 1000px) and (max-height: 500px)').matches) {
-      const panel = readingRefs.current[index]
-      if (panel) window.scrollTo({ top: window.scrollY + panel.getBoundingClientRect().top - (stageRef.current?.clientHeight ?? 0) * .4 - 64, behavior: 'smooth' })
+      const track = trackRef.current
+      const stage = stageRef.current
+      const moment = mobileMoments.find(item => item.chapter === index)
+      if (track && stage && moment) window.scrollTo({ top: window.scrollY + track.getBoundingClientRect().top - 64 + (track.offsetHeight - stage.offsetHeight) * (moment.enter + .035), behavior: 'smooth' })
       return
     }
     if (staticMode) { panelRefs.current[index]?.scrollIntoView({ behavior: 'instant', block: 'start' }); return }
@@ -190,18 +188,14 @@ export default function MimesissScrollStory({ onOpenImage }: { onOpenImage: (src
         <p className={styles.chapterBody}>{chapter.body}</p>
         <button type="button" className={styles.viewPhoto} onClick={() => onOpenImage(mimesissScenePhotos[index].src, mimesissScenePhotos[index].alt)}>Vezi fotografia <FiArrowRight aria-hidden="true" /></button>
       </div>)}
+      {mobilePassages.map((passage, index) => <div key={index} ref={element => { mobilePanelRefs.current[index] = element }} className={styles.mobilePanel} aria-hidden inert>
+        <p className={styles.eyebrow}>{String(passage.chapterIndex + 1).padStart(2, '0')} · {passage.label}{passage.parts > 1 && <span className={styles.passageCount}>{passage.part + 1} / {passage.parts}</span>}</p>
+        {passage.title && <h2>{passage.title}</h2>}
+        <p className={styles.chapterBody}>{passage.body}</p>
+        <button type="button" className={styles.viewPhoto} onClick={() => onOpenImage(mimesissScenePhotos[passage.chapterIndex].src, mimesissScenePhotos[passage.chapterIndex].alt)}>Vezi fotografia <FiArrowRight aria-hidden="true" /></button>
+      </div>)}
       <nav className={styles.chapters} aria-label="Momente din MIMESISS">{chapters.map((chapter, index) => <button key={chapter.label} ref={element => { jumpRefs.current[index] = element }} type="button" onClick={() => jumpTo(index)} aria-label={`Mergi la ${chapter.label}`}><span>{String(index + 1).padStart(2, '0')}</span><span>{chapter.label}</span></button>)}</nav>
       <div className={styles.progress} aria-hidden="true"><span ref={progressRef} /></div>
-    </div>
-    <div className={styles.reading}>
-      {chapters.map((chapter, index) => <div key={chapter.label} ref={element => { readingRefs.current[index] = element }} className={styles.readingChapter}>
-        <div className={styles.readingCopy}>
-          <p className={styles.eyebrow}>{String(index + 1).padStart(2, '0')} · {chapter.label}</p>
-          {chapter.title && <h2>{chapter.title}</h2>}
-          <p className={styles.chapterBody}>{chapter.body}</p>
-          <button type="button" className={styles.viewPhoto} onClick={() => onOpenImage(mimesissScenePhotos[index].src, mimesissScenePhotos[index].alt)}>Vezi fotografia <FiArrowRight aria-hidden="true" /></button>
-        </div>
-      </div>)}
     </div>
   </section>
 }
