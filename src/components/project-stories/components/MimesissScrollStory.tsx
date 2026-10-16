@@ -6,7 +6,7 @@ import { FiArrowDown } from 'react-icons/fi'
 import type { CSSProperties } from 'react'
 import { editableStoryKeys, type ProjectStoryCopy } from '@/lib/project-story-copy'
 import { mimesissChapters } from '@/lib/project-story-defaults'
-import { compactStoryPassages } from '@/lib/tent-story-copy'
+import { neuralStoryPassages } from '../lib/neural-story-copy'
 import { projects } from '../lib/content'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
 import { mobileStoryFrame, mobileStoryMoments } from '../lib/mobile-story-timing'
@@ -23,10 +23,13 @@ const between = (value: number, start: number, end: number) => clamp((value - st
 export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy }) {
   const chapters = useMemo(() => mimesissChapters.map((chapter, index) => ({ ...chapter, ...copy?.[editableStoryKeys.mimesiss[index]] })), [copy])
   const mobilePassages = useMemo(() => chapters.flatMap((chapter, chapterIndex) => {
-    const parts = compactStoryPassages(chapter.body, chapter.title)
+    const parts = neuralStoryPassages(chapter, true)
     return parts.map((copy, part) => ({ ...chapter, ...copy, chapterIndex, part, parts: parts.length }))
   }), [chapters])
-  const desktopPassages = mobilePassages
+  const desktopPassages = useMemo(() => chapters.flatMap((chapter, chapterIndex) => {
+    const parts = neuralStoryPassages(chapter, false)
+    return parts.map((copy, part) => ({ ...chapter, ...copy, chapterIndex, part, parts: parts.length }))
+  }), [chapters])
   const mobileMoments = useMemo(() => mobileStoryMoments(mobilePassages.map(passage => passage.chapterIndex)), [mobilePassages])
   const trackRef = useRef<HTMLElement>(null)
   const stageRef = useRef<HTMLDivElement>(null)
