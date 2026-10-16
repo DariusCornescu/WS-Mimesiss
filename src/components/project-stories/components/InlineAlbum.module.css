@@ -1,7 +1,6 @@
 .album { min-width: 0; position: sticky; top: 28px; border: 1px solid hsl(var(--border) / .6); border-radius: 8px; background: hsl(var(--card)); overflow: hidden; }
-.photo { display: block; position: relative; width: 100%; background: hsl(var(--background)); cursor: zoom-in; touch-action: pan-y pinch-zoom; user-select: none; }
+.photo { display: block; position: relative; width: 100%; background: hsl(var(--background)); touch-action: pan-y pinch-zoom; user-select: none; }
 .photo img { display: block; width: 100%; height: auto; aspect-ratio: 2.9 / 1; object-fit: cover; }
-.photo > span { position: absolute; display: flex; align-items: center; gap: 8px; right: 12px; bottom: 12px; padding: 9px 12px; font-size: 10px; background: hsl(var(--background) / .9); color: hsl(var(--foreground)); border-radius: 4px; }
 .caption { margin: 0; padding: 20px; font-family: Georgia, serif; font-size: 19px; line-height: 1.4; color: hsl(var(--foreground)); }
 .controls { display: flex; align-items: center; gap: 12px; padding: 0 20px 18px; }
 .controls button { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border: 1px solid hsl(var(--border)); border-radius: 4px; color: hsl(var(--foreground)); background: transparent; cursor: pointer; }
@@ -12,7 +11,6 @@
 
 @media (max-width: 640px) {
   .photo img { aspect-ratio: 2.2 / 1; object-fit: cover; }
-  .photo > span { right: 10px; bottom: 10px; padding: 10px 12px; font-size: 12px; }
   .caption { padding: 18px 16px; font-size: 20px; line-height: 1.5; overflow-wrap: anywhere; }
   .controls { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 10px; padding: 0 14px 16px; }
   .controls button { width: 44px; height: 44px; min-width: 44px; min-height: 44px; touch-action: manipulation; }
