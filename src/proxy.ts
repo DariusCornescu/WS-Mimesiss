@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import type { NextFetchEvent, NextRequest } from 'next/server'
+import { canRenderWithoutAuth } from '@/lib/public-routes'
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
@@ -46,6 +47,8 @@ export default function proxy(req: NextRequest, event: NextFetchEvent) {
   if (process.env.NODE_ENV === 'development' && process.env.ASMM_LOCAL_PREVIEW === '1') {
     return NextResponse.next()
   }
+
+  if (canRenderWithoutAuth(req.nextUrl.pathname, req.method)) return NextResponse.next()
 
   return authenticatedProxy(req, event)
 }

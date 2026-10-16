@@ -1,6 +1,22 @@
 import type { NextConfig } from "next";
+import path from 'node:path';
+
+const diagnostic = process.env.PERFORMANCE_DIAGNOSTIC;
+if (diagnostic && !['base', 'analytics', 'scene', 'full'].includes(diagnostic)) throw new Error('Unknown performance diagnostic');
+if (diagnostic && process.env.VERCEL_ENV === 'production') throw new Error('Performance diagnostics cannot run in production');
 
 const nextConfig: NextConfig = {
+	distDir: diagnostic ? `.preview/build-${diagnostic}` : '.next',
+	webpack(config, { webpack }) {
+		if (diagnostic === 'base' || diagnostic === 'scene') {
+			const fixture = path.resolve('scripts/fixtures/no-analytics.ts');
+			config.plugins.push(new webpack.NormalModuleReplacementPlugin(/(?:components\/analytics\/GoogleAnalytics$|^@vercel\/(?:analytics\/react|speed-insights\/next)$)/, fixture));
+		}
+		if (diagnostic === 'base' || diagnostic === 'analytics') {
+			config.plugins.push(new webpack.NormalModuleReplacementPlugin(/\/lib\/neural-space$/, path.resolve('scripts/fixtures/no-neural-space.ts')));
+		}
+		return config;
+	},
 	images: {
 		remotePatterns: [
 			{

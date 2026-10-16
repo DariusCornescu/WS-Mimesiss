@@ -3,6 +3,7 @@ import { test } from 'node:test'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import ts from 'typescript'
+import path from 'node:path'
 import { load } from './helpers/load-ts.mjs'
 
 function loadComponent(file, dependencies) {
@@ -31,6 +32,58 @@ test('public routes render without mounting an account provider; account and pay
     const result = Boundary({ children: child })
     assert.equal(result.type, provider)
     assert.equal(result.props.children, child)
+  }
+})
+
+test('only informational GET/HEAD requests skip auth; personalized pages and mutations keep middleware', async () => {
+  const routes = load('src/lib/public-routes.ts')
+  let authenticatedRequests = 0
+  const { default: proxy } = load('src/proxy.ts', {
+    '@/lib/public-routes': routes,
+    '@clerk/nextjs/server': {
+      createRouteMatcher: () => () => false,
+      clerkMiddleware: () => () => { authenticatedRequests++; return new Response(null, { status: 202 }) },
+    },
+    'next/server': { NextResponse: { next: () => new Response(null, { status: 200 }) } },
+  })
+  for (const pathname of ['/', '/despre', '/contact', '/proiecte', '/proiecte/mimesiss', '/congres', '/congres/gallery']) {
+    for (const method of ['GET', 'HEAD']) assert.equal((await proxy({ method, nextUrl: { pathname } }, {})).status, 200)
+  }
+  assert.equal(authenticatedRequests, 0)
+  for (const [pathname, method] of [['/congres/workshops', 'GET'], ['/congres/workshops/example', 'GET'], ['/api/session', 'GET'], ['/admin', 'GET'], ['/api/admin/settings', 'GET'], ['/dashboard', 'GET'], ['/payment', 'GET'], ['/auth/login', 'GET'], ['/congres/workshops', 'POST'], ['/proiecte', 'POST'], ['/', 'POST'], ['/proiecte-private', 'GET']]) {
+    assert.equal((await proxy({ method, nextUrl: { pathname } }, {})).status, 202)
+  }
+  assert.equal(authenticatedRequests, 12)
+})
+
+test('diagnostic builds exclude only their assigned systems and cannot be enabled in production', () => {
+  const previousDiagnostic = process.env.PERFORMANCE_DIAGNOSTIC
+  const previousDeployment = process.env.VERCEL_ENV
+  try {
+    delete process.env.VERCEL_ENV
+    for (const variant of ['base', 'analytics', 'scene', 'full']) {
+      process.env.PERFORMANCE_DIAGNOSTIC = variant
+      const config = load('next.config.ts', { 'node:path': path }).default
+      const replacements = []
+      config.webpack({ plugins: [] }, { webpack: { NormalModuleReplacementPlugin: class {
+        constructor(pattern, replacement) { replacements.push({ pattern, replacement }) }
+      } } })
+      const removed = request => replacements.some(item => item.pattern.test(request))
+      assert.equal(removed('../lib/neural-space'), ['base', 'analytics'].includes(variant))
+      for (const request of ['@/components/analytics/GoogleAnalytics', '@vercel/analytics/react', '@vercel/speed-insights/next']) assert.equal(removed(request), ['base', 'scene'].includes(variant))
+      assert.equal(removed('@clerk/nextjs/server'), false)
+      assert.equal(config.distDir, '.preview/build-' + variant)
+    }
+    process.env.VERCEL_ENV = 'production'
+    assert.throws(() => load('next.config.ts', { 'node:path': path }), /cannot run in production/)
+    delete process.env.VERCEL_ENV
+    process.env.PERFORMANCE_DIAGNOSTIC = '../invalid'
+    assert.throws(() => load('next.config.ts', { 'node:path': path }), /Unknown performance diagnostic/)
+  } finally {
+    if (previousDiagnostic === undefined) delete process.env.PERFORMANCE_DIAGNOSTIC
+    else process.env.PERFORMANCE_DIAGNOSTIC = previousDiagnostic
+    if (previousDeployment === undefined) delete process.env.VERCEL_ENV
+    else process.env.VERCEL_ENV = previousDeployment
   }
 })
 

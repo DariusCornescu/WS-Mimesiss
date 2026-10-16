@@ -131,3 +131,35 @@ jobs:
           done
           kill "$SERVER_PID" 2>/dev/null || true
           exit "$FAILED"
+
+  performance:
+    name: Isolated startup diagnostics
+    if: github.event_name == 'workflow_dispatch'
+    needs: [quality, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install pinned audit tooling outside application dependencies
+        run: npm install --prefix .preview/lighthouse --no-save --no-package-lock --ignore-scripts --no-audit --no-fund lighthouse@12.6.1
+      - name: Compare four isolated production builds
+        run: node scripts/audit-startup-matrix.mjs .preview/startup-matrix .preview/lighthouse/node_modules/lighthouse/cli/index.js
+      - name: Summarize collected measurements
+        if: always()
+        run: |
+          if test -f .preview/startup-matrix/matrix.json; then
+            node scripts/report-startup-matrix.mjs .preview/startup-matrix
+          fi
+      - name: Preserve measurements and browser traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-matrix
+          path: .preview/startup-matrix
+          include-hidden-files: true
+          retention-days: 14
