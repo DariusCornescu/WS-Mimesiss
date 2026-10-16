@@ -1,23 +1,26 @@
-export type MobileChapterBounds = { top: number; bottom: number }
+export type MobileStoryMoment = { chapter: number; enter: number; fadeStart: number; exit: number }
 
 const clamp = (value: number) => Math.max(0, Math.min(1, value))
-const between = (value: number, start: number, end: number) => clamp((value - start) / Math.max(1, end - start))
+const between = (value: number, start: number, end: number) => clamp((value - start) / Math.max(.0001, end - start))
 
-export function mobileStoryFrame(scroll: number, height: number, bounds: MobileChapterBounds[], stops: number[]) {
-  const timings = bounds.map(chapter => {
-    const arrival = chapter.top - height * .4
-    // Keep long chapters readable until their final lines reach the lower reading area.
-    const fadeStart = Math.max(arrival + height * .12, chapter.bottom - height * .78)
-    return { arrival, fadeStart, fadeEnd: fadeStart + height * .16 }
+export function mobileStoryMoments(chapters: number[]): MobileStoryMoment[] {
+  const span = .82 / chapters.length
+  return chapters.map((chapter, index) => {
+    const enter = .12 + index * span
+    return { chapter, enter, fadeStart: enter + span * .5, exit: enter + span * .62 }
   })
-  const opacities = timings.map(chapter => between(scroll, chapter.arrival - height * .22, chapter.arrival) * (1 - between(scroll, chapter.fadeStart, chapter.fadeEnd)))
-  let progress = stops[0] * between(scroll, 0, timings[0].arrival)
-  for (let index = 0; index < timings.length; index++) {
-    if (scroll < timings[index].arrival) break
-    progress = stops[index]
-    const next = timings[index + 1]
-    if (next && scroll > timings[index].fadeEnd) {
-      progress += (stops[index + 1] - stops[index]) * between(scroll, timings[index].fadeEnd, next.arrival)
+}
+
+export function mobileStoryFrame(scroll: number, moments: MobileStoryMoment[], stops: number[]) {
+  const opacities = moments.map(moment => between(scroll, moment.enter, moment.enter + .02) * (1 - between(scroll, moment.fadeStart, moment.exit)))
+  let progress = stops[moments[0].chapter] * between(scroll, 0, moments[0].enter)
+  for (let index = 0; index < moments.length; index++) {
+    const moment = moments[index]
+    if (scroll < moment.enter) break
+    progress = stops[moment.chapter]
+    const next = moments[index + 1]
+    if (next && scroll > moment.exit) {
+      progress += (stops[next.chapter] - stops[moment.chapter]) * between(scroll, moment.exit, next.enter)
     }
   }
   return { progress, opacities }
