@@ -213,3 +213,30 @@
 }
 .staticMode.cort .frame:not(.intro) { display: block; padding: 18px; }
 .staticMode.cort .frame:not(.intro) .visual { inset: auto; height: auto; aspect-ratio: 4 / 5; max-height: none; }
+
+.animated.cort { height: calc(var(--story-frame-count, 4) * 140svh + 50svh); }
+.cort .frame:not(.intro) .visual { inset: 8% 48% 10% 4%; }
+.cort .frame:not(.intro) .copy { left: 57%; width: 37%; padding: 24px; background: hsl(var(--background) / .82); overflow-wrap: anywhere; }
+.cort .frame:not(.intro) .copy h2 { font-size: clamp(26px, 3vw, 40px); line-height: 1.15; }
+.cort .frame:not(.intro) .body { margin-top: 14px; white-space: pre-line; }
+.cort .frame:not(.intro) .body:first-child { margin-top: 0; }
+@media (max-width: 700px), (max-width: 1000px) and (max-height: 500px) {
+  .animated.cort { height: calc(var(--story-frame-count, 4) * 125svh + 20svh); }
+  .animated.cort .frame:not(.intro) { display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 16px; padding: 56px 6% 24px; }
+  .animated.cort .frame:not(.intro) .visual { position: relative; inset: auto; width: 100%; height: 100%; min-height: 0; }
+  .animated.cort .frame:not(.intro) .copy { position: relative; inset: auto; width: 100%; padding: 16px; transform: translateY(var(--copy-y, 0px)); }
+  .animated.cort .frame:not(.intro) .copy h2 { font-size: 25px; }
+  .animated.cort .frame:not(.intro) .body { font-size: 14px; line-height: 1.45; margin-top: 10px; }
+}
+@media (max-width: 1000px) and (max-height: 500px) and (orientation: landscape) {
+  .animated.cort .frame:not(.intro) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); padding: 46px 5% 16px; }
+  .animated.cort .frame:not(.intro) .copy { align-self: center; padding: 12px; }
+  .animated.cort .frame:not(.intro) .copy h2 { font-size: 20px; }
+  .animated.cort .frame:not(.intro) .body { font-size: 13px; line-height: 1.35; }
+}
+@media (max-width: 700px) and (max-height: 380px) and (orientation: landscape) {
+  .animated.cort .frame:not(.intro) .copy h2 { font-size: 18px; }
+  .animated.cort .frame:not(.intro) .body { font-size: 12px; }
+}
+.staticMode.cort .frame:not(.intro) { display: grid; }
+.staticMode.cort .frame:not(.intro) .copy { position: relative; inset: auto; width: auto; transform: none; }
