@@ -1,9 +1,7 @@
 .track { position: relative; height: 580svh; margin: 0 calc(0px - min(34px, 3vw)); color: hsl(var(--foreground)); }
 .stage { position: sticky; top: 0; height: 100svh; min-height: 0; overflow: clip; isolation: isolate; background: hsl(var(--background)); border: 1px solid hsl(var(--border) / .35); }
-.ambient { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: .7; }
-.backdrop { position: absolute; inset: 0; }
-.loadedBackdrop { opacity: 0; }
-.world { position: absolute; inset: 0; }
+.world { position: absolute; inset: 0; opacity: 0; transition: opacity .24s ease-out; }
+.world[data-scene-ready="true"] { opacity: 1; }
 .world canvas { display: block; width: 100%; height: 100%; }
 .photoTargets { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .scenePhoto { position: absolute; display: block; visibility: hidden; border: 0; padding: 0; background: transparent; cursor: zoom-in; pointer-events: auto; }
@@ -29,7 +27,6 @@
 
 .staticMode { height: auto; }
 .staticMode .stage { position: relative; height: auto; min-height: 0; overflow: hidden; padding: 34px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; }
-.staticMode .ambient { opacity: .22; }
 .staticMode .world, .staticMode .photoTargets { display: none; }
 .staticMode .intro { position: relative; top: auto; left: auto; right: auto; width: 100%; grid-column: 1 / -1; padding: 16px 0; background: transparent; opacity: 1 !important; }
 .staticMode .tagline { max-width: 630px; }
@@ -52,7 +49,6 @@
 @media (max-width: 700px) {
   .track { margin: 0 -16px; height: 440svh; }
   .stage { min-height: 0; }
-  .ambient { opacity: .45; }
   .intro { top: 70px; left: 6%; width: 88%; padding: 16px; }
   .intro .eyebrow { font-size: 10px; letter-spacing: .07em; }
   .intro h1 { margin: 12px 0 16px; font-size: clamp(47px, 12vw, 74px); }
@@ -93,6 +89,7 @@
   .track { margin: 0 -16px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .world { transition: none; }
   .track { height: auto; }
   .stage { position: relative; height: auto; min-height: 0; overflow: hidden; padding: 28px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 28px; }
   .world { display: none; }
