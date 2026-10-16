@@ -137,3 +137,50 @@ Implementation references:
 - https://nextjs.org/docs/app/getting-started/server-and-client-components
 - https://web.dev/articles/optimize-long-tasks
 - https://threejs.org/manual/pages/offscreencanvas.html
+
+### Isolated comparison result
+
+[CI run 38972919668](https://github.com/DariusCornescu/WS-Mimesiss/actions/runs/38972919668)
+completed all 25 audits using application source
+`efc57e72821d3825ce7d129b0505f998be7ddfe2`, Node 22 on Linux and
+Chrome 155. Lighthouse 12.6.1 used its default simulated mobile performance
+profile. Browser caches were reset per audit; server caches were warm.
+CPU benchmark spread was 9.94%, inside the internal 10% check, but hosted
+runners and simulated devices still limit the conclusions.
+
+| Median | Frozen reference | Candidate |
+| --- | ---: | ---: |
+| Score | 88 | 88 |
+| LCP | 1,734 ms | 1,625 ms |
+| TBT | 425 ms | 442 ms |
+| CLS | 0 | 0 |
+| Transferred JavaScript | 499,168 bytes | 493,073 bytes |
+
+The candidate does not demonstrate an overall score or blocking-time gain.
+The LCP reduction is 109 ms and JavaScript transfer is 6,095 bytes smaller.
+TBT ranges overlap: 388–545 ms for the reference and 374–598 ms for the
+candidate. Retain the smaller client boundary as a reviewable structural
+change, not as a claim that the website is now faster for real users.
+
+Candidate controls isolate the remaining work:
+
+| Enabled in addition to content | Score | LCP | TBT |
+| --- | ---: | ---: | ---: |
+| Neither Analytics nor 3D | 99 | 1,618 ms | 63 ms |
+| Analytics | 97 | 1,625 ms | 174 ms |
+| 3D | 93 | 1,615 ms | 292 ms |
+| Both | 88 | 1,625 ms | 442 ms |
+
+This evidence prioritizes renderer startup and its interaction with other
+main-thread tasks. It does not justify removing any Analytics integration or
+moving its execution to a worker without preserving reporting behavior.
+Costs are not additive and controls are not release configurations.
+
+The complete-page score exceeds 85 in this CI series, including the reference;
+it is not comparable to the earlier Windows scores. The 200 ms TBT budget
+still fails. Production-domain measurements, all-route audits, first-scroll
+timing, field INP and signed-in provider journeys remain release checks.
+The PR remains draft. Raw reports, traces, provenance and regenerated HTML
+are retained under `output/startup-ci-2026-10-17/` locally and in the workflow
+artifact. A successful diagnostic job means collection succeeded, not that
+the release budgets passed.
