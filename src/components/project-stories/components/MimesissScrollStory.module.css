@@ -182,3 +182,13 @@
 .copyPanel[data-empty="true"], .mobilePanel[data-empty="true"] { background: transparent; padding: 0; }
 .copyPanel[data-empty="true"] > :not(.staticPhoto), .mobilePanel[data-empty="true"] > * { display: none; }
 .chapterBody { white-space: pre-line; overflow-wrap: anywhere; }
+
+/* Keep the complete congress descriptor on one line without widening the photo overlay. */
+.intro { container-type: inline-size; }
+.intro .eyebrow { white-space: nowrap; font-size: min(20px, 3.4cqi); letter-spacing: .025em; }
+@media (min-width: 701px) and (min-height: 501px) {
+  .track:not(.staticMode) .intro .eyebrow { position: relative; left: 100%; transform: translateX(-100%); width: max-content; white-space: nowrap; font-size: clamp(14px, 1.3vw, 20px); }
+}
+@media (max-width: 1000px) and (max-height: 500px) and (orientation: landscape) {
+  .intro .eyebrow { white-space: nowrap; font-size: min(13px, 3.4cqi); }
+}
