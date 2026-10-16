@@ -4,25 +4,20 @@ import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { FiArrowDown } from 'react-icons/fi'
 import type { CSSProperties } from 'react'
-import { editableStoryKeys, type ProjectStoryCopy } from '@/lib/project-story-copy'
-import { mimesissChapters } from '@/lib/project-story-defaults'
 import { neuralStoryPassages } from '../lib/neural-story-copy'
-import { projects } from '../lib/content'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
 import { mobileStoryFrame, mobileStoryMoments } from '../lib/mobile-story-timing'
 import { afterScenePaint } from '../lib/neural-loading'
 import type { NeuralSpace } from '../lib/neural-space'
 import styles from './MimesissScrollStory.module.css'
 
-const project = projects.find(item => item.id === 'mimesiss')!
 const stops = [.25, .49, .73, .96]
 const arrivals = [.19, .43, .67, .9]
 const departures = [.31, .55, .79, 1.1]
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 const between = (value: number, start: number, end: number) => clamp((value - start) / (end - start))
 
-export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy }) {
-  const chapters = useMemo(() => mimesissChapters.map((chapter, index) => ({ ...chapter, ...copy?.[editableStoryKeys.mimesiss[index]] })), [copy])
+export default function MimesissScrollStory({ chapters, kicker }: { chapters: { label: string; title: string; body: string }[]; kicker: string }) {
   const mobilePassages = useMemo(() => chapters.flatMap((chapter, chapterIndex) => {
     const parts = neuralStoryPassages(chapter, true)
     return parts.map((copy, part) => ({ ...chapter, ...copy, chapterIndex, part, parts: parts.length }))
@@ -169,7 +164,7 @@ export default function MimesissScrollStory({ copy }: { copy?: ProjectStoryCopy 
         <Image src="/project-stories/neural-space/intro-desktop.webp" alt="" fill unoptimized loading="eager" fetchPriority="high" />
       </picture>
       <div ref={introRef} className={styles.intro}>
-        <p className={styles.eyebrow}>{project.kicker}</p>
+        <p className={styles.eyebrow}>{kicker}</p>
         <h1 id="mimesiss-scroll-title">MIMESISS</h1>
         <p className={styles.fullName}>Military Medicine Scientific Session for Students</p>
         <p className={styles.tagline}><span>Cunoașterea ne formează, </span><span>experiența ne definește, iar medicina ne unește.</span></p>
