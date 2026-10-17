@@ -1,6 +1,5 @@
 'use client'
 
-import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -37,10 +36,35 @@ export default function AssociationHeader() {
   const pathname = usePathname()
   const [openPath, setOpenPath] = useState<string | null>(null)
   const [congressOpen, setCongressOpen] = useState(false)
+  const [signedIn, setSignedIn] = useState<boolean | null>(null)
+  const [sessionError, setSessionError] = useState(false)
   const menuButtonRef = useRef<HTMLButtonElement>(null)
   const menuPanelRef = useRef<HTMLDialogElement>(null)
   const open = openPath === pathname
   const inCongress = pathname.startsWith('/congres')
+
+  useEffect(() => {
+    let controller: AbortController | undefined
+    const refresh = async () => {
+      controller?.abort()
+      controller = new AbortController()
+      try {
+        const response = await fetch('/api/session', { cache: 'no-store', signal: controller.signal })
+        if (!response.ok) throw new Error('Session lookup failed')
+        const session: unknown = await response.json()
+        if (!session || typeof session !== 'object' || !('signedIn' in session) || typeof session.signedIn !== 'boolean') throw new Error('Invalid session response')
+        setSignedIn(session.signedIn)
+        setSessionError(false)
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return
+        setSignedIn(null)
+        setSessionError(true)
+      }
+    }
+    void refresh()
+    window.addEventListener('focus', refresh)
+    return () => { controller?.abort(); window.removeEventListener('focus', refresh) }
+  }, [pathname])
 
   const isPrimaryActive = (href: string) => (
     href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(`${href}/`)
@@ -101,17 +125,15 @@ export default function AssociationHeader() {
         </nav>
 
         <div className={styles.authControls}>
-          <SignedOut>
-            <Link href="/auth/login" className={styles.signInLink}>Conectare</Link>
-            <Link href="/auth/signup" className={styles.signUpLink}>Creează cont</Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard" className={styles.accountLink} aria-label="Contul meu">
+          {signedIn === false ? <>
+            <Link href="/auth/login" prefetch={false} className={styles.signInLink}>Conectare</Link>
+            <Link href="/auth/signup" prefetch={false} className={styles.signUpLink}>Creează cont</Link>
+          </> :
+            <Link href="/dashboard" prefetch={false} className={styles.accountLink} title={sessionError ? 'Starea sesiunii nu este disponibilă. Deschide contul pentru verificare.' : undefined} aria-label="Contul meu">
               <FaUser aria-hidden="true" />
               <span>Contul meu</span>
             </Link>
-            <UserButton />
-          </SignedIn>
+          }
         </div>
 
         <button
@@ -159,8 +181,8 @@ export default function AssociationHeader() {
           <nav className={styles.mobileShortcuts} aria-label="Acces rapid"><Link href="/congres/workshops" onClick={closeMenu}>Ateliere <FaArrowRight aria-hidden="true" /></Link><Link href="/congres/gallery" onClick={closeMenu}>Galerie foto <FaArrowRight aria-hidden="true" /></Link></nav>
         </div>
         <div className={styles.mobileAuth}>
-          <SignedOut><Link href="/auth/login" onClick={closeMenu}>Conectare</Link><Link href="/auth/signup" className={styles.mobileSignUp} onClick={closeMenu}>Creează cont</Link></SignedOut>
-          <SignedIn><Link href="/dashboard" className={styles.mobileAccountLink} onClick={closeMenu}><FaUser aria-hidden="true" />Contul meu</Link><UserButton /></SignedIn>
+          {signedIn === false ? <><Link href="/auth/login" prefetch={false} onClick={closeMenu}>Conectare</Link><Link href="/auth/signup" prefetch={false} className={styles.mobileSignUp} onClick={closeMenu}>Creează cont</Link></> : <Link href="/dashboard" prefetch={false} className={styles.mobileAccountLink} onClick={closeMenu}><FaUser aria-hidden="true" />Contul meu</Link>}
+          {sessionError && <span role="status" className="text-xs text-muted-foreground">Deschide contul pentru a verifica sesiunea.</span>}
         </div>
       </dialog>}
     </header>

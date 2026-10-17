@@ -18,9 +18,11 @@ import {
   FaUsers
 } from 'react-icons/fa'
 
-import AuthLinks from '@/components/dashboard/AuthLinks'
+import dynamic from 'next/dynamic'
 import AssociationHeader from '@/components/asociatie/AssociationHeader'
 import { isPublicPath } from '@/lib/public-routes'
+
+const AuthLinks = dynamic(() => import('@/components/dashboard/AuthLinks'))
 
 /** Navigația asociației — rădăcina site-ului. */
 const ASSOCIATION_LINKS = [

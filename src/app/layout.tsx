@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { ClerkProvider } from '@clerk/nextjs';
+import AuthBoundary from '@/components/auth/AuthBoundary';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
-import { GoogleAnalytics } from '@next/third-parties/google';
+import GoogleAnalytics from '@/components/analytics/GoogleAnalytics';
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import Header from "@/components/ui/Header";
 import "./globals.css";
@@ -123,37 +123,32 @@ export default async function RootLayout({
   const appSettings = await getAppSettings()
 
   return (
-    <ClerkProvider>
-      <html lang="ro" className="dark">
-        <head>
-          <link rel="preconnect" href="https://clerk.asmm.ro" crossOrigin="anonymous" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-          <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
-          <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
-          {/* Critical first-paint colours. These MUST match :root in globals.css,
-              otherwise the pre-stylesheet paint is a different shade and causes
-              the very flash this is meant to prevent. */}
-          <style dangerouslySetInnerHTML={{__html: `:root{--background:240 3% 6%;--foreground:0 0% 100%}body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground))}`}} />
-        </head>
-        <body
-          className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground min-h-screen`}
-        >
+    <html lang="ro" className="dark">
+      <head>
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
+        <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
+        {/* Critical first-paint colours must match :root in globals.css. */}
+        <style dangerouslySetInnerHTML={{__html: `:root{--background:240 3% 6%;--foreground:0 0% 100%}body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground))}`}} />
+      </head>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground min-h-screen`}>
+        <AuthBoundary>
           <AppSettingsProvider settings={appSettings}>
             <ToastProvider>
               <PublicSurface>
-              <Header />
-              <main id="site-main" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background">
-                {children}
-              </main>
-              <Footer />
+                <Header />
+                <main id="site-main" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background">
+                  {children}
+                </main>
+                <Footer />
               </PublicSurface>
             </ToastProvider>
           </AppSettingsProvider>
-          <SpeedInsights />
-          <Analytics />
-          <GoogleAnalytics gaId="G-2H44Z5Z7S3" />
-        </body>
-      </html>
-    </ClerkProvider>
+        </AuthBoundary>
+        <SpeedInsights />
+        <Analytics />
+        <GoogleAnalytics />
+      </body>
+    </html>
   );
 }

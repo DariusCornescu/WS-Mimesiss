@@ -74,7 +74,7 @@
   content: '';
 }
 
-.authControls { display: flex; align-items: center; gap: 18px; white-space: nowrap; }
+.authControls { display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; gap: 18px; width: 230px; min-height: 42px; white-space: nowrap; }
 .signInLink { color: hsl(var(--brand-ivory)); font-size: 14px; font-weight: 600; }
 .signUpLink {
   display: inline-flex;
@@ -112,7 +112,7 @@
 @media (max-width: 1140px) {
   .logo { flex-basis: 220px; }
   .desktopNav, .signInLink, .signUpLink { display: none; }
-  .authControls { margin-left: auto; }
+  .authControls { margin-left: auto; width: auto; }
   .menuButton, .closeButton { display: grid; place-items: center; flex-shrink: 0; width: 48px; height: 48px; border: 1px solid hsl(var(--brand-sand) / .3); border-radius: 50%; color: hsl(var(--brand-ivory)); }
   .congressNav { display: none; }
   .mobilePanel { color-scheme: dark; --background: var(--story-background); --foreground: var(--story-foreground); --muted: var(--story-muted); --muted-foreground: var(--story-muted-foreground); --border: var(--story-border); position: fixed; inset: 0 0 0 auto; width: min(420px, 100%); max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; overflow: hidden; background: hsl(var(--background)); color: hsl(var(--foreground)); box-shadow: -14px 0 34px hsl(var(--background) / .25); }

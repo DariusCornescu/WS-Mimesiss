@@ -1,6 +1,5 @@
-'use client'
-
-import type { ProjectStoryCopy } from '@/lib/project-story-copy'
+import { editableStoryKeys, type ProjectStoryCopy } from '@/lib/project-story-copy'
+import { mimesissChapters } from '@/lib/project-story-defaults'
 import type { TentStoryCopy } from '@/lib/tent-story-copy'
 import Image from 'next/image'
 import InlineAlbum from './InlineAlbum'
@@ -36,7 +35,7 @@ export default function StoryDesign({ project, tentCopy, storyCopy }: StoryDesig
 
   return (
     <div className={`${styles.story} ${!isCongress ? styles.eventStory : ''}`}>
-      {isCongress ? <MimesissScrollStory copy={storyCopy} /> : <EventScrollStory key={project.id} story={getEventStory(project, tentCopy, storyCopy)} />}
+      {isCongress ? <MimesissScrollStory kicker={project.kicker} chapters={mimesissChapters.map((chapter, index) => ({ ...chapter, ...storyCopy?.[editableStoryKeys.mimesiss[index]] }))} /> : <EventScrollStory key={project.id} story={getEventStory(project, tentCopy, storyCopy)} />}
 
         <section id="story-overview" className={styles.overview} aria-labelledby="story-overview-title">
           <div className={styles.chapterLabel}>{project.id === 'bal' && <span>05</span>}<p>Despre proiect</p><span className={styles.rule} /></div>

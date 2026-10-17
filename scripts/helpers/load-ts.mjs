@@ -5,7 +5,7 @@ const require = createRequire(import.meta.url)
 const ts = require('typescript')
 export function load(path, dependencies = {}) {
   const source = ts.transpileModule(readFileSync(new URL('../../' + path, import.meta.url), 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText
   const loadedModule = { exports: {} }
   runInNewContext(source, { module: loadedModule, exports: loadedModule.exports, require: name => {

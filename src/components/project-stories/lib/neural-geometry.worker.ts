@@ -1,15 +1,18 @@
-import { buildNeuralGeometry } from './neural-geometry'
+import { buildNeuralGeometryStage, type NeuralGeometryStage } from './neural-geometry'
 
-self.onmessage = async () => {
+self.onmessage = (event: MessageEvent<NeuralGeometryStage>) => {
   try {
-    const geometries = await buildNeuralGeometry()
-    const entries = Object.entries(geometries).map(([name, geometry]) => [name, {
+    const geometries = buildNeuralGeometryStage(event.data)
+    const entries = Object.entries(geometries).map(([name, geometry]) => {
+      geometry.computeBoundingSphere()
+      return [name, {
       attributes: Object.fromEntries(Object.entries(geometry.attributes).map(([key, attribute]) => [key, { array: attribute.array, itemSize: attribute.itemSize }])),
       index: geometry.index?.array,
-    }])
+      sphere: { center: geometry.boundingSphere!.center.toArray(), radius: geometry.boundingSphere!.radius },
+    }] })
     const buffers = Object.values(geometries).flatMap(geometry => [...Object.values(geometry.attributes).map(attribute => attribute.array.buffer), ...(geometry.index ? [geometry.index.array.buffer] : [])])
-    self.postMessage({ geometries: entries }, { transfer: [...new Set(buffers)] })
+    self.postMessage({ stage: event.data, geometries: entries }, { transfer: [...new Set(buffers)] })
   } catch {
-    self.postMessage({ error: 'Scene geometry could not be prepared.' })
+    self.postMessage({ stage: event.data, error: 'Scene geometry could not be prepared.' })
   }
 }

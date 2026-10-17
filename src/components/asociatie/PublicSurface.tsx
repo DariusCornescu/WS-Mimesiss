@@ -25,7 +25,11 @@ export default function PublicSurface({ children }: { children: React.ReactNode 
         animation.onfinish = () => animations.delete(animation)
       })
     }, { threshold: .08 })
-    root.current.querySelectorAll('[data-entrance], .public-card, .person-card, .gallery-grid button, .header-div h1').forEach(element => observer.observe(element))
+    root.current.querySelectorAll('[data-entrance], .public-card, .person-card, .gallery-grid button').forEach(element => {
+      const bounds = element.getBoundingClientRect()
+      if (bounds.top < window.innerHeight && bounds.bottom > 0) return
+      observer.observe(element)
+    })
     const stop = () => { if (motion.matches) { observer.disconnect(); animations.forEach(animation => animation.cancel()) } }
     motion.addEventListener('change', stop)
     return () => { observer.disconnect(); animations.forEach(animation => animation.cancel()); motion.removeEventListener('change', stop) }

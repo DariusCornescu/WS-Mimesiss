@@ -81,5 +81,5 @@ const photos = [
 
 export default function EventGallery() {
   const [index, setIndex] = useState<number | null>(null)
-  return <><PhotoGrid photos={photos} onSelect={(_, selected) => setIndex(selected)} />{index !== null && <PhotoViewer photos={photos} index={index} title="Galerie MIMESISS" onClose={() => setIndex(null)} />}</>
+  return <><PhotoGrid photos={photos} prioritizeFirst onSelect={(_, selected) => setIndex(selected)} />{index !== null && <PhotoViewer photos={photos} index={index} title="Galerie MIMESISS" onClose={() => setIndex(null)} />}</>
 }

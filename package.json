@@ -10,7 +10,8 @@
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "test:partners": "node --test scripts/test-partners.mjs",
-    "test:stories": "node --test scripts/test-project-stories.mjs scripts/test-photo-viewer.mjs scripts/test-tent-story-copy.mjs"
+    "test:startup": "node --test scripts/test-public-startup.mjs",
+    "test:stories": "node --test scripts/test-project-stories.mjs scripts/test-photo-viewer.mjs scripts/test-tent-story-copy.mjs scripts/test-neural-startup.mjs scripts/test-project-rendering.mjs"
   },
   "engines": {
     "node": ">=22.0.0"

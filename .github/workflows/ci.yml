@@ -44,6 +44,9 @@ jobs:
       - name: Project story routes and assets
         run: npm run test:stories
 
+      - name: Public startup and session isolation
+        run: npm run test:startup
+
   build:
     name: Production build
     runs-on: ubuntu-latest
@@ -128,3 +131,45 @@ jobs:
           done
           kill "$SERVER_PID" 2>/dev/null || true
           exit "$FAILED"
+
+  performance:
+    name: Isolated startup diagnostics
+    if: github.event_name == 'workflow_dispatch'
+    needs: [quality, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      PERFORMANCE_REFERENCE_ROOT: ${{ github.workspace }}/.preview/reference
+      PERFORMANCE_REFERENCE_COMMIT: 04b39f2a6ff26c8851b5ba499ee3f534a957a9e5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check out the reference before the rendering change
+        uses: actions/checkout@v7
+        with:
+          ref: 04b39f2a6ff26c8851b5ba499ee3f534a957a9e5
+          path: .preview/reference
+      - name: Share identical installed dependencies with the reference
+        run: ln -s "$GITHUB_WORKSPACE/node_modules" .preview/reference/node_modules
+      - name: Install pinned audit tooling outside application dependencies
+        run: npm install --prefix .preview/lighthouse --no-save --no-package-lock --ignore-scripts --no-audit --no-fund lighthouse@12.6.1
+      - name: Compare reference and isolated production builds
+        run: node scripts/audit-startup-matrix.mjs .preview/startup-matrix .preview/lighthouse/node_modules/lighthouse/cli/index.js
+      - name: Summarize collected measurements
+        if: always()
+        run: |
+          if test -f .preview/startup-matrix/matrix.json; then
+            node scripts/report-startup-matrix.mjs .preview/startup-matrix
+          fi
+      - name: Preserve measurements and browser traces
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: startup-matrix
+          path: .preview/startup-matrix
+          include-hidden-files: true
+          retention-days: 14
