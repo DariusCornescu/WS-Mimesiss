@@ -66,7 +66,7 @@ test('worker prepares only the requested neuron and transfers its precomputed bo
   worker.onmessage({ data: 0 })
   const first = messages[0]
   assert.equal(first.message.stage, 0)
-  assert.deepEqual(Array.from(first.message.geometries, ([name]) => name).sort(), ['body', 'branches0', 'photo0'])
+  assert.deepEqual(Array.from(first.message.geometries, ([name]) => name).sort(), ['body', 'branches0', 'photo0', 'signals0'])
   assert.equal(new Set(first.options.transfer).size, first.options.transfer.length)
   for (const [, payload] of first.message.geometries) {
     assert.ok(payload.sphere.radius > 0)
@@ -74,11 +74,11 @@ test('worker prepares only the requested neuron and transfers its precomputed bo
     assert.ok(first.options.transfer.includes(payload.attributes.position.array.buffer))
   }
   worker.onmessage({ data: 3 })
-  assert.deepEqual(Array.from(messages[1].message.geometries, ([name]) => name).sort(), ['branches3', 'photo3'])
+  assert.deepEqual(Array.from(messages[1].message.geometries, ([name]) => name).sort(), ['branches3', 'photo3', 'signals3'])
   const initialVertices = first.message.geometries.reduce((sum, [, g]) => sum + g.attributes.position.array.length / 3, 0)
   worker.onmessage({ data: 'background' })
   const background = messages[2].message.geometries
-  assert.deepEqual(Array.from(background, ([name]) => name).sort(), ['backgroundBodies', 'backgroundBranches', 'connections'])
+  assert.deepEqual(Array.from(background, ([name]) => name).sort(), ['backgroundBodies', 'backgroundBranches', 'connectionSignals', 'connections'])
   const backgroundVertices = background.reduce((sum, [, g]) => sum + g.attributes.position.array.length / 3, 0)
   assert.ok(initialVertices < backgroundVertices, 'The first paint must not wait for the distant network')
 })

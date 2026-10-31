@@ -6,7 +6,7 @@ import { afterScenePaint, neuralStagePriority, requiredNeuralStages, shouldPrepa
 import { loadNeuralTexture } from './neural-texture'
 
 export type NeuralLayout = { width: number; height: number; narrow: boolean; landscape?: boolean; panelHeight: number; introBottom?: number }
-export type NeuralSpace = { update: (progress: number, layout: NeuralLayout) => boolean; dispose: () => void }
+export type NeuralSpace = { update: (progress: number, layout: NeuralLayout) => boolean; animate: (time: number) => void; dispose: () => void }
 
 const arrivals = [.19, .43, .67, .9]
 const departures = [.31, .55, .79, 1.1]
@@ -61,7 +61,7 @@ function geometryLoader(signal: AbortSignal) {
   return { load, dispose }
 }
 
-function photographMaterial(texture: THREE.Texture, index: number, introTexture: THREE.Texture) {
+function photographMaterial(texture: THREE.Texture, index: number) {
   const photo = mimesissScenePhotos[index]
   const sourceAspect = photo.width / photo.height
   const size = photoSize(index)
@@ -70,40 +70,84 @@ function photographMaterial(texture: THREE.Texture, index: number, introTexture:
   const repeat = new THREE.Vector2(Math.min(1, destinationAspect / sourceAspect), Math.min(1, sourceAspect / destinationAspect))
   const offset = new THREE.Vector2((1 - repeat.x) * x, (1 - repeat.y) * (1 - y))
   return new THREE.ShaderMaterial({
-    uniforms: { ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), photo: { value: texture }, crop: { value: repeat }, offset: { value: offset }, introPhoto: { value: introTexture }, introMix: { value: index === 0 ? 1 : 0 }, introSize: { value: new THREE.Vector2(.97, .97 * destinationAspect * 1.25 / (770 / 342)) } },
-    vertexShader: `varying vec2 vPhotoUv; uniform float introMix;
+    uniforms: { ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), photo: { value: texture }, crop: { value: repeat }, offset: { value: offset }, reveal: { value: index === 0 ? 0 : 1 } },
+    vertexShader: `varying vec2 vPhotoUv;
       #include <fog_pars_vertex>
       void main() {
         vPhotoUv = uv;
-        vec3 photoPosition = position;
-        photoPosition.x *= mix(1.0, 1.25, introMix);
-        vec4 mvPosition = modelViewMatrix * vec4(photoPosition, 1.0);
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
         gl_Position = projectionMatrix * mvPosition;
         #include <fog_vertex>
       }`,
-    fragmentShader: `uniform sampler2D photo; uniform vec2 crop; uniform vec2 offset;
-      uniform sampler2D introPhoto; uniform float introMix; uniform vec2 introSize;
+    fragmentShader: `uniform sampler2D photo; uniform vec2 crop; uniform vec2 offset; uniform float reveal;
       varying vec2 vPhotoUv;
       #include <fog_pars_fragment>
       void main() {
         vec2 edge = (vPhotoUv - 0.5) * 2.0;
         float angle = atan(edge.y, edge.x);
         float radius = length(edge) * (1.0 + 0.035 * sin(angle * 5.0) + 0.02 * cos(angle * 7.0));
-        float alpha = 1.0 - smoothstep(mix(0.73, 0.94, introMix), mix(1.075, 1.2, introMix), radius);
+        // The photograph opens from the centre of the cell as the camera arrives.
+        float alpha = (1.0 - smoothstep(mix(0.0, 0.73, reveal), mix(0.3, 1.075, reveal), radius)) * reveal;
         if (alpha < 0.015) discard;
         vec4 image = texture2D(photo, offset + vPhotoUv * crop);
-        vec2 logoUv = (vPhotoUv - 0.5) / introSize + 0.5;
-        vec2 logoEdge = abs(logoUv - 0.5) * 2.0;
-        float logoRadius = max(logoEdge.x, logoEdge.y);
-        float logoMask = 1.0 - smoothstep(0.94, 1.08, logoRadius);
-        vec2 croppedLogoUv = vec2(70.0 / 910.0, 234.0 / 584.0) + clamp(logoUv, 0.0, 1.0) * vec2(770.0 / 910.0, 342.0 / 584.0);
-        vec3 logo = texture2D(introPhoto, croppedLogoUv).rgb;
-        gl_FragColor = vec4(mix(image.rgb * 0.86, logo, introMix), alpha * mix(1.0, logoMask, introMix));
+        gl_FragColor = vec4(image.rgb * 0.86, alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
         #include <fog_fragment>
       }`,
     transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide,
+  })
+}
+
+// Copper impulses travelling inside the neurites (looping) and along the axons
+// between neurons, where the leading pulse follows the camera's own journey.
+function signalMaterial(kind: 'neurite' | 'axon', density: number) {
+  return new THREE.ShaderMaterial({
+    uniforms: { time: { value: 0 }, travel: { value: new THREE.Vector3() }, color: { value: new THREE.Color(BRAND.story.copper) }, core: { value: new THREE.Color(BRAND.story.foreground) }, density: { value: density } },
+    defines: kind === 'axon' ? { AXON: '' } : {},
+    vertexShader: `uniform vec3 travel;
+      attribute float ${kind === 'axon' ? 'segment' : 'phase'};
+      varying float vAlong; varying float vKey; varying float vFresnel; varying float vDepth;
+      void main() {
+        vAlong = uv.x;
+        #ifdef AXON
+          vKey = segment < 0.5 ? travel.x : segment < 1.5 ? travel.y : travel.z;
+        #else
+          vKey = phase;
+        #endif
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vec3 viewNormal = normalize(normalMatrix * normal);
+        vFresnel = 1.0 - abs(dot(viewNormal, normalize(-mvPosition.xyz)));
+        vDepth = -mvPosition.z;
+        gl_Position = projectionMatrix * mvPosition;
+      }`,
+    fragmentShader: `uniform float time; uniform vec3 color; uniform vec3 core; uniform float density;
+      varying float vAlong; varying float vKey; varying float vFresnel; varying float vDepth;
+      // A soft leading edge and a long fading tail, so the signal reads as light, not as a band.
+      float pulse(float head, float along) {
+        float d = head - along;
+        return d >= 0.0 ? exp(-d * 3.5) : exp(d * 28.0);
+      }
+      void main() {
+        float glow;
+        #ifdef AXON
+          // Travel 0..1 is the camera's progress between two neurons; a faint train keeps the axon alive.
+          float lead = pulse(vKey * 1.15 - 0.05, vAlong) * smoothstep(0.0, 0.04, vKey) * (1.0 - smoothstep(0.96, 1.0, vKey));
+          glow = lead + 0.18 * pulse(fract(time * 0.09), vAlong);
+        #else
+          float cycle = time * 0.22 + vKey;
+          // Roughly half of the branches fire in any cycle, chosen anew each cycle.
+          float firing = step(0.48, fract(sin((floor(cycle) + vKey * 17.0) * 43.7) * 9631.3));
+          glow = pulse(fract(cycle) * 1.2, vAlong) * firing * (1.0 - smoothstep(0.75, 1.0, vAlong));
+        #endif
+        float fog = exp(-density * density * vDepth * vDepth);
+        // Mostly edge light, so the branch looks lit from inside rather than painted.
+        float rim = 0.12 + 0.88 * pow(vFresnel, 2.2);
+        float intensity = glow * rim * fog;
+        if (intensity < 0.004) discard;
+        gl_FragColor = vec4(mix(color, core, glow * glow * 0.45) * intensity * 1.7, 1.0);
+      }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   })
 }
 
@@ -120,7 +164,7 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
   const mobile = window.matchMedia('(max-width: 700px)').matches
   const resources = () => { jobs.dispose(); ownedGeometry.forEach(item => item.dispose()); textures.forEach(item => item.dispose()) }
   const loadTexture = async (src: string) => {
-    const url = mobile && !src.endsWith('mimesiss-intro-logo.webp') ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src
+    const url = mobile ? '/_next/image?url=' + encodeURIComponent(src) + '&w=' + (src.includes('membrane') ? 640 : 828) + '&q=85' : src
     const texture = await loadNeuralTexture(url, signal)
     if (disposed || signal.aborted) { texture.dispose(); throw new DOMException('Scene loading cancelled', 'AbortError') }
     texture.colorSpace = THREE.SRGBColorSpace
@@ -136,15 +180,13 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
   const initial = await Promise.allSettled([
     loadGeometry(0),
     loadTexture('/project-stories/neural-space/membrane.webp'),
-    loadTexture('/project-stories/neural-space/mimesiss-intro-logo.webp'),
   ])
-  if (signal.aborted || initial[0].status !== 'fulfilled' || initial[1].status !== 'fulfilled' || initial[2].status !== 'fulfilled') {
+  if (signal.aborted || initial[0].status !== 'fulfilled' || initial[1].status !== 'fulfilled') {
     resources()
     throw new Error('Scene loading interrupted or failed.')
   }
   const geometry = initial[0].value
   const membrane = initial[1].value
-  const introTexture = initial[2].value
   membrane.wrapS = membrane.wrapT = THREE.RepeatWrapping
   membrane.repeat.set(2, 2)
   let renderer: THREE.WebGLRenderer
@@ -157,7 +199,10 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
   host.appendChild(renderer.domElement)
   const scene = new THREE.Scene()
   scene.background = new THREE.Color(BRAND.story.background).multiplyScalar(.3)
-  scene.fog = new THREE.FogExp2(scene.background, .012)
+  const fogDensity = .016
+  scene.fog = new THREE.FogExp2(scene.background, fogDensity)
+  const neuriteSignals = signalMaterial('neurite', fogDensity)
+  const axonSignals = signalMaterial('axon', fogDensity)
   const camera = new THREE.PerspectiveCamera(46, 1, .1, 200)
   const material = new THREE.MeshStandardMaterial({ map: membrane, bumpMap: membrane, bumpScale: .08, color: BRAND.story.foreground, roughness: .94, metalness: 0 })
   scene.add(new THREE.AmbientLight(BRAND.story.mutedForeground, 2.4))
@@ -174,20 +219,28 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     group.rotation.y = [-.08, .12, -.06, .05][index]
     group.rotation.z = [-.045, .02, -.025, .025][index]
     group.add(new THREE.Mesh(geometry.body, material), new THREE.Mesh(meshes['branches' + index], material))
-    const photograph = new THREE.Mesh(meshes['photo' + index], photographMaterial(texture, index, introTexture))
+    const photograph = new THREE.Mesh(meshes['photo' + index], photographMaterial(texture, index))
     photograph.renderOrder = 1
     group.add(photograph)
+    // Looping neurite signals only animate on larger screens, so phones skip the extra draw call.
+    if (!mobile) {
+      const signals = new THREE.Mesh(meshes['signals' + index], neuriteSignals)
+      signals.renderOrder = 2
+      group.add(signals)
+    }
     scene.add(group)
     scene.updateMatrixWorld(true)
     group.traverse(object => { object.matrixAutoUpdate = false })
     photographs[index] = photograph
   }
-  addNeuron(0, geometry, introTexture)
+  // The first photograph is hidden until the camera moves, so the membrane can stand in for it.
+  addNeuron(0, geometry, membrane)
   scene.traverse(object => { object.matrixAutoUpdate = false })
   cameraLight.matrixAutoUpdate = true
   const instance = crypto.randomUUID()
   let lastSize = ''
   let lastFrame = ''
+  let rendered = false
   const lost = (event: Event) => { event.preventDefault(); if (!disposed) onContextLost() }
   renderer.domElement.addEventListener('webglcontextlost', lost)
   const view = (index: number, layout: NeuralLayout) => {
@@ -255,10 +308,16 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     camera.rotation.set(0, yaw, 0)
     camera.updateMatrixWorld(true)
     cameraLight.position.copy(position).add(new THREE.Vector3(-5, 6, -1))
-    const introMix = photoReady[0] ? 1 - smooth(clamp((progress - .05) / .12)) : 1;
-    (photographs[0].material as THREE.ShaderMaterial).uniforms.introMix.value = introMix
-    host.dataset.introLogoOpacity = introMix.toFixed(3)
+    // Each photograph opens only as the camera approaches its neuron, so distant ones never sit behind the copy.
+    const reveal = photoReady[0] ? smooth(clamp((progress - .05) / .12)) : 0
+    photographs.forEach((photograph, index) => {
+      const amount = index === 0 ? reveal : smooth(clamp((progress - departures[index - 1]) / ((arrivals[index] - departures[index - 1]) * .7)))
+      ;(photograph.material as THREE.ShaderMaterial).uniforms.reveal.value = amount
+    })
+    host.dataset.introReveal = reveal.toFixed(3)
+    axonSignals.uniforms.travel.value.set(...[0, 1, 2].map(index => clamp((progress - departures[index]) / (arrivals[index + 1] - departures[index]))) as [number, number, number])
     renderer.render(scene, camera)
+    rendered = true
     if (ready) { host.dataset.sceneReady = 'true'; presentedProgress = progress }
     host.dataset.scenePhase = complete ? 'complete' : ready ? 'interactive' : 'preparing'
     host.dataset.loadedPhotos = photoReady.flatMap((ready, index) => ready ? [index] : []).join(',')
@@ -268,6 +327,13 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     host.dataset.triangles = String(renderer.info.render.triangles)
     host.dataset.drawCalls = String(renderer.info.render.calls)
     return ready
+  }
+  // Advances the idle signal animation without moving the camera.
+  const animate = (time: number) => {
+    if (disposed || !rendered) return
+    neuriteSignals.uniforms.time.value = time
+    axonSignals.uniforms.time.value = time
+    renderer.render(scene, camera)
   }
   const dispose = () => {
     if (disposed) return
@@ -294,7 +360,7 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
       delete host.dataset.cameraPosition
       delete host.dataset.triangles
       delete host.dataset.drawCalls
-      delete host.dataset.introLogoOpacity
+      delete host.dataset.introReveal
     }
   }
   signal.addEventListener('abort', dispose, { once: true })
@@ -321,7 +387,9 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     renderer.initTexture(firstPhoto)
     ;(photographs[0].material as THREE.ShaderMaterial).uniforms.photo.value = firstPhoto
     photoReady[0] = true
-    scene.add(new THREE.Mesh(background.backgroundBodies, material), new THREE.Mesh(background.backgroundBranches, material), new THREE.Mesh(background.connections, material))
+    const axons = new THREE.Mesh(background.connectionSignals, axonSignals)
+    axons.renderOrder = 2
+    scene.add(new THREE.Mesh(background.backgroundBodies, material), new THREE.Mesh(background.backgroundBranches, material), new THREE.Mesh(background.connections, material), axons)
     scene.updateMatrixWorld(true)
     backgroundReady = true
     changed()
@@ -350,5 +418,5 @@ export async function createNeuralSpace(host: HTMLDivElement, onContextLost: () 
     complete = true
     changed()
   })().catch(() => { if (!disposed && !signal.aborted) { onContextLost(); dispose() } })
-  return { update, dispose }
+  return { update, animate, dispose }
 }
