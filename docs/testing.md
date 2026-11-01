@@ -21,6 +21,9 @@ The existing `ci.yml` workflow runs secret scanning, the security and isolated M
 - `tests/unit/public-routes.test.ts`: public-surface path classification for presentation. These are not authorization checks; server authorization is checked separately.
 - `tests/unit/e2e-target.test.ts`: the browser target and authentication guards in `tests/e2e/support/target.ts` (production hosts, paths, credentials, query strings, preview HTTPS, opt-in requirements).
 - `tests/integration/users-clerkId-route.test.ts`: the `/api/users/[clerkId]` route handler, called directly with mocked authentication and data access.
+- `tests/integration/security-route-inventory.test.ts`: static inventory of every `src/app/api/**/route.ts`. A new route fails until it is listed with its methods and access gate.
+- `tests/integration/security-proxy.test.ts`: `src/proxy.ts` origin check, JSON 401 for `/api/admin`, webhook exemption and Clerk protection of `/dashboard` and `/admin` (Clerk replaced by a pass-through).
+- `tests/integration/security-qr-redirect.test.ts`, `security-staff-routes.test.ts`, `security-public-reads.test.ts` and `tests/unit/security-config.test.ts`: audit regression tests. Tests written as `it.fails` pin a known gap: they pass while the gap exists and start failing once it is fixed, at which point remove `.fails`.
 - `tests/component/association-header.test.tsx`: `AssociationHeader` menu toggle state, modal dialog semantics, initial focus, Tab and Shift+Tab containment, focus restoration on Escape and on the close button, backdrop close, scroll lock release, closing on route change, congress group expansion and reset, `aria-current` marking and signed-in/signed-out controls.
 
 Limits:
