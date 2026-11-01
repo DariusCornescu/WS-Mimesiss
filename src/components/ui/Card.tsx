@@ -6,7 +6,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Card = ({ children, className, ...props }: CardProps) => {
   return (
-    <div className={`bg-card shadow border border-border rounded-lg ${className}`}{...props}>
+    <div className={`rounded-xl border border-border/60 bg-card/85 shadow-lg shadow-background/15 backdrop-blur-sm ${className || ''}`} {...props}>
       {children}
     </div>
   );

@@ -15,8 +15,7 @@
    * there is no theme toggle, so there is no `.dark` override block. The class
    * itself stays, because 12 `dark:` variants on stock palette colours use it.
    *
-   * Fractional values are deliberate. `6 100% 50%` renders #FF1900 and
-   * `218 11% 65%` renders #9CA3B0 — each one 8-bit level off the brand hex.
+   * Warm charcoal, burgundy, ivory and rose form the shared platform palette.
    */
   :root {
     --story-background: 340 6.977% 8.431%;
@@ -26,25 +25,25 @@
     --story-muted-foreground: 7.059 10.828% 69.216%;
     --story-accent: 4.839 49.206% 75.294%;
     --story-border: 353.684 10.383% 35.882%;
-    --background: 240 3% 6%;               /* #0F0F10 */
-    --foreground: 0 0% 100%;               /* #FFFFFF */
-    --card: 240 3% 6%;                     /* #0F0F10 */
-    --card-foreground: 0 0% 100%;          /* #FFFFFF */
-    --popover: 240 3% 6%;                  /* #0F0F10 */
-    --popover-foreground: 0 0% 100%;       /* #FFFFFF */
-    --primary: 220 100% 70%;               /* #6699FF - brand blue */
-    --primary-foreground: 0 0% 100%;       /* #FFFFFF */
-    --secondary: 270 100% 40%;             /* #6600CC - brand purple */
-    --secondary-foreground: 0 0% 100%;     /* #FFFFFF */
-    --muted: 240 3% 6%;                    /* #0F0F10 */
-    --muted-foreground: 217.9 10.6% 64.9%; /* #9CA3AF */
-    --accent: 220 100% 70%;                /* #6699FF - same as primary */
-    --accent-foreground: 0 0% 0%;          /* #000000 - 7.57:1 on primary */
-    --destructive: 5.6 100% 50%;           /* #FF1800 */
-    --destructive-foreground: 0 0% 100%;   /* #FFFFFF */
-    --border: 220 100% 70%;                /* #6699FF */
-    --input: 270 100% 40%;                 /* #6600CC */
-    --ring: 220 100% 70%;                  /* #6699FF */
+    --background: 340.000 6.977% 8.431%; /* #171415 */
+    --foreground: 33.103 52.727% 89.216%; /* #F2E5D5 */
+    --card: 340.000 10.000% 11.765%; /* #211B1D */
+    --card-foreground: 33.103 52.727% 89.216%; /* #F2E5D5 */
+    --popover: 340.000 10.000% 11.765%; /* #211B1D */
+    --popover-foreground: 33.103 52.727% 89.216%; /* #F2E5D5 */
+    --primary: 355.714 50.602% 32.549%; /* #7D292F */
+    --primary-foreground: 33.103 52.727% 89.216%; /* #F2E5D5 */
+    --secondary: 35.000 56.604% 79.216%; /* #E8CFAC */
+    --secondary-foreground: 354.146 45.055% 17.843%; /* #42191D */
+    --muted: 345.000 10.256% 15.294%; /* #2B2325 */
+    --muted-foreground: 7.059 10.828% 69.216%; /* #B9AAA8 */
+    --accent: 4.839 49.206% 75.294%; /* #DFA6A1 */
+    --accent-foreground: 340.000 6.977% 8.431%; /* #171415 */
+    --destructive: 0.000 90.604% 70.784%; /* #F87171 */
+    --destructive-foreground: 340.000 6.977% 8.431%; /* #171415 */
+    --border: 353.684 10.383% 35.882%; /* #655254 */
+    --input: 351.429 8.936% 46.078%; /* #806B6E */
+    --ring: 4.839 49.206% 75.294%; /* #DFA6A1 */
     --brand-header: 355.946 57.813% 25.098%; /* #651B20 */
     --brand-deep: 354.146 45.055% 17.843%; /* #42191D */
     --brand-ivory: 33.103 52.727% 89.216%; /* #F2E5D5 */
@@ -100,19 +99,19 @@
   }
   
   .mimesiss-card {
-    @apply bg-card/80 backdrop-blur-sm rounded-lg border-2 border-border;
+    @apply rounded-xl border border-border/60 bg-card/85 shadow-lg shadow-background/15 backdrop-blur-sm;
   }
   
   .mimesiss-section-card {
-    @apply bg-card rounded-lg shadow border border-border overflow-hidden;
+    @apply overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-lg shadow-background/15;
   }
   
   .mimesiss-btn-primary {
-    @apply w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-black bg-primary hover:bg-primary/90 md:py-4 md:text-lg md:px-10 transition duration-200;
+    @apply flex min-h-12 w-full items-center justify-center rounded-lg border border-accent/50 bg-primary px-8 py-3 text-base font-semibold text-primary-foreground transition duration-200 hover:bg-primary/90 md:px-10 md:py-4 md:text-lg;
   }
   
   .mimesiss-btn-secondary {
-    @apply w-full flex items-center justify-center px-8 py-3 border border-border text-base font-medium rounded-md text-secondary-foreground bg-secondary hover:bg-secondary/80 md:py-4 md:text-lg md:px-10 transition duration-200;
+    @apply flex min-h-12 w-full items-center justify-center rounded-lg border border-border bg-secondary px-8 py-3 text-base font-semibold text-secondary-foreground transition duration-200 hover:bg-secondary/80 md:px-10 md:py-4 md:text-lg;
   }
   
   .mimesiss-contact-card {
@@ -144,7 +143,7 @@
   }
   
   .mimesiss-countdown-number {
-    @apply text-3xl md:text-4xl font-bold text-primary;
+    @apply text-3xl md:text-4xl font-bold text-accent;
   }
   
   .mimesiss-countdown-label {
@@ -152,8 +151,8 @@
   }
   
   /* Utility classes */
-  .mimesiss-text-primary {
-    @apply text-primary;
+  .mimesiss-text-accent {
+    @apply text-accent;
   }
   
   .mimesiss-text-secondary {
