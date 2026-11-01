@@ -24,13 +24,14 @@ const eslintConfig = [
   // WorkshopRegistrationButton). Downgraded so CI can start green; fix them
   // and then delete this block.
   {
+    files: ['**/*.{js,jsx,mjs,ts,tsx,mts,cts}'],
     rules: {
       'react-hooks/set-state-in-effect': 'warn',
       'react-hooks/purity': 'warn',
     },
   },
 
-  { ignores: ['.preview/**', '.pnpm-store/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts'] },
+  { ignores: ['.preview/**', '.pnpm-store/**', '.next/**', '.next-gallery-check/**', 'out/**', 'build/**', 'next-env.d.ts'] },
 ];
 
 export default eslintConfig;
