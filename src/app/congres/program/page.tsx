@@ -88,7 +88,7 @@ const timelineData = [
 				<Reveal>
 				<div className="mimesiss-card mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 text-center flex flex-col items-center justify-center p-8 space-y-4">
 
-					<h2 className="text-2xl font-bold text-primary text-center">JOI - 13 Noiembrie</h2>
+					<h2 className="text-2xl font-bold text-accent text-center">JOI - 13 Noiembrie</h2>
 
 					<p className="text-lg font-semibold text-foreground">Ceremonia de deschidere a congresului MIMESISS 2025</p>
 
@@ -96,7 +96,7 @@ const timelineData = [
 						href="https://www.google.com/maps/search/Cercul+Militar+Na%C8%9Bional"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="text-primary hover:underline font-medium"
+						className="text-accent hover:underline font-medium"
 					>
 						Cercul Militar Național
 					</Link>
@@ -105,7 +105,7 @@ const timelineData = [
 						Intervalul orar: 18:00 - 21:00
 					</p>
 
-					<a className="mimesiss-btn-primary max-w-80 my-5 mx-auto" href="/docs/Program.pdf">Descarca Programul PDF</a>
+					<a className="mimesiss-btn-primary max-w-80 my-5 mx-auto" href="/docs/Program.pdf">Descarcă programul PDF</a>
 
 				</div>
 				</Reveal>
@@ -122,7 +122,7 @@ const timelineData = [
 										{dayIndex + 1}
 									</div>
 									<div>
-										<h2 className="text-3xl font-bold uppercase tracking-tight text-primary">{day.date}</h2>
+										<h2 className="text-3xl font-bold uppercase tracking-tight text-accent">{day.date}</h2>
 										<p className="text-xl text-muted-foreground">{day.title}</p>
 										<div className="mt-2 h-px w-20 bg-gradient-to-r from-primary to-secondary" />
 									</div>
@@ -139,7 +139,7 @@ const timelineData = [
 										Conferințe
 									</h3>
 									<p className="text-sm text-muted-foreground mb-6 ml-0 md:ml-5">
-										📍 Locație: <a href={`https://www.google.com/maps/search/${encodeURIComponent(day.conferenceLocation)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium">{day.conferenceLocation}</a>
+										📍 Locație: <a href={`https://www.google.com/maps/search/${encodeURIComponent(day.conferenceLocation)}`} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline font-medium">{day.conferenceLocation}</a>
 									</p>
 
 									{/* Conference Timeline */}
@@ -151,7 +151,7 @@ const timelineData = [
 
 												<div className={`p-4 rounded-lg ${conf.break ? 'bg-muted/30 italic' : 'bg-primary/5 border border-primary/20 hover:border-primary/40 hover:bg-primary/10 transition-all'}`}>
 													<div className="mb-2">
-														<span className="font-semibold text-primary text-sm">{conf.time}</span>
+														<span className="font-semibold text-accent text-sm">{conf.time}</span>
 													</div>
 													{conf.break ? (
 														<p className="text-sm text-muted-foreground">{conf.break}</p>
@@ -186,7 +186,7 @@ const timelineData = [
 
 													<div className="p-4 bg-primary/5 border border-primary/20 rounded-lg hover:border-primary/40 hover:bg-primary/10 transition-all">
 														<div className="mb-2">
-															<span className="font-semibold text-primary text-sm">{workshop.time}</span>
+															<span className="font-semibold text-accent text-sm">{workshop.time}</span>
 														</div>
 														{workshop.title && (
 															<p className="font-medium text-foreground mb-2">{workshop.title}</p>
@@ -197,7 +197,7 @@ const timelineData = [
 																href={`https://www.google.com/maps/search/${encodeURIComponent(workshop.location)}`}
 																target="_blank"
 																rel="noopener noreferrer"
-																className="flex items-center gap-2 text-xs text-primary hover:underline font-medium"
+																className="flex items-center gap-2 text-xs text-accent hover:underline font-medium"
 															>
 																<span>📍</span>
 																<span>{workshop.location}</span>

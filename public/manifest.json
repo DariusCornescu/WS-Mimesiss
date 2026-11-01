@@ -4,8 +4,8 @@
   "description": "Cea de-a V-a ediție a Sesiunii de Comunicări Științifice Medico-Militare",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0F0F10",
-  "theme_color": "#6699FF",
+  "background_color": "#171415",
+  "theme_color": "#7D292F",
   "orientation": "portrait-primary",
   "icons": [
     {
@@ -27,7 +27,11 @@
       "purpose": "any"
     }
   ],
-  "categories": ["medical", "education", "conferences"],
+  "categories": [
+    "medical",
+    "education",
+    "conferences"
+  ],
   "lang": "ro",
   "dir": "ltr"
 }

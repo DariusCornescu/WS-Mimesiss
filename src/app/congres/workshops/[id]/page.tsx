@@ -99,12 +99,12 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 
 	return (
 		<>
-			<HeaderContent title={`${wType}: ${workshop.title}`} />
+			<HeaderContent kicker="Congres · Activitate" title={`${wType}: ${workshop.title}`} />
 			<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 					{/* Hero Section */}
 					<div className="mimesiss-card p-8">
 						<div className="text-center mb-6">
-							<h1 className="text-3xl font-bold text-foreground mb-3">{workshop.title}</h1>
+							<h2 className="text-3xl font-bold text-foreground mb-3">{workshop.title}</h2>
 							<p className="text-lg text-muted-foreground leading-relaxed">{workshop.description}</p>
 						</div>
 
@@ -116,7 +116,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 							/>
 						</div>					{/* Status Badge */}
 						<div className="flex justify-center">
-							<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${workshop.status === 'active' ? 'bg-primary/10 text-primary border border-primary/20' :
+							<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${workshop.status === 'active' ? 'bg-primary/10 text-accent border border-primary/20' :
 								workshop.status === 'completed' ? 'bg-green-100 text-green-800 border border-green-200' :
 									'bg-red-100 text-red-800 border border-red-200'
 								}`}>
@@ -132,7 +132,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 					{workshop.url && (
 						<div className="mimesiss-card p-6">
 							<h2 className="text-xl font-semibold text-foreground mb-6 flex items-center">
-								<FaInstagram className="mr-2 text-primary" />
+								<FaInstagram className="mr-2 text-accent" />
 								Postare Instagram
 							</h2>
 
@@ -147,13 +147,13 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 					{/* Workshop Details */}
 					<div className="mimesiss-card p-6">
 						<h2 className="text-xl font-semibold text-foreground mb-6 flex items-center">
-							<FaInfoCircle className="mr-2 text-primary" />
+							<FaInfoCircle className="mr-2 text-accent" />
 							Detalii Workshop
 						</h2>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 							<div className="flex items-center p-4 bg-muted/30 rounded-lg">
-								<FaCalendarAlt className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+								<FaCalendarAlt className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
 								<div>
 									<h4 className="text-sm font-medium text-muted-foreground mb-1">Data</h4>
 									<div className="font-semibold text-foreground">{formatDate(workshopDate)}</div>
@@ -161,7 +161,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 							</div>
 
 							<div className="flex items-center p-4 bg-muted/30 rounded-lg">
-								<FaClock className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+								<FaClock className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
 								<div>
 									<h4 className="text-sm font-medium text-muted-foreground mb-1">Ora</h4>
 									<div className="font-semibold text-foreground">{workshop.time || "De stabilit"}</div>
@@ -169,7 +169,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 							</div>
 
 							<div className="flex items-center p-4 bg-muted/30 rounded-lg">
-								<FaMapMarkerAlt className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+								<FaMapMarkerAlt className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
 								<div>
 									<h4 className="text-sm font-medium text-muted-foreground mb-1">Locația</h4>
 									<div className="font-semibold text-foreground">{workshop.location || "De stabilit"}</div>
@@ -177,7 +177,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 							</div>
 
 							<div className="flex items-center p-4 bg-muted/30 rounded-lg">
-								<FaChalkboardTeacher className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+								<FaChalkboardTeacher className="h-5 w-5 text-accent mr-3 flex-shrink-0" />
 								<div>
 									<h4 className="text-sm font-medium text-muted-foreground mb-1">Instructor</h4>
 									<div className="font-semibold text-foreground">{workshop.instructor || "De stabilit"}</div>
@@ -190,7 +190,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 					{workshop.location && (
 						<div className="mimesiss-card p-6">
 							<h2 className="text-xl font-semibold text-foreground mb-6 flex items-center">
-								<FaMapMarkerAlt className="mr-2 text-primary" />
+								<FaMapMarkerAlt className="mr-2 text-accent" />
 								Locația Workshop-ului
 							</h2>
 							<div className="h-[400px]">
@@ -210,14 +210,14 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 					{/* Participation Info */}
 					<div className="mimesiss-card p-6">
 						<h2 className="text-xl font-semibold text-foreground mb-6 flex items-center">
-							<FaUsers className="mr-2 text-primary" />
+							<FaUsers className="mr-2 text-accent" />
 							Informații Participare
 						</h2>
 
 						{isConference ? (
 							<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 								<div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/10">
-									<div className="text-2xl font-bold text-primary mb-1">∞</div>
+									<div className="text-2xl font-bold text-accent mb-1">∞</div>
 									<div className="text-sm text-muted-foreground">Locuri nelimitate</div>
 								</div>
 
@@ -230,7 +230,7 @@ export default async function WorkshopPage({ params }: { params: Promise<{ id: s
 							<>
 								<div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 									<div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/10">
-										<div className="text-2xl font-bold text-primary mb-1">{workshop.maxParticipants}</div>
+										<div className="text-2xl font-bold text-accent mb-1">{workshop.maxParticipants}</div>
 										<div className="text-sm text-muted-foreground">Locuri disponibile</div>
 									</div>
 

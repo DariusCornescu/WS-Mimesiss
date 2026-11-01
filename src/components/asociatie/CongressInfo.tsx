@@ -6,7 +6,7 @@ import { RiContractFill } from 'react-icons/ri'
 export default function CongressInfo({ paymentEnabled, activeTicket, passiveTicket }: { paymentEnabled:boolean; activeTicket?: {price:number}; passiveTicket?: {price:number} }) {
   return (
     <>
-      <HeaderContent title='Informații MIMESISS 2025' />
+      <HeaderContent kicker="Congres · Informații" title='Informații MIMESISS 2025' />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Registration Process */}
         <div className="mb-16">
@@ -19,9 +19,9 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
             <div className="mimesiss-info-card mimesiss-border-step-1">
               <div className="text-center">
                 <div className="mimesiss-info-icon">
-                  <FaUserGraduate className="text-primary text-2xl" />
+                  <FaUserGraduate className="text-accent text-2xl" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-3">1. Crează-ți un cont</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">1. Creează-ți un cont</h3>
                 <p className="mimesiss-text-secondary text-sm">
                   Apasă pe butonul &ldquo;Înregistrare&rdquo; și completează formularul cu datele tale.
                   Vei primi un e-mail de confirmare pe care trebuie să-l accesezi pentru a activa contul.
@@ -54,7 +54,7 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
                   Doar pentru participanții activi. Încarcă abstractul conform ghidului de redactare
                   disponibil în secțiunea de informații.
                 </p>
-                <Link href="/congres/ghid" className="text-primary hover:underline">Vezi ghidul de redactare</Link>
+                <Link href="/congres/ghid" className="text-accent hover:underline">Vezi ghidul de redactare</Link>
               </div>
             </div>
 
@@ -64,9 +64,9 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
                 <div className="mimesiss-info-icon">
                   <RiContractFill className="text-secondary text-2xl" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-3">4. Completeaza formularul GDPR</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">4. Completează formularul GDPR</h3>
                 <p className="mimesiss-text-secondary text-sm">
-                  Înainte de plata taxei, descărcați și completați formularul <Link href="/docs/gdpr.pdf" className="text-primary hover:underline">GDPR</Link> și trimiteți-l împreună cu dovada plății la <Link href="mailto:secretariat@asmm-bucuresti.com" className="text-primary hover:underline">secretariat@asmm-bucuresti.com</Link>. Înscrierea se validează după primirea ambelor documente.
+                  Înainte de plata taxei, descărcați și completați formularul <Link href="/docs/gdpr.pdf" className="text-accent hover:underline">GDPR</Link> și trimiteți-l împreună cu dovada plății la <Link href="mailto:secretariat@asmm-bucuresti.com" className="text-accent hover:underline">secretariat@asmm-bucuresti.com</Link>. Înscrierea se validează după primirea ambelor documente.
                 </p>
               </div>
             </div>
@@ -75,7 +75,7 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
             <div className="mimesiss-info-card mimesiss-border-step-4">
               <div className="text-center">
                 <div className="mimesiss-info-icon">
-                  <FaCreditCard className="text-primary text-2xl" />
+                  <FaCreditCard className="text-accent text-2xl" />
                 </div>
                 <h3 className="text-lg font-semibold text-white mb-3">5. Achită taxa</h3>
                 <p className="mimesiss-text-secondary text-sm">
@@ -127,7 +127,7 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
                 )}
                 {paymentEnabled && (
                   <Link href="/payment" className="mimesiss-btn-primary items-center">
-                    Cumpara bilet
+                    Cumpără bilet
                   </Link>
                 )}
               </div>
@@ -143,14 +143,14 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
 
               <div className="text-center mb-6">
                 <div className="bg-card rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 border border-border">
-                  <FaFileAlt className="text-primary text-3xl" />
+                  <FaFileAlt className="text-accent text-3xl" />
                 </div>
                 <h3 className="text-2xl font-bold text-white">Participanți Activi</h3>
               </div>
 
               <div className="space-y-4">
                 <p className="text-gray-300">
-                  Prezintă o <Link href="/congres/ghid" className="text-primary hover:underline">lucrare științifică</Link> în una dintre secțiunile disponibile.
+                  Prezintă o <Link href="/congres/ghid" className="text-accent hover:underline">lucrare științifică</Link> în una dintre secțiunile disponibile.
                 </p>
 
                 <div className="bg-card/50 rounded-lg p-4 border border-border/30">
@@ -175,14 +175,14 @@ export default function CongressInfo({ paymentEnabled, activeTicket, passiveTick
 
                 {activeTicket?.price && (
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary mb-2">{activeTicket.price} RON</div>
+                    <div className="text-3xl font-bold text-accent mb-2">{activeTicket.price} RON</div>
                     <p className="text-muted-foreground">Taxa comună pentru toate secțiunile</p>
                   </div>
                 )}
 
                 {paymentEnabled && (
                   <Link href="/payment" className="mimesiss-btn-primary items-center">
-                    Cumpara bilet
+                    Cumpără bilet
                   </Link>
                 )}
               </div>

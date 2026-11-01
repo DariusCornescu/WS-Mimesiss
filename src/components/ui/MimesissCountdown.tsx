@@ -66,7 +66,7 @@ export default function MimesissCountdown() {
   if (!mounted) {
     return (
       <div className="text-center mb-6">
-       <FaCalendar className="h-8 w-8 text-primary mx-auto mb-4" />
+       <FaCalendar className="h-8 w-8 text-accent mx-auto mb-4" />
         <h3 className="text-2xl font-bold text-white mb-2">Timpul rămas până la MIMESISS 2025</h3>
         <p className="mimesiss-text-secondary">Se încarcă...</p>
       </div>
