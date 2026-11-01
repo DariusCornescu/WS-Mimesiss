@@ -1,0 +1,67 @@
+name: "Bot: auto-merge"
+
+# Default is to merge: every PR arms GitHub's native auto-merge (squash) and
+# merges as soon as the required checks on `main` pass. Humans only act to HOLD.
+#
+# Holds (auto-merge stays off):
+#   - draft PRs
+#   - a `needs-review` label (a human must decide)
+#   - an `agent-hold` label (temporary stop owned by an agent, not a review queue)
+#   - head branch starting with `review/` or `hold/`
+#   - PRs from forks, and Dependabot PRs
+# The `automerge` label forces merge-on-green past the branch-name and Dependabot
+# holds. `needs-review` and `agent-hold` always win over it.
+#
+# This only lets GitHub wait for the branch-protected checks; it cannot bypass
+# branch protection. The workflow reads PR metadata only and never checks out or
+# runs code from the pull request.
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, ready_for_review, converted_to_draft, labeled, unlabeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  decide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Arm or disarm auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          set -euo pipefail
+          labels="$(gh pr view "$PR" --repo "$REPO" --json labels --jq '[.labels[].name] | join(",")')"
+          has() { case ",$labels," in *",$1,"*) return 0 ;; *) return 1 ;; esac; }
+
+          hold=""
+          if [ "$DRAFT" = "true" ]; then hold="draft"
+          elif has needs-review; then hold="needs-review label"
+          elif has agent-hold; then hold="agent-hold label"
+          elif ! has automerge; then
+            case "$HEAD_REF" in review/*|hold/*) hold="review-first branch" ;; esac
+            [ "$AUTHOR" = "dependabot[bot]" ] && hold="Dependabot PR (add automerge to release)"
+          fi
+          [ "$HEAD_REPO" != "$REPO" ] && hold="fork PR"
+
+          if [ -n "$hold" ]; then
+            echo "Held: $hold"
+            gh pr merge "$PR" --repo "$REPO" --disable-auto || true
+          else
+            echo "Arming auto-merge (squash)"
+            gh pr merge "$PR" --repo "$REPO" --auto --squash
+          fi
