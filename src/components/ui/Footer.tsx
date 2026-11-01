@@ -64,7 +64,6 @@ export default function Footer() {
       <div className="border-t border-[hsl(var(--brand-sand)/.18)]">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 py-6 text-xs leading-6 text-[hsl(var(--brand-ivory)/.7)] sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p>&copy; {new Date().getFullYear()} Asociația Studenților în Medicină Militară.</p>
-          <p>MIMESISS este un proiect ASMM.</p>
         </div>
       </div>
     </footer>
