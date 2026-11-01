@@ -35,7 +35,9 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next-gallery-check/types/**/*.ts",
-    ".next-gallery-check/dev/types/**/*.ts"
+    ".next-gallery-check/dev/types/**/*.ts",
+    ".preview/pr-screenshots/types/**/*.ts",
+    ".preview/pr-screenshots/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
