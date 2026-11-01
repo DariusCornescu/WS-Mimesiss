@@ -14,6 +14,7 @@ interface PaymentWithUser {
   currency: string
   ticketId: string
   ticketType: string
+  status: 'pending' | 'completed' | 'failed' | 'refunded'
   createdAt: Date
   updatedAt: Date
   user?: {
@@ -37,13 +38,37 @@ function formatCurrency(amount: number, currency: string = 'RON'): string {
 }
 
 function formatDate(date: Date | string): string {
-  return new Date(date).toLocaleDateString('ro-RO', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  return new Intl.DateTimeFormat('ro-RO', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(date))
+}
+
+const paymentStatus = {
+  completed: { label: 'Finalizată', className: 'border-secondary/30 bg-secondary/10 text-secondary' },
+  pending: { label: 'În așteptare', className: 'border-accent/30 bg-accent/10 text-accent' },
+  failed: { label: 'Eșuată', className: 'border-destructive/30 bg-destructive/10 text-destructive' },
+  refunded: { label: 'Rambursată', className: 'border-border bg-muted text-muted-foreground' },
+} satisfies Record<PaymentWithUser['status'], { label: string; className: string }>
+
+function PaymentBadges({ payment, ticketCount }: { payment: PaymentWithUser; ticketCount?: number }) {
+  const status = paymentStatus[payment.status]
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-xs font-semibold text-accent">
+        {payment.ticketType || 'Tip necunoscut'}
+      </span>
+      <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${status.className}`}>
+        {status.label}
+      </span>
+      {ticketCount != null && (
+        <span className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+          {ticketCount} bilet{ticketCount !== 1 ? 'e' : ''}
+        </span>
+      )}
+    </div>
+  )
 }
 
 
@@ -64,144 +89,145 @@ export default function PaymentsList({ payments, ticketCounts }: PaymentsListPro
       const ticketType = payment.ticketType?.toLowerCase() || ''
       const amount = formatCurrency(payment.amount, payment.currency).toLowerCase()
       const stripeId = payment.stripePaymentIntentId?.toLowerCase() || ''
+      const status = paymentStatus[payment.status].label.toLowerCase()
 
       return (
         userName.includes(lowerSearch) ||
         userEmail.includes(lowerSearch) ||
         ticketType.includes(lowerSearch) ||
+        status.includes(lowerSearch) ||
         amount.includes(lowerSearch) ||
         stripeId.includes(lowerSearch)
       )
     })
   }, [payments, searchTerm])
 
+  const resultLabel = `${filteredPayments.length} ${filteredPayments.length === 1 ? 'plată' : 'plăți'}`
+
   return (
-    <>
-      {/* Search Bar */}
-      <div className="px-4 py-3 sm:px-6 bg-muted/50 border-b border-border">
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="h-4 w-4 text-muted-foreground" />
-            </div>
+    <section aria-label="Lista plăților">
+      <div className="border-b border-border/70 bg-muted/35 p-4 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-xl">
+            <label htmlFor="payment-search" className="sr-only">Caută în plăți</label>
+            <FaSearch aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
-              type="text"
-              placeholder="Caută plăți după utilizator, email, tip bilet, status, sumă..."
+              id="payment-search"
+              type="search"
+              placeholder="Caută după participant, email, bilet sau sumă"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="block w-full pl-10 pr-10 py-2 border border-border rounded-md leading-5 bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+              onChange={(event) => setSearchTerm(event.target.value)}
+              className="min-h-11 w-full rounded-lg border border-input bg-background/70 py-2 pl-11 pr-12 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-accent focus:ring-2 focus:ring-ring/30"
             />
             {searchTerm && (
               <button
-                type='button'
+                type="button"
                 onClick={() => setSearchTerm('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center hover:text-foreground text-muted-foreground transition-colors"
+                className="absolute right-0 top-0 grid h-11 w-11 place-items-center rounded-r-lg text-muted-foreground transition hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 aria-label="Șterge căutarea"
               >
-                <FaTimes className="h-4 w-4" />
+                <FaTimes aria-hidden="true" className="h-4 w-4" />
               </button>
             )}
           </div>
-          <div className="text-sm text-muted-foreground whitespace-nowrap">
-            {filteredPayments.length} {filteredPayments.length === 1 ? 'plată' : 'plăți'}
-          </div>
+          <p className="text-sm font-medium text-muted-foreground" aria-live="polite">{resultLabel}</p>
         </div>
       </div>
 
-      {/* Payments Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-border">
-          <thead className="bg-muted">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Utilizator
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Tip Bilet
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Sumă
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Data
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                ID Stripe
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Acțiuni
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {filteredPayments.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-sm text-muted-foreground">
-                  {searchTerm ? 'Nu s-au găsit plăți care să corespundă căutării.' : 'Nu există plăți.'}
-                </td>
-              </tr>
-            ) : (
-              filteredPayments.map((payment) => (
-                <tr key={payment._id} className="hover:bg-muted/50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+      {filteredPayments.length === 0 ? (
+        <div className="px-6 py-14 text-center">
+          <p className="font-medium text-foreground">
+            {searchTerm ? 'Nicio plată nu corespunde căutării.' : 'Nu există plăți înregistrate.'}
+          </p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {searchTerm ? 'Încearcă un nume, un email sau un tip de bilet diferit.' : 'Plățile vor apărea aici după înregistrare.'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <ul className="grid gap-3 p-4 sm:p-5 xl:hidden">
+            {filteredPayments.map((payment) => {
+              const userName = payment.user
+                ? `${payment.user.firstName} ${payment.user.lastName}`.trim() || 'Participant necunoscut'
+                : 'Participant necunoscut'
+
+              return (
+                <li key={payment._id} className="rounded-xl border border-border/70 bg-background/35 p-4 shadow-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-foreground">{userName}</p>
+                      <p className="mt-1 break-all text-sm text-muted-foreground">{payment.user?.email || payment.clerkId}</p>
+                    </div>
+                    <p className="shrink-0 text-base font-bold text-foreground">{formatCurrency(payment.amount, payment.currency)}</p>
+                  </div>
+
+                  <div className="mt-4">
+                    <PaymentBadges payment={payment} ticketCount={ticketCounts[payment._id]} />
+                  </div>
+
+                  <dl className="mt-4 grid gap-3 border-t border-border/60 pt-4 sm:grid-cols-2">
                     <div>
-                      <div className="text-sm font-medium text-foreground">
-                        {payment.user
-                          ? `${payment.user.firstName} ${payment.user.lastName}`.trim() || 'N/A'
-                          : 'N/A'}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {payment.user?.email || payment.clerkId}
-                      </div>
+                      <dt className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Data</dt>
+                      <dd className="mt-1 text-sm text-foreground">{formatDate(payment.createdAt)}</dd>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm space-y-1">
-                      {payment.ticketType ? (
-                        <>
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                              {payment.ticketType}
-                            </span>
-                            {ticketCounts[payment._id] != null && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border">
-                                {ticketCounts[payment._id]} bilet{ticketCounts[payment._id] !== 1 ? 'e' : ''}
-                              </span>
-                            )}
-                          </div>
-                          {payment.ticketId && (
-                            <div className="text-xs text-muted-foreground">
-                              ID: {payment.ticketId.substring(0, 8)}...
-                            </div>
-                          )}
-                        </>
-                      ) : (
-                        <div className="text-xs text-muted-foreground">N/A</div>
-                      )}
+                    <div>
+                      <dt className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">ID Stripe</dt>
+                      <dd className="mt-1 break-all font-mono text-xs text-muted-foreground">{payment.stripePaymentIntentId || 'Nedisponibil'}</dd>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-foreground">
-                      {formatCurrency(payment.amount, payment.currency)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                    {formatDate(payment.createdAt)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-mono text-muted-foreground max-w-[150px] truncate">
-                      {payment.stripePaymentIntentId || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <DeletePaymentButton paymentId={payment._id} />
-                  </td>
+                  </dl>
+
+                  <div className="mt-4 flex justify-end border-t border-border/60 pt-3">
+                    <DeletePaymentButton paymentId={payment._id} userName={userName} />
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+
+          <div className="hidden overflow-x-auto xl:block">
+            <table className="min-w-full divide-y divide-border/70">
+              <thead className="bg-muted/45">
+                <tr>
+                  {['Participant', 'Bilet și status', 'Sumă', 'Data', 'ID Stripe', 'Acțiuni'].map((label) => (
+                    <th key={label} scope="col" className="px-5 py-3 text-left text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                      {label}
+                    </th>
+                  ))}
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-    </>
+              </thead>
+              <tbody className="divide-y divide-border/60 bg-card/45">
+                {filteredPayments.map((payment) => {
+                  const userName = payment.user
+                    ? `${payment.user.firstName} ${payment.user.lastName}`.trim() || 'Participant necunoscut'
+                    : 'Participant necunoscut'
+
+                  return (
+                    <tr key={payment._id} className="transition-colors hover:bg-muted/30">
+                      <td className="px-5 py-4 align-top">
+                        <p className="text-sm font-semibold text-foreground">{userName}</p>
+                        <p className="mt-1 max-w-64 break-all text-xs text-muted-foreground">{payment.user?.email || payment.clerkId}</p>
+                      </td>
+                      <td className="px-5 py-4 align-top">
+                        <PaymentBadges payment={payment} ticketCount={ticketCounts[payment._id]} />
+                      </td>
+                      <td className="whitespace-nowrap px-5 py-4 text-sm font-semibold text-foreground">{formatCurrency(payment.amount, payment.currency)}</td>
+                      <td className="whitespace-nowrap px-5 py-4 text-sm text-muted-foreground">{formatDate(payment.createdAt)}</td>
+                      <td className="px-5 py-4">
+                        <p className="max-w-40 truncate font-mono text-xs text-muted-foreground" title={payment.stripePaymentIntentId || undefined}>
+                          {payment.stripePaymentIntentId || 'Nedisponibil'}
+                        </p>
+                      </td>
+                      <td className="px-5 py-4">
+                        <DeletePaymentButton paymentId={payment._id} userName={userName} />
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
+    </section>
   )
 }

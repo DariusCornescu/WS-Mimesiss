@@ -1,8 +1,8 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Autentificare - Mimesiss',
-  description: 'Platformă de management a workshopurilor',
+  title: 'Cont ASMM',
+  description: 'Autentificare pentru evenimente, înscrieri și bilete ASMM.',
 }
 
 export default function AuthLayout({

@@ -11,7 +11,20 @@
     "typecheck": "tsc --noEmit",
     "test:partners": "node --test scripts/test-partners.mjs",
     "test:startup": "node --test scripts/test-public-startup.mjs",
-    "test:stories": "node --test scripts/test-project-stories.mjs scripts/test-photo-viewer.mjs scripts/test-tent-story-copy.mjs scripts/test-neural-startup.mjs scripts/test-project-rendering.mjs"
+    "test:stories": "node --test scripts/test-project-stories.mjs scripts/test-photo-viewer.mjs scripts/test-tent-story-copy.mjs scripts/test-neural-startup.mjs scripts/test-project-rendering.mjs",
+    "test:registration": "node --test scripts/test-registration-profile.mjs",
+    "test:security": "node --test scripts/test-registration-profile.mjs scripts/test-security.mjs",
+    "test:payments": "node --test scripts/test-payments-db.mjs",
+    "test:stress": "node scripts/stress-local.mjs",
+    "security:secrets": "node scripts/check-secrets.mjs",
+    "security:audit": "npm audit --omit=dev --audit-level=moderate",
+    "build:isolated": "node scripts/build-isolated.mjs",
+    "dev:staging": "node scripts/dev-staging.mjs",
+    "test:atlas-staging": "node scripts/verify-atlas-staging.mjs",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:list": "playwright test --list"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -40,19 +53,30 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@clerk/testing": "^2.2.47",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.64.1",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/file-saver": "^2.0.7",
     "@types/node": "^22.20.5",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "@types/three": "0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
     "eslint-config-next": "^16.4.3",
+    "jsdom": "^30.1.3",
     "mongodb-memory-server-core": "^11.3.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.5"
   },
   "overrides": {
     "sharp": "$sharp"

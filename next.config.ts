@@ -6,6 +6,16 @@ if (diagnostic && !['base', 'analytics', 'scene', 'full'].includes(diagnostic)) 
 if (diagnostic && process.env.VERCEL_ENV === 'production') throw new Error('Performance diagnostics cannot run in production');
 
 const nextConfig: NextConfig = {
+	poweredByHeader: false,
+	async headers() {
+		return [{ source: '/:path*', headers: [
+			{ key: 'X-Content-Type-Options', value: 'nosniff' },
+			{ key: 'X-Frame-Options', value: 'DENY' },
+			{ key: 'Content-Security-Policy', value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'" },
+			{ key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+			{ key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=()' },
+		] }]
+	},
 	distDir: diagnostic ? `.preview/build-${diagnostic}` : '.next',
 	webpack(config, { webpack }) {
 		if (diagnostic === 'base' || diagnostic === 'scene') {
@@ -46,7 +56,7 @@ const nextConfig: NextConfig = {
 	},
 	productionBrowserSourceMaps: false,
 	compiler: {
-		removeConsole: process.env.NODE_ENV === 'production',
+		removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
 	},
 	// Turbopack configuration (Next.js 16 uses Turbopack by default)
 	turbopack: {},

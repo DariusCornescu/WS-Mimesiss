@@ -4,6 +4,7 @@ import { currentUser, User as ClerkUser } from '@clerk/nextjs/server'
 import connectDB from '@/lib/mongodb'
 import { User as MongoUser } from '@/models'
 import { User, UserRole } from '@/types/models'
+import { registrationProfile } from '@/lib/registration-profile'
 
 /**
  * Sync Clerk user with our database
@@ -12,26 +13,22 @@ import { User, UserRole } from '@/types/models'
 export async function syncUserWithDatabase(clerkUser: ClerkUser): Promise<User> {
   await connectDB()
 
+  // Only the validated database profile establishes completion. Browser metadata
+  // is editable by the account holder and must not authorize onboarding bypass.
+  const existingUser = await MongoUser.findOne({ clerkId: clerkUser.id }).lean() as User | null
+  if (!registrationProfile(existingUser)) redirect('/auth/complete-profile')
+
   try {
-    // First, check if user already exists to preserve their role
-    const existingUser = await MongoUser.findOne({ clerkId: clerkUser.id }).lean() as User | null
-
-    // Roles are managed in MongoDB; authentication metadata cannot grant privileges.
-    const role = existingUser?.role || 'user'
-
-    // Use findOneAndUpdate with upsert to avoid duplicate key errors
+    // Do not write role or category during sync: concurrent administrative
+    // changes must not be overwritten by a stale read of the user record.
     const user = await MongoUser.findOneAndUpdate(
       { clerkId: clerkUser.id },
       {
         clerkId: clerkUser.id,
-        email: clerkUser.emailAddresses[0]?.emailAddress || '',
-        firstName: clerkUser.firstName || existingUser?.firstName || '',
-        lastName: clerkUser.lastName || existingUser?.lastName || '',
-        role: role, // Preserve the database role
-        userType: clerkUser.unsafeMetadata?.userType || existingUser?.userType || 'student', // Default to 'student' if not set
+        email: clerkUser.primaryEmailAddress?.emailAddress || clerkUser.emailAddresses[0]?.emailAddress || '',
       },
       {
-        upsert: true, // Create if doesn't exist
+        upsert: false,
         new: true,    // Return the updated document
         runValidators: true,
       }

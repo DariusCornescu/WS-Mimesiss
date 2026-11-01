@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react'
 import { useSignIn, useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
+import { FiMail } from 'react-icons/fi'
+import AuthShell from '@/components/auth/AuthShell'
+import styles from '@/components/auth/auth.module.css'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -25,11 +27,9 @@ export default function ForgotPasswordPage() {
   // Don't render the form if user is already logged in
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full text-center">
-          <p className="text-foreground">Sunteți deja conectat. Redirecționare...</p>
-        </div>
-      </div>
+      <AuthShell>
+        <p role="status" className={styles.status}>Ești deja conectat. Se deschide contul tău…</p>
+      </AuthShell>
     )
   }
 
@@ -50,14 +50,14 @@ export default function ForgotPasswordPage() {
       })
 
       if (result.status === 'needs_first_factor') {
-        setSuccessMessage('Emailul de resetare a parolei a fost trimis! Verificați-vă căsuța de email.')
+        setSuccessMessage('Am trimis mesajul de resetare. Verifică și folderul Spam.')
         
         // Redirect to reset password page after 2 seconds
         setTimeout(() => {
           router.push(`/auth/reset-password?email=${encodeURIComponent(email)}`)
         }, 2000)
       } else {
-        setError('Nu s-a putut inițializa procesul de resetare. Încercați din nou.')
+        setError('Nu am putut începe resetarea. Încearcă din nou.')
       }
     } catch (err: unknown) {
       console.error('Password reset error:', err)
@@ -73,13 +73,13 @@ export default function ForgotPasswordPage() {
             setError('Adresa de email nu este validă.')
             break
           case 'too_many_requests':
-            setError('Prea multe încercări. Vă rugăm să așteptați câteva minute.')
+            setError('Prea multe încercări. Așteaptă câteva minute și încearcă din nou.')
             break
           default:
-            setError(errorMessage || 'A apărut o eroare. Încercați din nou.')
+            setError(errorMessage || 'A apărut o eroare. Încearcă din nou.')
         }
       } else {
-        setError('A apărut o eroare. Încercați din nou.')
+        setError('A apărut o eroare. Încearcă din nou.')
       }
     } finally {
       setIsLoading(false)
@@ -87,78 +87,45 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <Image src="/icons/logo.png" alt="MIMESISS 2025" width={100} height={100} className="mx-auto w-auto" />
-          <h2 className="mt-6 text-3xl font-bold text-foreground">
-            Resetare Parolă
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Introduceți adresa de email pentru a primi instrucțiuni de resetare
-          </p>
-        </div>
+    <AuthShell>
+      <h1 className={styles.heading}>Resetare parolă</h1>
+      <p className={styles.subtitle}>Introdu adresa de email pentru a primi instrucțiunile de resetare.</p>
 
-        <div className="bg-card rounded-lg shadow-md p-8">
-          {successMessage && (
-            <div className="mb-4 p-4 rounded-md bg-green-50 border border-green-200">
-              <p className="text-green-800 text-sm">{successMessage}</p>
-            </div>
-          )}
+      {successMessage && <p role="status" className={styles.notice}>{successMessage}</p>}
+      {error && <p role="alert" className={styles.error}>{error}</p>}
 
-          {error && (
-            <div className="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-foreground">
-                Adresa de Email *
-              </label>
-              <div className="mt-1">
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="nume@exemplu.com"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading || !email}
-                className={`w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                  isLoading || !email
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'
-                }`}
-              >
-                {isLoading && (
-                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
-                )}
-                {isLoading ? 'Se trimite...' : 'Trimite Email de Resetare'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6 text-center">
-            <Link
-              href="/auth/login"
-              className="text-sm text-primary hover:text-primary/80"
-            >
-              ← Înapoi la autentificare
-            </Link>
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.field}>
+          <label htmlFor="email">Adresa de email</label>
+          <div className={styles.inputWrap}>
+            <FiMail aria-hidden="true" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={styles.input}
+              placeholder="nume@exemplu.com"
+            />
           </div>
         </div>
+
+        <button
+          type="submit"
+          disabled={!isLoaded || isLoading || !email}
+          className={styles.primary}
+          aria-busy={isLoading}
+        >
+          {isLoading ? 'Se trimite…' : 'Trimite emailul de resetare'}
+        </button>
+      </form>
+
+      <div className={styles.actions}>
+        <Link href="/auth/login" className={styles.link}>← Înapoi la autentificare</Link>
       </div>
-    </div>
+    </AuthShell>
   )
 }

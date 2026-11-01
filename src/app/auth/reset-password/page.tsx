@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSignIn, useUser } from '@clerk/nextjs'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import AuthShell from '@/components/auth/AuthShell'
+import styles from '@/components/auth/auth.module.css'
 
 function ResetPasswordForm() {
   const [code, setCode] = useState('')
@@ -11,6 +13,7 @@ function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [email, setEmail] = useState('')
   
   const { signIn, isLoaded, setActive } = useSignIn()
@@ -36,11 +39,9 @@ function ResetPasswordForm() {
   // Don't render the form if user is already logged in
   if (user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full text-center">
-          <p className="text-foreground">Sunteți deja conectat. Redirecționare...</p>
-        </div>
-      </div>
+      <AuthShell>
+        <p role="status" className={styles.status}>Ești deja conectat. Se deschide contul tău…</p>
+      </AuthShell>
     )
   }
 
@@ -78,10 +79,10 @@ function ResetPasswordForm() {
           await setActive({ session: result.createdSessionId })
         }
         
-        // Force a page reload to ensure authentication state is properly synced
-        window.location.href = '/dashboard'
+        router.replace('/dashboard')
+        router.refresh()
       } else {
-        setError('Procesul de resetare nu s-a finalizat. Încercați din nou.')
+        setError('Procesul de resetare nu s-a finalizat. Încearcă din nou.')
       }
     } catch (err: unknown) {
       console.error('Password reset error:', err)
@@ -98,17 +99,17 @@ function ResetPasswordForm() {
             setError('Parola nu îndeplinește cerințele de securitate (minim 8 caractere)')
             break
           case 'form_password_too_common':
-            setError('Parola este prea comună. Alegeți o parolă mai sigură.')
+            setError('Parola este prea comună. Alege o parolă mai sigură.')
             break
           case 'session_exists':
-            // If session already exists, just redirect
-            window.location.href = '/dashboard'
+            router.replace('/dashboard')
+            router.refresh()
             return
           default:
-            setError(errorMsg || 'A apărut o eroare. Încercați din nou.')
+            setError(errorMsg || 'A apărut o eroare. Încearcă din nou.')
         }
       } else {
-        setError('A apărut o eroare. Încercați din nou.')
+        setError('A apărut o eroare. Încearcă din nou.')
       }
     } finally {
       setIsLoading(false)
@@ -119,144 +120,100 @@ function ResetPasswordForm() {
     if (!email || !isLoaded) return
 
     try {
+      setNotice('')
       await signIn.create({
         strategy: 'reset_password_email_code',
         identifier: email,
       })
       setError('')
-      alert('Codul a fost retrimis!')
+      setNotice('Codul a fost retrimis. Verifică și folderul Spam.')
     } catch (err: unknown) {
       console.error('Resend code error:', err)
+      setNotice('')
       setError('Nu s-a putut retrimite codul')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="mt-6 text-3xl font-bold text-foreground">
-            Resetare Parolă
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Introduceți codul primit pe email și noua parolă
-          </p>
-          {email && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Email: {email}
-            </p>
-          )}
+    <AuthShell>
+      <h1 className={styles.heading}>Resetare parolă</h1>
+      <p className={styles.subtitle}>
+        Introdu codul primit pe email și alege noua parolă.
+        {email && <> Codul a fost trimis la <strong>{email}</strong>.</>}
+      </p>
+
+      {error && <p role="alert" className={styles.error}>{error}</p>}
+      {notice && <p role="status" className={styles.notice}>{notice}</p>}
+
+      <form onSubmit={handleSubmit} className={styles.form}>
+        <div className={styles.field}>
+          <label htmlFor="code">Cod de verificare</label>
+          <input
+            id="code"
+            name="code"
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            required
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            className={styles.input}
+            placeholder="Introdu codul din email"
+          />
+          {email && <button type="button" onClick={resendCode} className={styles.link} disabled={!isLoaded}>Retrimite codul</button>}
         </div>
 
-        <div className="bg-card rounded-lg shadow-md p-8">
-          {error && (
-            <div className="mb-4 p-4 rounded-md bg-red-50 border border-red-200">
-              <p className="text-red-800 text-sm">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="code" className="block text-sm font-medium text-foreground">
-                Cod de Verificare *
-              </label>
-              <div className="mt-1">
-                <input
-                  name="code"
-                  type="text"
-                  required
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="Introduceți codul din email"
-                />
-              </div>
-              {email && (
-                <button
-                  type="button"
-                  onClick={resendCode}
-                  className="mt-1 text-xs text-primary hover:text-primary/80"
-                >
-                  Retrimite codul
-                </button>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-foreground">
-                Parola Nouă *
-              </label>
-              <div className="mt-1">
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="Minim 8 caractere"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
-                Confirmă Parola *
-              </label>
-              <div className="mt-1">
-                <input
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
-                  placeholder="Reintroduceți parola"
-                />
-              </div>
-            </div>
-
-            <div>
-              <button
-                type="submit"
-                disabled={isLoading || !code || !password || !confirmPassword}
-                className={`w-full flex justify-center items-center gap-2 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                  isLoading || !code || !password || !confirmPassword
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary'
-                }`}
-              >
-                {isLoading && (
-                  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent" />
-                )}
-                {isLoading ? 'Se resetează...' : 'Resetează Parola'}
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-6 text-center space-y-2">
-            <Link
-              href="/auth/forgot-password"
-              className="block text-sm text-primary hover:text-primary/80"
-            >
-              ← Înapoi la cererea de resetare
-            </Link>
-            <Link
-              href="/auth/login"
-              className="block text-sm text-muted-foreground hover:text-foreground"
-            >
-              Înapoi la autentificare
-            </Link>
-          </div>
+        <div className={styles.field}>
+          <label htmlFor="password">Parola nouă</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={styles.input}
+            placeholder="Minim 8 caractere"
+          />
         </div>
+
+        <div className={styles.field}>
+          <label htmlFor="confirmPassword">Confirmă parola</label>
+          <input
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            autoComplete="new-password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className={styles.input}
+            placeholder="Reintrodu parola"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={!isLoaded || isLoading || !code || !password || !confirmPassword}
+          className={styles.primary}
+          aria-busy={isLoading}
+        >
+          {isLoading ? 'Se resetează…' : 'Resetează parola'}
+        </button>
+      </form>
+
+      <div className={styles.actions}>
+        <Link href="/auth/forgot-password" className={styles.link}>← Cere un cod nou</Link>
+        <Link href="/auth/login" className={styles.link}>Înapoi la autentificare</Link>
       </div>
-    </div>
+    </AuthShell>
   )
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<AuthShell><p role="status" className={styles.status}>Se încarcă…</p></AuthShell>}>
       <ResetPasswordForm />
     </Suspense>
   )
