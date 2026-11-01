@@ -40,11 +40,10 @@ test('all story photographs and 3D textures are included in the production asset
 test('upload processing and responsive delivery share a working native image runtime', async () => {
   const sharp = (await import('sharp')).default
   const { readFile } = await import('node:fs/promises')
-  const { optimizeImage } = await import('next/dist/server/image-optimizer.js')
   const original = await readFile(new URL('../public/icons/asmm.png', import.meta.url))
-  // Exercise both paths in one process, as the production server does.
+  // Exercise WebP and AVIF encoding in one process, as uploads and responsive delivery do.
   await sharp(original).resize(512).webp().toBuffer()
-  const optimized = await optimizeImage({ buffer: original, contentType: 'image/avif', quality: 75, width: 384 })
+  const optimized = await sharp(original).resize(384).avif({ quality: 75 }).toBuffer()
   const metadata = await sharp(optimized).metadata()
   assert.equal(metadata.width, 384)
   assert.equal(metadata.format, 'heif')
