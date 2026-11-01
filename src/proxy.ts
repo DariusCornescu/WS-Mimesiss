@@ -20,11 +20,16 @@ const isPublicRoute = createRouteMatcher([
   '/',
   '/auth/(.*)',
   '/api/payments/webhook(.*)', // Exclude webhook from auth
-  '/api/payments/webhook-test(.*)', // Exclude test webhook from auth
   '/qr/(.*)', // QR code routes should be public
 ])
 
 const authenticatedProxy = clerkMiddleware(async (auth, req) => {
+  // Browser mutations require the same origin; Stripe proves origin by signature.
+  if (req.nextUrl.pathname.startsWith('/api/') && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)
+    && req.nextUrl.pathname !== '/api/payments/webhook'
+    && req.headers.get('origin') !== req.nextUrl.origin) {
+    return NextResponse.json({ error: 'Cerere nepermisă.' }, { status: 403 })
+  }
   // Skip auth for public routes (including webhooks)
   if (isPublicRoute(req)) {
     return

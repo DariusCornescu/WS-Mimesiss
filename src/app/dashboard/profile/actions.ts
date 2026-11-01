@@ -1,9 +1,11 @@
 'use server'
 
-import { currentUser, clerkClient } from '@clerk/nextjs/server'
+import { currentUser } from '@clerk/nextjs/server'
 import { revalidatePath } from 'next/cache'
-import { syncUserWithDatabase, requireRole, AuthError } from '@/lib/auth'
-import { User, UserType } from '@/types/models'
+import { requireRole, AuthError } from '@/lib/auth'
+import { User } from '@/types/models'
+import { saveProfile } from '@/lib/profile'
+import { limitRequests } from '@/lib/request-security'
 import { User as MongoUser } from '@/models'
 import connectDB from '@/lib/mongodb'
 
@@ -14,32 +16,13 @@ export async function updateProfile(formData: FormData) {
     throw new Error('Authentication required')
   }
 
-  const firstName = formData.get('firstName') as string
-  const lastName = formData.get('lastName') as string
-  const userType = formData.get('userType') as UserType
+  const firstName = formData.get('firstName')
+  const lastName = formData.get('lastName')
+  const userType = formData.get('userType')
 
   try {
-    // Update the user in Clerk using clerkClient
-    const clerk = await clerkClient()
-    await clerk.users.updateUser(clerkUser.id, {
-      firstName: firstName || undefined,
-      lastName: lastName || undefined,
-      publicMetadata: {
-        // Preserve existing metadata and only update what we have
-        ...clerkUser.publicMetadata,
-        userType,
-      },
-      unsafeMetadata: {
-        ...clerkUser.unsafeMetadata,
-        userType,
-      }
-    })
-
-    // Get the updated user data
-    const updatedClerkUser = await clerk.users.getUser(clerkUser.id)
-
-    // Then sync with our MongoDB database
-    await syncUserWithDatabase(updatedClerkUser)
+    await limitRequests(clerkUser.id, 'profile-save')
+    await saveProfile(clerkUser, { firstName, lastName, userType })
 
     // Revalidate the profile page to reflect changes
     revalidatePath('/dashboard/profile')

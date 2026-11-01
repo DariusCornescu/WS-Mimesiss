@@ -10,6 +10,8 @@ export interface IUser extends Document {
   lastName?: string
   role: UserRole
   userType: UserType
+  paymentRevision?: number
+  registrationRevision?: number
 }
 
 // Project interface — un proiect al asociației. Congresul este unul dintre ele.
@@ -21,9 +23,11 @@ export interface IProject extends Document {
   summary: string
   description?: string
   coverImage?: string
+  coverPositionX?: number
+  coverPositionY?: number
   order: number
   status: 'draft' | 'published'
-  kind: 'congress' | 'standard'
+  kind: 'congress' | 'standard' | 'announcement'
 }
 
 // Edition interface — o ediție a unui proiect (ex. MIMESISS 2025).
@@ -80,6 +84,8 @@ const UserSchema = new Schema<IUser>({
   email: { type: String, required: true, unique: true }, // unique: true creates an index
   firstName: { type: String },
   lastName: { type: String },
+  paymentRevision: { type: Number, default: 0 },
+  registrationRevision: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin', 'moderator'], default: 'user' },
   userType: { type: String, enum: ['student', 'elev', 'rezident'], default: 'student' },
 }, {
@@ -97,9 +103,11 @@ const ProjectSchema = new Schema<IProject>({
   summary: { type: String, required: true },
   description: { type: String, required: false },
   coverImage: { type: String, required: false },
+  coverPositionX: { type: Number, min: 0, max: 100, default: 50 },
+  coverPositionY: { type: Number, min: 0, max: 100, default: 50 },
   order: { type: Number, default: 0 },
   status: { type: String, enum: ['draft', 'published'], default: 'draft' },
-  kind: { type: String, enum: ['congress', 'standard'], default: 'standard' },
+  kind: { type: String, enum: ['congress', 'standard', 'announcement'], default: 'standard' },
 }, {
   timestamps: true
 })
@@ -174,6 +182,7 @@ RegistrationSchema.index({ 'attendance.confirmed': 1 })
 export interface IPayment extends Document {
   clerkId: string
   stripeSessionId: string
+  fulfillmentComplete?: boolean
   stripePaymentIntentId?: string
   amount: number
   currency: string
@@ -192,6 +201,7 @@ const PaymentSchema = new Schema<IPayment>({
   clerkId: { type: String, required: true, index: true },
   stripeSessionId: { type: String, required: true, unique: true },
   stripePaymentIntentId: { type: String },
+  fulfillmentComplete: { type: Boolean, default: false },
   amount: { type: Number, required: true },
   currency: { type: String, required: true, default: 'ron' },
   ticketId: { type: String, index: true },
