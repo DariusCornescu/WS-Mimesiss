@@ -1,0 +1,73 @@
+name: "Guard: pull requests"
+
+# Awareness labels, not gates. Both jobs only read PR metadata and edit labels.
+# They never check out or run code from a pull request.
+#
+#   sensitive-paths  the PR touches auth, payments, middleware, API routes,
+#                    environment config or workflows. It still auto-merges
+#                    unless someone adds `needs-review`.
+#   merge-conflict   the PR conflicts with `main`. Native auto-merge stalls
+#                    silently on a conflict; the label makes it visible and
+#                    clears once the conflict is gone.
+
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  sensitive-paths:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Label PRs that touch high-blast-radius paths
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          pattern='^(src/app/api/|src/lib/auth\.ts|src/proxy\.ts|src/lib/stripe|src/app/payment|src/components/payments/|src/models/|\.github/|next\.config\.ts|package-lock\.json)'
+          if gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename' | grep -Eq "$pattern"; then
+            gh pr edit "$PR" --repo "$REPO" --add-label sensitive-paths
+          else
+            gh pr edit "$PR" --repo "$REPO" --remove-label sensitive-paths || true
+          fi
+
+  merge-conflict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Label PRs that conflict with main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PAYLOAD_PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "push" ]; then
+            prs="$(gh pr list --repo "$REPO" --base main --state open --json number --jq '.[].number')"
+          else
+            prs="$PAYLOAD_PR"
+          fi
+          for pr in $prs; do
+            # mergeability is computed lazily; poll until GitHub has an answer.
+            state="UNKNOWN"
+            for _ in 1 2 3 4 5 6; do
+              state="$(gh pr view "$pr" --repo "$REPO" --json mergeable --jq .mergeable)"
+              [ "$state" != "UNKNOWN" ] && break
+              sleep 5
+            done
+            case "$state" in
+              CONFLICTING) gh pr edit "$pr" --repo "$REPO" --add-label merge-conflict ;;
+              MERGEABLE)   gh pr edit "$pr" --repo "$REPO" --remove-label merge-conflict || true ;;
+            esac
+          done
