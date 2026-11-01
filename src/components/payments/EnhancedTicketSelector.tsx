@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { FaArrowLeft, FaCheck } from 'react-icons/fa';
 import { getPublicTickets } from '@/app/payment/actions';
 import type { Ticket as TicketType } from '@/types/models';
 import EmbeddedCheckout from './EmbeddedCheckout';
 
 export default function EnhancedTicketSelector() {
+	const router = useRouter();
 	const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
 	const [showCheckout, setShowCheckout] = useState(false);
 	const [tickets, setTickets] = useState<TicketType[]>([]);
@@ -30,9 +32,8 @@ export default function EnhancedTicketSelector() {
 	}
 
 
-	const handlePaymentSuccess = () => {
-		// Redirect to success page instead of reloading
-		window.location.href = '/payment/success';
+	const handlePaymentSuccess = (paymentIntentId: string) => {
+		router.push(`/payment/success?payment_intent=${encodeURIComponent(paymentIntentId)}`);
 	};
 
 	const handlePaymentError = (error: string) => {
@@ -42,30 +43,38 @@ export default function EnhancedTicketSelector() {
 
 	if (showCheckout && selectedTicket) {
 		return (
-			<div className="space-y-6 max-w-md mx-auto">
-				<div className="text-center">
+			<div className="mx-auto max-w-lg space-y-6">
+				<div>
 					<button
 						type="button"
 						onClick={() => setShowCheckout(false)}
-						className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 mx-auto"
+						className="mb-6 flex items-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 					>
-						<FaArrowLeft className="h-3 w-3" />
+						<FaArrowLeft className="h-3 w-3" aria-hidden="true" />
 						Înapoi la selecția biletelor
 					</button>
-					<h2 className="text-2xl font-bold text-foreground mb-2">
-						Finalizare plată - {selectedTicket.title}
+					<p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Pasul 2 · Date de plată</p>
+					<h2 className="mt-2 text-2xl font-bold text-foreground">
+						Finalizează plata
 					</h2>
-					<p className="text-muted-foreground mb-4">
-						{selectedTicket.price} RON
-					</p>
-					<ul className='mx-auto space-y-2 mb-6'>
+
+					<div className="mt-5 rounded-lg border border-border bg-muted/50 p-5">
+						<div className="flex flex-wrap items-start justify-between gap-3">
+							<div>
+								<p className="font-semibold text-foreground">{selectedTicket.title}</p>
+								<p className="mt-1 text-sm text-muted-foreground">Bilet selectat</p>
+							</div>
+							<strong className="text-xl text-accent">{selectedTicket.price} RON</strong>
+						</div>
+						<ul className="mt-4 space-y-2 border-t border-border/60 pt-4">
 						{selectedTicket.features.map((feature) => (
-							<li key={feature} className='flex items-center text-sm'>
-								<FaCheck className="h-4 w-4 text-primary mr-3 flex-shrink-0" />
+							<li key={feature} className="flex items-center text-sm text-muted-foreground">
+								<FaCheck className="mr-3 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
 								<span>{feature}</span>
 							</li>
 						))}
-					</ul>
+						</ul>
+					</div>
 				</div>
 
 				<EmbeddedCheckout
@@ -78,31 +87,32 @@ export default function EnhancedTicketSelector() {
 	}
 
 	return (
-		<div className="space-y-6">
-			<div className="text-center">
-				<h2 className="text-3xl font-bold text-foreground mb-2">
-					Alegeți tipul de bilet
+		<div className="space-y-7">
+			<div>
+				<p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Pasul 1 · Selectare</p>
+				<h2 className="mt-2 text-2xl font-bold text-foreground sm:text-3xl">
+					Alege tipul de bilet
 				</h2>
-				<p className="text-muted-foreground">
-					Selectați nivelul de participare la MIMESISS 2025
+				<p className="mt-2 leading-relaxed text-muted-foreground">
+					Selectează nivelul de participare potrivit evenimentului.
 				</p>
 			</div>
 
-			<div className="ticket-grid">
+			<div className="grid gap-5 xl:grid-cols-2">
 				{tickets.map((ticket) => {
 					const purchased = ticket._id === selectedTicket?._id;
 
 					return (
-						<div
+						<article
 							key={ticket._id}
-							className={`relative rounded-lg border p-6 transition-all ${purchased
+							className={`relative flex h-full flex-col rounded-lg border p-6 transition-colors ${purchased
 								? 'border-primary bg-primary/5'
-								: 'border-border bg-card hover:border-primary/50'
+								: 'border-border bg-card hover:border-accent/50'
 								}`}
 						>
 							{purchased && (
-								<div className="absolute -top-3 -right-3 bg-primary text-primary-foreground rounded-full p-2">
-									<FaCheck className="h-4 w-4" />
+								<div className="absolute -right-3 -top-3 rounded-full border border-accent/40 bg-primary p-2 text-primary-foreground" aria-label="Bilet selectat">
+									<FaCheck className="h-4 w-4" aria-hidden="true" />
 								</div>
 							)}
 
@@ -113,15 +123,15 @@ export default function EnhancedTicketSelector() {
 								<p className="text-muted-foreground text-sm mb-4">
 									{ticket.description}
 								</p>
-								<div className="text-3xl font-bold text-primary">
+								<div className="text-3xl font-bold text-accent">
 									{ticket.price} RON
 								</div>
 							</div>
 
-							<ul className="space-y-2 mb-6">
+							<ul className="mb-6 space-y-2">
 								{ticket.features.map((feature) => (
-									<li key={feature} className="flex items-center text-sm">
-										<FaCheck className="h-4 w-4 text-primary mr-3 flex-shrink-0" />
+									<li key={feature} className="flex items-center text-sm text-muted-foreground">
+										<FaCheck className="mr-3 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
 										<span>{feature}</span>
 									</li>
 								))}
@@ -131,22 +141,21 @@ export default function EnhancedTicketSelector() {
 								type="button"
 								onClick={() => handleSelectTicket(ticket)}
 								disabled={purchased}
-								className={`w-full py-3 px-4 rounded-md font-medium transition-colors ${purchased
-									? 'bg-primary/20 text-primary cursor-not-allowed'
-									: 'bg-primary text-primary-foreground hover:bg-primary/90'
+								className={`mt-auto min-h-12 w-full rounded-lg border px-4 py-3 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${purchased
+									? 'cursor-not-allowed border-primary/30 bg-primary/20 text-accent'
+									: 'border-accent/50 bg-primary text-primary-foreground hover:bg-primary/90'
 									}`}
 							>
 								{purchased ? 'Deja cumpărat' : 'Cumpără acum'}
 							</button>
-						</div>
+						</article>
 					);
 				})}
 			</div>
 
-			<div className="text-center text-sm text-muted-foreground">
+			<div className="rounded-lg border border-border bg-muted/40 p-4 text-sm leading-relaxed text-muted-foreground" role="status">
 				<p>
-					Plățile sunt procesate securizat prin Stripe. <br />
-					Veți primi o confirmare pe email după finalizarea plății.
+					Plățile sunt procesate securizat prin Stripe. Vei primi confirmarea după finalizarea plății.
 				</p>
 			</div>
 		</div>

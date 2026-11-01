@@ -1,8 +1,10 @@
 'use client'
 
-import { FaCreditCard } from 'react-icons/fa'
+import { FaCreditCard, FaDownload, FaPlus, FaTicketAlt } from 'react-icons/fa'
 import PaymentsList from '@/components/admin/PaymentsList'
 import Link from 'next/link'
+import { escapeCsvCell as escapeCSV } from '@/lib/csv'
+import PageIntro from '@/components/ui/PageIntro'
 
 // Define the types again here or import them from a shared types file
 interface PaymentStats {
@@ -53,16 +55,6 @@ export default function PaymentsClient({ stats, payments, ticketCounts }: Paymen
 			"Tip Bilet", "Suma (RON)", "Moneda", "ID Sesiune Stripe", "ID Plata Stripe"
 		];
 
-		// Helper to safely wrap values in quotes if they contain commas
-		const escapeCSV = (str: string | undefined | null) => {
-			if (str == null) return '';
-			const s = String(str);
-			if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-				return `"${s.replace(/"/g, '""')}"`;
-			}
-			return s;
-		};
-
 		const rows = payments.map(p => {
 			const row = [
 				escapeCSV(p._id),
@@ -89,7 +81,7 @@ export default function PaymentsClient({ stats, payments, ticketCounts }: Paymen
 		const link = document.createElement('a');
 
 		link.setAttribute('href', url);
-		link.setAttribute('download', 'raport-plati-mimesiss-2025.csv');
+		link.setAttribute('download', `raport-plati-asmm-${new Date().toISOString().slice(0, 10)}.csv`);
 		document.body.appendChild(link);
 		link.click();
 
@@ -97,60 +89,63 @@ export default function PaymentsClient({ stats, payments, ticketCounts }: Paymen
 		URL.revokeObjectURL(url);
 	}
 
-	// 3. Move all JSX here
+	const issuedTickets = Object.values(ticketCounts).reduce((total, count) => total + count, 0)
+
 	return (
 		<div className="space-y-6">
-			{/* Header */}
-			<div className="flex justify-between items-center">
-				<div>
-					<h1 className="text-2xl font-bold text-foreground">Gestionare Plăți</h1>
-				<p className="mt-1 text-sm text-muted-foreground">
-						Monitorizați și gestionați toate plățile pentru biletele MIMESISS 2025.
-					</p>
-				<p className="mt-1 text-sm text-muted-foreground">
-					Total încasat: <span className="font-semibold text-foreground">{formatCurrency(stats.totalRevenue)}</span>
-				</p>
-
-					{/* 4. Add onClick handler to the button */}
-					<div className="mt-4 flex items-center space-x-4">
+			<PageIntro
+				eyebrow="Administrare · Financiar"
+				title="Gestionare plăți"
+				description="Monitorizează plățile, biletele emise și încasările înregistrate pentru evenimentele ASMM."
+				actions={(
+					<>
 						<button
-							type='button'
+							type="button"
 							onClick={downloadCSV}
-							className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+							className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-secondary px-4 py-2 text-sm font-semibold text-secondary-foreground transition hover:bg-secondary/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 						>
-							Descarca Raport Plăți
+							<FaDownload aria-hidden="true" className="h-4 w-4" />
+							Descarcă raportul
 						</button>
-
-						<Link href="/admin/payments/new" className="text-sm text-primary hover:underline">
-							Creează o plată nouă
+						<Link
+							href="/admin/payments/new"
+							className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-accent/45 bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+						>
+							<FaPlus aria-hidden="true" className="h-4 w-4" />
+							Plată nouă
 						</Link>
-					</div>
-				</div>
-			</div>
-
-			{/* Statistics Cards removed */}
-
-			{/* Recent Payments Table */}
-			<div className="bg-card shadow border border-border overflow-hidden sm:rounded-lg">
-				<div className="px-4 py-5 sm:px-6">
-					<h3 className="text-lg leading-6 font-medium text-foreground">Plăți Recente</h3>
-					<p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-						Lista tuturor plăților efectuate pentru biletele MIMESISS 2025.
-					</p>
-				</div>
-
-				<PaymentsList payments={payments} ticketCounts={ticketCounts} />
-
-				{payments.length === 0 && (
-					<div className="text-center py-12">
-						<FaCreditCard className="mx-auto h-12 w-12 text-muted-foreground" />
-						<h3 className="mt-2 text-sm font-medium text-foreground">Nicio plată</h3>
-						<p className="mt-1 text-sm text-muted-foreground">
-							Nu există încă plăți înregistrate în sistem.
-						</p>
-					</div>
+					</>
 				)}
-			</div>
+			/>
+
+			<section aria-label="Rezumat plăți" className="grid gap-3 sm:grid-cols-3">
+				<div className="mimesiss-card flex items-center gap-4 p-5">
+					<div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-accent/25 bg-primary/20 text-accent">
+						<FaCreditCard aria-hidden="true" />
+					</div>
+					<div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Încasări</p><p className="mt-1 text-xl font-bold text-foreground">{formatCurrency(stats.totalRevenue)}</p></div>
+				</div>
+				<div className="mimesiss-card flex items-center gap-4 p-5">
+					<div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-accent/25 bg-primary/20 text-accent">
+						<FaCreditCard aria-hidden="true" />
+					</div>
+					<div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Plăți</p><p className="mt-1 text-xl font-bold text-foreground">{stats.totalPayments}</p></div>
+				</div>
+				<div className="mimesiss-card flex items-center gap-4 p-5">
+					<div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-accent/25 bg-primary/20 text-accent">
+						<FaTicketAlt aria-hidden="true" />
+					</div>
+					<div><p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">Bilete emise</p><p className="mt-1 text-xl font-bold text-foreground">{issuedTickets}</p></div>
+				</div>
+			</section>
+
+			<section className="mimesiss-section-card" aria-labelledby="payments-list-title">
+				<div className="border-b border-border/70 px-5 py-5 sm:px-6">
+					<h2 id="payments-list-title" className="text-xl font-semibold text-foreground">Istoricul plăților</h2>
+					<p className="mt-1 text-sm text-muted-foreground">Caută, verifică sau elimină o înregistrare de plată.</p>
+				</div>
+				<PaymentsList payments={payments} ticketCounts={ticketCounts} />
+			</section>
 		</div>
 	)
 }

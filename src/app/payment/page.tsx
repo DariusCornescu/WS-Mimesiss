@@ -7,6 +7,7 @@ import BallTicketSelector from '@/components/payments/BallTicketSelector';
 import { getAppSettings } from '@/lib/settings';
 import connectDB from '@/lib/mongodb';
 import { Payment } from '@/models';
+import PaymentShell from '@/components/payments/PaymentShell';
 
 export default async function PaymentPage() {
   const clerkUser = await currentUser();
@@ -36,31 +37,38 @@ export default async function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {!paymentsEnabled ? (
-          <div className="mb-6 p-4 bg-yellow-100 border border-yellow-300 text-yellow-800 rounded-lg">
-            <strong>Notă:</strong> Plățile sunt momentan închise. Te rugăm să verifici înapoi mai târziu.
-          </div>
-        ) : eventMode === 'ball' ? (
-          <BallTicketSelector
-            ballMaxTicketsPerUser={appSettings.ballMaxTicketsPerUser ?? 2}
-            ballTicketAvailableFrom={
-              appSettings.ballTicketAvailableFrom
-                ? new Date(appSettings.ballTicketAvailableFrom).toISOString()
-                : null
-            }
-            ballTicketAvailableTo={
-              appSettings.ballTicketAvailableTo
-                ? new Date(appSettings.ballTicketAvailableTo).toISOString()
-                : null
-            }
-            alreadyPurchased={alreadyPurchasedBallTickets}
-          />
-        ) : (
-          <EnhancedTicketSelector />
-        )}
-      </div>
-    </div>
+    <PaymentShell
+      title="Finalizează participarea"
+      description="Alege biletul potrivit evenimentului și finalizează plata în câțiva pași simpli."
+    >
+      {!paymentsEnabled ? (
+        <div role="status" className="rounded-lg border border-accent/30 bg-accent/10 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+            Plăți indisponibile
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-foreground">Vânzarea biletelor este momentan închisă</h2>
+          <p className="mt-2 leading-relaxed text-muted-foreground">
+            Revino mai târziu pentru a verifica disponibilitatea biletelor.
+          </p>
+        </div>
+      ) : eventMode === 'ball' ? (
+        <BallTicketSelector
+          ballMaxTicketsPerUser={appSettings.ballMaxTicketsPerUser ?? 2}
+          ballTicketAvailableFrom={
+            appSettings.ballTicketAvailableFrom
+              ? new Date(appSettings.ballTicketAvailableFrom).toISOString()
+              : null
+          }
+          ballTicketAvailableTo={
+            appSettings.ballTicketAvailableTo
+              ? new Date(appSettings.ballTicketAvailableTo).toISOString()
+              : null
+          }
+          alreadyPurchased={alreadyPurchasedBallTickets}
+        />
+      ) : (
+        <EnhancedTicketSelector />
+      )}
+    </PaymentShell>
   );
 }
