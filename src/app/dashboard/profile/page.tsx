@@ -18,7 +18,7 @@ export default function ProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
-          <div className="text-red-500 mb-2">Eroare la încărcarea datelor</div>
+          <div role="alert" className="mb-2 text-destructive">Eroare la încărcarea datelor</div>
           <button
             type='button'
             onClick={() => refetch()}

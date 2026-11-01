@@ -77,6 +77,9 @@ async function readSettings(): Promise<AppSettingsPlain> {
   }
 }
 
+// Purchase creation must observe current sales controls, not a cached page view.
+export async function getUncachedAppSettings(): Promise<AppSettingsPlain> { return readSettings() }
+
 const cachedSettings = unstable_cache(readSettings, ['app-settings'], {
   tags: ['app-settings'],
   revalidate: 300, // belt-and-braces TTL on top of the tag invalidation below
