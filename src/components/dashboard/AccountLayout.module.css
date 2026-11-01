@@ -1,0 +1,75 @@
+.shell {
+  position: relative;
+  display: flex;
+  min-height: calc(100svh - 5.375rem);
+  align-items: flex-start;
+  background:
+    radial-gradient(circle at 92% 4%, hsl(var(--primary) / .14), transparent 30rem),
+    hsl(var(--background));
+}
+
+.skipLink {
+  position: fixed;
+  top: -8rem;
+  left: 1rem;
+  z-index: 80;
+  border-radius: .5rem;
+  background: hsl(var(--secondary));
+  color: hsl(var(--secondary-foreground));
+  padding: .75rem 1rem;
+  font-weight: 700;
+}
+
+.skipLink:focus {
+  top: 1rem;
+  outline: 3px solid hsl(var(--ring));
+  outline-offset: 3px;
+}
+
+.content {
+  min-width: 0;
+  width: 100%;
+  flex: 1;
+  padding: clamp(1.25rem, 3vw, 3rem);
+}
+
+.content:focus {
+  outline: none;
+}
+
+.contentInner {
+  width: 100%;
+  max-width: 90rem;
+  margin-inline: auto;
+}
+
+.contentInner :global(h1) {
+  color: hsl(var(--foreground));
+  font-size: clamp(1.8rem, 3vw, 2.7rem);
+  font-weight: 750;
+  letter-spacing: -.035em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+
+.contentInner :global(h2),
+.contentInner :global(h3) {
+  text-wrap: balance;
+}
+
+@media (max-width: 63.999rem) {
+  .shell {
+    min-height: auto;
+    flex-direction: column;
+  }
+
+  .content {
+    padding: 1.25rem 1rem 2.5rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .content {
+    padding-inline: .875rem;
+  }
+}

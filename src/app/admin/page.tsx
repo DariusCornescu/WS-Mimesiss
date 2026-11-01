@@ -1,11 +1,12 @@
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
-import { FaUsers, FaCalendarAlt, FaUserPlus, FaCog } from 'react-icons/fa'
+import { FaUsers, FaCalendarAlt, FaUserPlus, FaCog, FaCreditCard, FaFolderOpen, FaTicketAlt, FaImages } from 'react-icons/fa'
 import Link from 'next/link'
 import { syncUserWithDatabase } from '@/lib/auth'
 import { User as UserType } from '@/types/models'
 import connectDB from '@/lib/mongodb'
 import { User, Workshop, Registration } from '@/models'
+import PageIntro from '@/components/ui/PageIntro'
 
 export default async function AdminDashboard() {
   const clerkUser = await currentUser()
@@ -32,30 +33,25 @@ export default async function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-card overflow-hidden shadow border border-border rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h1 className="text-2xl font-bold text-foreground">Panou Administrare</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Gestionați workshop-urile, utilizatorii și setările sistemului.
-          </p>
-        </div>
-      </div>
+      <PageIntro
+        eyebrow="Administrare ASMM"
+        title="Panou de administrare"
+        description="Gestionează workshopurile, utilizatorii, biletele și setările platformei dintr-un singur loc."
+      />
 
-      {/* Statistics */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-card overflow-hidden shadow border border-border rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
+        <div className="mimesiss-card overflow-hidden">
+          <div className="px-5 py-5 sm:p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FaUsers className="h-8 w-8 text-blue-600" />
+              <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl border border-accent/25 bg-primary/20">
+                <FaUsers aria-hidden="true" className="h-5 w-5 text-accent" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-muted-foreground truncate">
                     Total utilizatori
                   </dt>
-                  <dd className="text-lg font-medium text-foreground">
+                  <dd className="mt-1 text-2xl font-bold text-foreground">
                     {totalUsers}
                   </dd>
                 </dl>
@@ -64,18 +60,18 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-card overflow-hidden shadow border border-border rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
+        <div className="mimesiss-card overflow-hidden">
+          <div className="px-5 py-5 sm:p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FaCalendarAlt className="h-8 w-8 text-green-600" />
+              <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl border border-accent/25 bg-primary/20">
+                <FaCalendarAlt aria-hidden="true" className="h-5 w-5 text-accent" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-muted-foreground truncate">
                     Total workshop-uri
                   </dt>
-                  <dd className="text-lg font-medium text-foreground">
+                  <dd className="mt-1 text-2xl font-bold text-foreground">
                     {totalWorkshops}
                   </dd>
                 </dl>
@@ -84,18 +80,18 @@ export default async function AdminDashboard() {
           </div>
         </div>
 
-        <div className="bg-card overflow-hidden shadow border border-border rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
+        <div className="mimesiss-card overflow-hidden">
+          <div className="px-5 py-5 sm:p-6">
             <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <FaUserPlus className="h-8 w-8 text-purple-600" />
+              <div className="grid h-12 w-12 flex-shrink-0 place-items-center rounded-xl border border-accent/25 bg-primary/20">
+                <FaUserPlus aria-hidden="true" className="h-5 w-5 text-accent" />
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
                   <dt className="text-sm font-medium text-muted-foreground truncate">
                     Total înregistrări
                   </dt>
-                  <dd className="text-lg font-medium text-foreground">
+                  <dd className="mt-1 text-2xl font-bold text-foreground">
                     {totalRegistrations}
                   </dd>
                 </dl>
@@ -105,69 +101,72 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-card shadow border border-border rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-foreground">
+      <section className="mimesiss-section-card p-5 sm:p-6" aria-labelledby="admin-quick-actions">
+          <h2 id="admin-quick-actions" className="text-xl font-semibold text-foreground">
             Acțiuni rapide
-          </h3>
-          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">Accesează cele mai folosite zone de administrare.</p>
+          <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <Link
               href="/admin/workshops"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
+              className="inline-flex min-h-12 items-center rounded-lg border border-accent/25 bg-primary/15 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/45 hover:bg-primary/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <FaCalendarAlt className="mr-2 h-4 w-4" />
-              Gestionează workshop-urile
+              <FaCalendarAlt aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Workshopuri
             </Link>
             <Link
-              href="/admin/workshops/new"
-              className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
+              href="/admin/users"
+              className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <FaUserPlus className="mr-2 h-4 w-4" />
-              Creează workshop nou
+              <FaUsers aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Utilizatori
             </Link>
             <Link
-              href="/admin/settings"
-              className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
+              href="/admin/proiecte"
+              className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <FaCog className="mr-2 h-4 w-4" />
-              Setări
+              <FaFolderOpen aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Proiecte și anunțuri
             </Link>
-            <Link
-              href="/admin/parteneri"
-              className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
-            >
-              <FaUsers className="mr-2 h-4 w-4" />
+            <Link href="/admin/galerie" className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <FaImages aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Galerie MIMESISS
+            </Link>
+            <Link href="/admin/parteneri" className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <FaUsers aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
               Parteneri și sponsori
             </Link>
             <Link
-              href="/dashboard"
-              className="inline-flex items-center px-4 py-2 border border-input text-sm font-medium rounded-md text-foreground bg-background hover:bg-accent hover:text-accent-foreground"
+              href="/admin/tickets"
+              className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <FaUsers className="mr-2 h-4 w-4" />
-              Dashboard utilizator
+              <FaTicketAlt aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Bilete
+            </Link>
+            <Link href="/admin/payments" className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <FaCreditCard aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Plăți
+            </Link>
+            <Link href="/admin/settings" className="inline-flex min-h-12 items-center rounded-lg border border-border bg-background/35 px-4 py-3 text-sm font-semibold text-foreground transition hover:border-accent/40 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <FaCog aria-hidden="true" className="mr-3 h-4 w-4 text-accent" />
+              Setări
             </Link>
           </div>
-        </div>
-      </div>
+      </section>
 
       {/* Recent Activity - Placeholder for now */}
-      <div className="bg-card shadow border border-border rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-foreground">
+      <section className="mimesiss-section-card p-5 sm:p-6" aria-labelledby="admin-recent-activity">
+          <h2 id="admin-recent-activity" className="text-xl font-semibold text-foreground">
             Activitate recentă
-          </h3>
-          <div className="mt-5">
-            <div className="text-center py-12">
-              <FaCog className="mx-auto h-12 w-12 text-muted-foreground" />
-              <h3 className="mt-2 text-sm font-medium text-foreground">În dezvoltare</h3>
+          </h2>
+          <div className="mt-5 rounded-xl border border-dashed border-border bg-background/25 px-5 py-10 text-center">
+              <FaCog aria-hidden="true" className="mx-auto h-9 w-9 text-muted-foreground" />
+              <p className="mt-3 text-sm font-semibold text-foreground">În dezvoltare</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Istoricul activității va fi disponibil în curând.
               </p>
-            </div>
           </div>
-        </div>
-      </div>
+      </section>
     </div>
   )
 }

@@ -12,22 +12,29 @@ interface DeleteWorkshopButtonProps {
 // Simple CSS spinner component
 function Spinner() {
   return (
-    <div className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+    <span
+      aria-hidden="true"
+      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]"
+    />
   )
 }
 
 export default function DeleteWorkshopButton({ workshopId, workshopTitle }: DeleteWorkshopButtonProps) {
   const [isPending, startTransition] = useTransition()
   const [showConfirm, setShowConfirm] = useState(false)
+  const [error, setError] = useState('')
 
   const handleDelete = async () => {
     startTransition(async () => {
       try {
+        setError('')
         await deleteWorkshop(workshopId)
         setShowConfirm(false)
       } catch (error) {
         console.error('Error deleting workshop:', error)
-        alert('Failed to delete workshop: ' + (error instanceof Error ? error.message : 'Unknown error'))
+        setError(
+          `Workshop-ul nu a putut fi șters: ${error instanceof Error ? error.message : 'eroare necunoscută'}`
+        )
       }
     })
   }
@@ -35,30 +42,40 @@ export default function DeleteWorkshopButton({ workshopId, workshopTitle }: Dele
   if (showConfirm) {
     return (
       <div className="space-y-2">
-        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-          <p className="text-sm text-red-700 mb-2">
-            Delete &quot;{workshopTitle}&quot;?
+        <div
+          role="group"
+          aria-labelledby={`delete-workshop-${workshopId}`}
+          className="rounded-lg border border-destructive/40 bg-destructive/10 p-3"
+        >
+          <p id={`delete-workshop-${workshopId}`} className="mb-3 text-sm text-foreground">
+            Ștergi workshop-ul &bdquo;{workshopTitle}&rdquo;?
           </p>
-          <div className="flex space-x-2">
+          <div className="flex flex-wrap gap-2">
             <button
               type='button'
               onClick={handleDelete}
               disabled={isPending}
-              className="inline-flex items-center gap-1 px-2 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+              aria-busy={isPending}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-transparent bg-destructive px-3 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPending && <Spinner />}
-              {isPending ? 'Deleting...' : 'Yes, Delete'}
+              {isPending ? 'Se șterge...' : 'Da, șterge'}
             </button>
             <button
               type='button'
               onClick={() => setShowConfirm(false)}
               disabled={isPending}
-              className="inline-flex items-center px-2 py-1 border border-input text-xs font-medium rounded text-foreground bg-card hover:bg-muted focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex min-h-11 items-center justify-center rounded-md border border-input bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Cancel
+              Anulează
             </button>
           </div>
         </div>
+        {error && (
+          <p role="alert" className="max-w-sm text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     )
   }
@@ -66,11 +83,14 @@ export default function DeleteWorkshopButton({ workshopId, workshopTitle }: Dele
   return (
     <button
       type='button'
-      onClick={() => setShowConfirm(true)}
-      className="inline-flex items-center px-3 py-2 border border-red-300 shadow-sm text-sm leading-4 font-medium rounded-md text-red-700 bg-card hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+      onClick={() => {
+        setError('')
+        setShowConfirm(true)
+      }}
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-destructive/50 bg-card px-3 py-2 text-sm font-medium leading-4 text-destructive shadow-sm transition-colors hover:bg-destructive/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
     >
-      <FaTrash className="h-4 w-4 mr-1" />
-      Delete
+      <FaTrash aria-hidden="true" className="mr-2 h-4 w-4" />
+      Șterge
     </button>
   )
 }

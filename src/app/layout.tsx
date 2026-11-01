@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     apple: { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     shortcut: '/favicon.ico',
   },
-  manifest: '/manifest.json',
+  manifest: '/manifest.webmanifest',
   openGraph: {
     type: "website",
     locale: "ro_RO",
@@ -129,7 +129,7 @@ export default async function RootLayout({
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://va.vercel-scripts.com" />
         {/* Critical first-paint colours must match :root in globals.css. */}
-        <style dangerouslySetInnerHTML={{__html: `:root{--background:240 3% 6%;--foreground:0 0% 100%}body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground))}`}} />
+        <style dangerouslySetInnerHTML={{__html: `:root{--background:340.000 6.977% 8.431%;--foreground:33.103 52.727% 89.216%}body{margin:0;background:hsl(var(--background));color:hsl(var(--foreground))}`}} />
       </head>
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased bg-background text-foreground min-h-screen`}>
         <AuthBoundary>
@@ -137,7 +137,7 @@ export default async function RootLayout({
             <ToastProvider>
               <PublicSurface>
                 <Header />
-                <main id="site-main" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background">
+                <main id="site-main" tabIndex={-1} className="min-h-[calc(100svh-5.375rem)] bg-gradient-to-br from-background via-background/95 to-background">
                   {children}
                 </main>
                 <Footer />

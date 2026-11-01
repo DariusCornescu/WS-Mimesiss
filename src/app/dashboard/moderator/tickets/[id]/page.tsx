@@ -17,7 +17,7 @@ export default async function ModeratorTicketDetailPage({
 }) {
   const { id } = await params
 
-  await requireRoleOrRedirect('admin', 'moderator')
+  const staff = await requireRoleOrRedirect('admin', 'moderator')
 
   if (!mongoose.isValidObjectId(id)) notFound()
 
@@ -35,10 +35,10 @@ export default async function ModeratorTicketDetailPage({
 
   const statusColor =
     ticket.status === 'used'
-      ? 'text-green-400 bg-green-500/10 border-green-500/30'
+      ? 'text-secondary bg-secondary/10 border-secondary/30'
       : ticket.status === 'cancelled'
-      ? 'text-red-400 bg-red-500/10 border-red-500/30'
-      : 'text-primary bg-primary/10 border-primary/30'
+      ? 'text-destructive bg-destructive/10 border-destructive/30'
+      : 'text-accent bg-primary/10 border-primary/30'
 
   const statusLabel =
     ticket.status === 'used' ? 'Folosit' : ticket.status === 'cancelled' ? 'Anulat' : 'Activ'
@@ -48,9 +48,10 @@ export default async function ModeratorTicketDetailPage({
       <div className="flex items-center gap-3">
         <Link
           href="/dashboard/moderator/scan"
-          className="text-muted-foreground hover:text-foreground transition-colors"
+          aria-label="Înapoi la scanarea biletelor"
+          className="rounded-md text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          <FaArrowLeft className="h-4 w-4" />
+          <FaArrowLeft className="h-4 w-4" aria-hidden="true" />
         </Link>
         <div>
           <h1 className="text-xl font-bold text-foreground">Detalii bilet</h1>
@@ -63,8 +64,8 @@ export default async function ModeratorTicketDetailPage({
         {/* Number + status */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <FaTicketAlt className="h-5 w-5 text-primary" />
-            <span className="font-mono text-2xl font-bold text-primary tracking-wide">
+            <FaTicketAlt className="h-5 w-5 text-accent" />
+            <span className="font-mono text-2xl font-bold text-accent tracking-wide">
               #{String(ticket.ticketNumber).padStart(4, '0')}
             </span>
           </div>
@@ -121,7 +122,7 @@ export default async function ModeratorTicketDetailPage({
               ? 'Marchați biletul ca folosit la intrarea participantului.'
               : 'Biletul a fost deja marcat ca folosit. Puteți reactiva dacă a fost o greșeală.'}
           </p>
-          <TicketStatusToggle
+          <TicketStatusToggle canReactivate={staff.role === 'admin'}
             ticketId={(ticket._id as { toString(): string }).toString()}
             initialStatus={ticket.status as 'active' | 'used' | 'cancelled'}
             large
@@ -130,8 +131,8 @@ export default async function ModeratorTicketDetailPage({
       )}
 
       {ticket.status === 'cancelled' && (
-        <div className="mimesiss-card p-4 border border-red-500/30">
-          <p className="text-sm text-red-400 text-center">Acest bilet a fost anulat și nu este valid.</p>
+        <div role="alert" className="mimesiss-card border border-destructive/30 p-4">
+          <p className="text-center text-sm text-destructive">Acest bilet a fost anulat și nu este valid.</p>
         </div>
       )}
     </div>

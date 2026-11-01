@@ -6,6 +6,7 @@ import SimpleUserQRCode from '@/components/SimpleUserQRCode'
 import { getAppSettings } from '@/lib/settings'
 import connectDB from '@/lib/mongodb'
 import { Payment } from '@/models'
+import PageIntro from '@/components/ui/PageIntro'
 
 export default async function DashboardPage() {
   const clerkUser = await currentUser()
@@ -44,24 +45,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-card overflow-hidden shadow-lg border border-border rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h1 className="text-2xl font-bold text-foreground">
-            Bine ai venit, {clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : clerkUser.emailAddresses?.[0]?.emailAddress}!
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Iată ce se întâmplă cu workshopurile tale astăzi.
-          </p>
-        </div>
-      </div>
+      <PageIntro
+        eyebrow="Spațiul personal"
+        title={<>Bine ai venit, {clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : clerkUser.emailAddresses?.[0]?.emailAddress}!</>}
+        description="De aici îți gestionezi profilul, înscrierile și biletele pentru evenimentele ASMM."
+      />
 
       {/* Quick Stats */}
       <div className="mimesiss-card p-6">
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <FaTicketAlt className="h-5 w-5 text-primary" />
+              <FaTicketAlt className="h-5 w-5 text-accent" />
             </div>
             <div>
               <h3 className="font-semibold text-foreground">
@@ -78,7 +73,7 @@ export default async function DashboardPage() {
           </div>
 
           {ticketsRemaining !== null && ticketsRemaining > 0 ? (
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
               <span className="text-sm text-muted-foreground">
                 {isBallMode
                   ? `Mai poți cumpăra ${ticketsRemaining} bilet${ticketsRemaining > 1 ? 'e' : ''}`
@@ -86,19 +81,19 @@ export default async function DashboardPage() {
               </span>
               <Link
                 href="/payment"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
+                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
               >
                 <FaShoppingCart className="h-3 w-3" />
                 Cumpără
               </Link>
             </div>
           ) : (
-            <span className="text-sm font-medium text-green-500">
+            <span className="text-sm font-medium text-secondary">
               {isBallMode ? 'Limită atinsă' : 'Complet'}
             </span>
           )}
         </div>
-        <Link href="/dashboard/tickets" className="text-xs text-primary hover:underline">
+        <Link href="/dashboard/tickets" className="text-xs text-accent hover:underline">
           Vezi toate biletele mele →
         </Link>
       </div>
@@ -170,7 +165,7 @@ export default async function DashboardPage() {
             {user.role === 'admin' && (
               <Link
                 href="/admin"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-orange-700 bg-orange-100 hover:bg-orange-200"
+                className="inline-flex items-center px-4 py-2 border border-accent/50 text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
               >
                 <FaUsers className="mr-2 h-4 w-4" />
                 Panou Admin

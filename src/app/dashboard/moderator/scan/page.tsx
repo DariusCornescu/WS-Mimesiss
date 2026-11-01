@@ -5,8 +5,8 @@ export default async function ScannerPage() {
   await requireRoleOrRedirect('admin', 'moderator')
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl py-2 sm:py-4">
+      <div>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-foreground">Scanner Cod QR</h1>
           <p className="mt-2 text-muted-foreground">

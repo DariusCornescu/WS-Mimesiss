@@ -70,7 +70,7 @@ export default function AttendanceToggle({
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           {confirmed ? (
-            <FaCheckCircle className="text-primary" />
+            <FaCheckCircle className="text-accent" />
           ) : (
             <FaTimesCircle className="text-muted-foreground" />
           )}

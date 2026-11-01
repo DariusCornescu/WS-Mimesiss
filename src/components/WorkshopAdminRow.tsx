@@ -20,7 +20,7 @@ export default function WorkshopAdminRow({ workshop, registrations }: { workshop
 									<span>{workshop.title} </span>
 									<span className="pill">{workshop.wsType ? workshop.wsType : 'N/A'}</span>
 									{workshop.url && (
-										<Link href={`${workshop.url}`} target="_blank" className="inline-flex items-center text-sm text-primary hover:underline mt-1">
+										<Link href={`${workshop.url}`} target="_blank" className="inline-flex items-center text-sm text-accent hover:underline mt-1">
 											<FaLink className="mr-1 h-4 w-4" />
 										</Link>
 									)}
@@ -129,7 +129,7 @@ export default function WorkshopAdminRow({ workshop, registrations }: { workshop
 												</td>
 												<td className="px-4 py-2 text-sm text-muted-foreground">
 													<div className="flex items-center space-x-3">
-														<Link href={`/admin/attendance/${user.clerkId}`} className="text-primary hover:underline">
+														<Link href={`/admin/attendance/${user.clerkId}`} className="text-accent hover:underline">
 															Prezenta
 														</Link>
 														<RemoveUserButton 

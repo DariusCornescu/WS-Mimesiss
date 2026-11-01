@@ -4,7 +4,7 @@ import HeaderContent from "@/components/ui/HeaderContent";
 export default function GhidPage() {
 	return (
 		<>
-			<HeaderContent title='Ghid de redactare pentru Congresul MIMESISS 2025' />
+			<HeaderContent kicker="Congres · Ghid abstracte" title='Ghid de redactare pentru Congresul MIMESISS 2025' />
 			<div className="public-document max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="archive-note">Arhivă · Informațiile de pe această pagină se referă la ediția MIMESISS 2025.</p>
 				
 				{/* Section 1: Dispoziții generale */}
@@ -72,7 +72,7 @@ export default function GhidPage() {
 
 						<p>
 							Documentul va fi transmis în format Word (.doc) sau PDF (.pdf) începând cu data de <strong className="underline">02.11.2025</strong> până la data de <strong className="underline">08.11.2025</strong>, la adresa de e-mail{' '}
-							<a className="underline text-primary hover:text-primary/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
+							<a className="underline text-accent hover:text-accent/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
 								secretariat@asmm-bucuresti.com
 							</a>
 						</p>
@@ -83,7 +83,7 @@ export default function GhidPage() {
 
 						<p>
 							Rezultatele evaluării vor fi transmise prin e-mail de la adresa{' '}
-							<a className="underline text-primary hover:text-primary/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
+							<a className="underline text-accent hover:text-accent/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
 								secretariat@asmm-bucuresti.com
 							</a>
 						</p>
@@ -148,7 +148,7 @@ export default function GhidPage() {
 					<div className="flex flex-col gap-4 mt-6">
 						<p>
 							Documentul va fi transmis în format PDF (.pdf) începând cu data de <strong className="underline">02.11.2025</strong> până la data de <strong className="underline">08.11.2025</strong>, la adresa de e-mail{' '}
-							<a className="underline text-primary hover:text-primary/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
+							<a className="underline text-accent hover:text-accent/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
 								secretariat@asmm-bucuresti.com
 							</a>
 						</p>
@@ -159,7 +159,7 @@ export default function GhidPage() {
 
 						<p>
 							Rezultatele evaluării vor fi transmise prin e-mail de la adresa{' '}
-							<a className="underline text-primary hover:text-primary/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
+							<a className="underline text-accent hover:text-accent/80 transition-colors" href="mailto:secretariat@asmm-bucuresti.com">
 								secretariat@asmm-bucuresti.com
 							</a>
 						</p>

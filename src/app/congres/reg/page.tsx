@@ -4,7 +4,7 @@ import HeaderContent from "@/components/ui/HeaderContent";
 export default function RegPage() {
 	return (
 		<>
-			<HeaderContent title='Regulament de participare la MIMESISS 2025' />
+			<HeaderContent kicker="Congres · Regulament" title='Regulament de participare la MIMESISS 2025' />
 			<div className="public-document max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12"><p className="archive-note">Arhivă · Informațiile de pe această pagină se referă la ediția MIMESISS 2025.</p>
 				<ol className="regulament-list flex flex-col gap-4">
 					<li>
@@ -91,7 +91,7 @@ export default function RegPage() {
 						<ul className="list-decimal list-outside pl-5 my-2">
 							<li>Trimiterea abstractelor și evaluare
 								<ul className="list-disc list-outside pl-5 my-2">
-									<li>Toți participanții activi trimit abstractul la <a href="mailto:secretariat@asmm-bucuresti.com" className="underline text-primary"> secretariat@asmm-bucuresti.com </a> începând cu data de 02.11.2025 până la data de 08.11.2025</li>
+									<li>Toți participanții activi trimit abstractul la <a href="mailto:secretariat@asmm-bucuresti.com" className="underline text-accent"> secretariat@asmm-bucuresti.com </a> începând cu data de 02.11.2025 până la data de 08.11.2025</li>
 									<li>Evaluarea abstractelor se va desfășura între 02.11.2025-11.11.2025 de către comisia de experți din domeniul medical și medico-militar.</li>
 									<li>Participanții la prezentări orale își pregătesc materialul pentru congres.</li>
 									<li>Participanții la e-postere trimit posterul digital între 08.11 - 11.11.2025. Organizatorii își rezervă dreptul ca posterul să nu fie acceptat, chiar dacă abstractul a fost aprobat.</li>

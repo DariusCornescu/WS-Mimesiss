@@ -86,7 +86,7 @@ export default function TicketQRPopover({ ticketId, ticketLabel }: TicketQRPopov
               <a
                 href={qrDataUrl}
                 download={`bilet-${ticketLabel.replace(/\s+/g, '-')}.png`}
-                className="block w-full text-center text-xs text-primary hover:underline"
+                className="block w-full text-center text-xs text-accent hover:underline"
               >
                 Descarcă QR
               </a>

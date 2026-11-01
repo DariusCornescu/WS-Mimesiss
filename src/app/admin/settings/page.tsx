@@ -1,6 +1,7 @@
 import { requireRoleOrRedirect } from '@/lib/auth'
 import { getAppSettings } from '@/lib/settings'
 import SettingsForm from '@/components/admin/SettingsForm'
+import PageIntro from '@/components/ui/PageIntro'
 
 export default async function AdminSettingsPage() {
   await requireRoleOrRedirect('admin')
@@ -10,18 +11,18 @@ export default async function AdminSettingsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Setări Aplicație</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configurați setările globale pentru platformă.
-        </p>
-      </div>
+      <PageIntro
+        eyebrow="Administrare ASMM"
+        title="Setările aplicației"
+        description="Configurează disponibilitatea workshopurilor, plățile și regulile generale ale platformei."
+      />
 
-      {/* Settings Form */}
-      <div className="bg-card shadow border border-border rounded-lg">
+      <section
+        aria-label="Configurarea aplicației"
+        className="overflow-hidden rounded-xl border border-border/60 bg-card/85 shadow-lg shadow-background/15 backdrop-blur-sm"
+      >
         <SettingsForm initialSettings={settings} />
-      </div>
+      </section>
     </div>
   )
 }
