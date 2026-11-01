@@ -3,10 +3,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { FaEye, FaEyeSlash, FaPen, FaPlus, FaTrash } from 'react-icons/fa'
 
+import PageIntro from '@/components/ui/PageIntro'
+import DuplicateProjectButton from '@/components/admin/DuplicateProjectButton'
+import { LocalProjectDraftCleanup } from '@/components/admin/ProjectForm'
 import { syncUserWithDatabase } from '@/lib/auth'
 import { deleteProject, getAllProjects } from './actions'
 
-export default async function AdminProiectePage() {
+export default async function AdminProiectePage({ searchParams }: { searchParams: Promise<{ savedDraft?: string; savedToken?: string }> }) {
   const clerkUser = await currentUser()
 
   if (!clerkUser) {
@@ -20,24 +23,25 @@ export default async function AdminProiectePage() {
   }
 
   const projects = await getAllProjects()
+  const saved = await searchParams
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Administrare proiecte</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Proiectele afișate pe pagina principală și în /proiecte
-          </p>
-        </div>
-        <Link
-          href="/admin/proiecte/new"
-          className="mimesiss-btn-primary inline-flex items-center justify-center whitespace-nowrap"
-        >
-          <FaPlus className="w-4 h-4 mr-2" />
-          Adaugă proiect
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <LocalProjectDraftCleanup id={saved.savedDraft} token={saved.savedToken} />
+      <PageIntro
+        eyebrow="Administrare · Proiecte"
+        title="Proiecte și anunțuri"
+        description="Configurează proiectele prezentate public, ordinea lor și starea de publicare dintr-un singur loc."
+        actions={(
+          <Link
+            href="/admin/proiecte/new"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-accent/50 bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+          >
+            <FaPlus aria-hidden="true" className="h-4 w-4" />
+            Adaugă postare
+          </Link>
+        )}
+      />
 
       <section className="mimesiss-card p-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
         <div><h2 className="font-semibold">Cortul IMM · Povestea animată</h2><p className="text-sm text-muted-foreground mt-1">Adaugă textele de lângă cele trei imagini de album.</p></div>
@@ -47,71 +51,123 @@ export default async function AdminProiectePage() {
       {([{ slug: 'mimesiss', title: 'MIMESISS' }, { slug: 'balul-bobocilor', title: 'Balul bobocilor' }]).map(story => <section key={story.slug} className="mimesiss-card p-5 flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between"><div><h2 className="font-semibold">{story.title} · Povestea animată</h2><p className="text-sm text-muted-foreground mt-1">Editează textele de lângă fotografiile fiecărei scene.</p></div><Link href={'/admin/proiecte/poveste/' + story.slug} className="mimesiss-btn-secondary sm:w-auto">Editează textele</Link></section>)}
 
       {projects.length === 0 ? (
-        <div className="mimesiss-card p-8 text-center">
-          <p className="text-muted-foreground">
-            Niciun proiect încă. Rulează scriptul de migrare sau adaugă unul manual.
+        <section className="flex min-h-64 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card/70 px-6 py-12 text-center" aria-labelledby="empty-projects-title">
+          <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent">
+            <FaPlus aria-hidden="true" className="h-5 w-5" />
+          </div>
+          <h2 id="empty-projects-title" className="text-lg font-semibold text-foreground">
+            Nu există încă proiecte
+          </h2>
+          <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+            Adaugă primul proiect și păstrează-l ca ciornă până când conținutul este pregătit pentru publicare.
           </p>
-        </div>
+          <Link
+            href="/admin/proiecte/new"
+            className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <FaPlus aria-hidden="true" className="h-4 w-4" />
+            Creează primul proiect
+          </Link>
+        </section>
       ) : (
-        <div className="space-y-3">
-          {projects.map((project) => (
-            <div
-              key={project._id}
-              className="mimesiss-card p-5 flex flex-col sm:flex-row sm:items-center gap-4"
-            >
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <h2 className="text-lg font-semibold text-foreground">{project.title}</h2>
-
-                  {project.status === 'published' ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-primary">
-                      <FaEye className="w-3 h-3" />
-                      Publicat
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <FaEyeSlash className="w-3 h-3" />
-                      Ciornă
-                    </span>
-                  )}
-
-                  {project.kind === 'congress' && (
-                    <span className="pill text-xs px-2">Congres</span>
-                  )}
-                </div>
-
-                <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{project.summary}</p>
-                <p className="mt-1 font-mono text-xs text-muted-foreground">
-                  /proiecte/{project.slug} · ordine {project.order}
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <Link
-                  href={`/admin/proiecte/edit/${project._id}`}
-                  className="inline-flex items-center gap-2 rounded-md border border-border/40 px-4 py-2 text-sm text-foreground transition-colors hover:bg-primary/10"
-                >
-                  <FaPen className="w-3 h-3" />
-                  Editează
-                </Link>
-
-                {/* Congresul nu se poate șterge: are ediții și workshopuri legate. */}
-                {project.kind !== 'congress' && (
-                  <form action={deleteProject}>
-                    <input type="hidden" name="id" value={project._id} />
-                    <button
-                      type="submit"
-                      className="inline-flex items-center gap-2 rounded-md border border-destructive/40 px-4 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                    >
-                      <FaTrash className="w-3 h-3" />
-                      Șterge
-                    </button>
-                  </form>
-                )}
-              </div>
+        <section aria-labelledby="projects-list-title" className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">Conținut public</p>
+              <h2 id="projects-list-title" className="mt-1 text-xl font-semibold text-foreground">
+                Proiecte configurate
+              </h2>
             </div>
-          ))}
-        </div>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{projects.length}</span>{' '}
+              {projects.length === 1 ? 'proiect' : 'proiecte'}
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {projects.map((project) => {
+              const isPublished = project.status === 'published'
+              const isCongress = project.kind === 'congress'
+
+              return (
+                <article
+                  key={project._id}
+                  className="flex h-full flex-col rounded-xl border border-border/60 bg-card/85 p-5 shadow-lg shadow-background/15 sm:p-6"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                      isPublished
+                        ? 'border-accent/30 bg-accent/10 text-accent'
+                        : 'border-border bg-muted text-muted-foreground'
+                    }`}>
+                      {isPublished ? (
+                        <FaEye aria-hidden="true" className="h-3 w-3" />
+                      ) : (
+                        <FaEyeSlash aria-hidden="true" className="h-3 w-3" />
+                      )}
+                      {isPublished ? 'Publicat' : 'Ciornă'}
+                    </span>
+
+                    <span className={`inline-flex min-h-7 items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                      isCongress
+                        ? 'border-secondary/30 bg-secondary/10 text-secondary'
+                        : 'border-primary/25 bg-primary/10 text-foreground'
+                    }`}>
+                      {isCongress ? 'Congres' : project.kind === 'announcement' ? 'Anunț' : 'Proiect'}
+                    </span>
+
+                    <span className="inline-flex min-h-7 items-center rounded-full border border-border bg-background/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                      Ordine {project.order}
+                    </span>
+                  </div>
+
+                  <div className="mt-5 min-w-0 flex-1">
+                    <h3 className="text-xl font-semibold leading-tight text-foreground">{project.title}</h3>
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                      {project.summary}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 rounded-lg border border-border bg-background/45 px-3 py-2">
+                    <p className="break-all font-mono text-xs text-muted-foreground">
+                      /proiecte/{project.slug}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 grid grid-cols-1 gap-2 border-t border-border pt-4 sm:grid-cols-2">
+                    <Link
+                      href={`/admin/proiecte/edit/${project._id}`}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:border-accent/40 hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    >
+                      <FaPen aria-hidden="true" className="h-3.5 w-3.5" />
+                      Editează
+                    </Link>
+
+                    {/* Congresul nu se poate șterge: are ediții și workshopuri legate. */}
+                    {isCongress ? (
+                      <div className="flex min-h-11 items-center justify-center rounded-lg border border-border bg-background/35 px-4 py-2 text-center text-xs font-medium text-muted-foreground">
+                        Proiect protejat
+                      </div>
+                    ) : (
+                      <form action={deleteProject}>
+                        <input type="hidden" name="id" value={project._id} />
+                        <button
+                          type="submit"
+                          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive"
+                          aria-label={`Șterge proiectul ${project.title}`}
+                        >
+                          <FaTrash aria-hidden="true" className="h-3.5 w-3.5" />
+                          Șterge
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                  {!isCongress && <div className="mt-2"><DuplicateProjectButton id={project._id} title={project.title} /></div>}
+                </article>
+              )
+            })}
+          </div>
+        </section>
       )}
     </div>
   )
