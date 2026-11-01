@@ -13,7 +13,10 @@ interface SettingsFormProps {
 // Simple CSS spinner component
 function Spinner() {
   return (
-    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+    <span
+      aria-hidden="true"
+      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]"
+    />
   )
 }
 
@@ -51,7 +54,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
         
       } catch (error) {
         console.error('Error updating settings:', error)
-        setError(error instanceof Error ? error.message : 'Failed to update settings')
+        setError(error instanceof Error ? error.message : 'Setările nu au putut fi actualizate.')
       }
     })
   }
@@ -76,23 +79,30 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
         
       } catch (error) {
         console.error('Error resetting settings:', error)
-        setError(error instanceof Error ? error.message : 'Failed to reset settings')
+        setError(error instanceof Error ? error.message : 'Setările nu au putut fi resetate.')
       }
     })
   }
 
   return (
-    <div className="p-6">
+    <div className="p-4 sm:p-6">
       <form action={handleSubmit} className="space-y-8">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800 text-sm">{error}</p>
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
+          >
+            {error}
           </div>
         )}
 
         {success && (
-          <div className="bg-green-50 border border-green-200 rounded-md p-4">
-            <p className="text-green-800 text-sm">{success}</p>
+          <div
+            role="status"
+            aria-live="polite"
+            className="rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm text-foreground"
+          >
+            {success}
           </div>
         )}
 
@@ -140,9 +150,10 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               <div className="mt-1">
                 <input
                   type="datetime-local"
+                  id="registrationStartTime"
                   name="registrationStartTime"
                   defaultValue={formatDateTimeLocal(initialSettings.registrationStartTime)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
                 />
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -157,9 +168,10 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               <div className="mt-1">
                 <input
                   type="datetime-local"
+                  id="registrationDeadline"
                   name="registrationDeadline"
                   defaultValue={formatDateTimeLocal(initialSettings.registrationDeadline)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
                 />
               </div>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -176,11 +188,12 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               <div className="mt-1">
                 <input
                   type="number"
+                  id="defaultMaxParticipants"
                   name="defaultMaxParticipants"
                   min="1"
                   max="1000"
                   defaultValue={initialSettings.defaultMaxParticipants}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm placeholder-muted-foreground text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
                 />
               </div>
             </div>
@@ -198,22 +211,22 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
             </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
+          <fieldset>
+            <legend className="mb-2 block text-sm font-medium text-foreground">
               Mod activ
-            </label>
-            <div className="flex gap-3">
+            </legend>
+            <div className="flex flex-wrap gap-3">
               {(['workshops', 'ball'] as const).map((mode) => (
                 <label
                   key={mode}
-                  className="flex items-center gap-2 cursor-pointer"
+                  className="flex min-h-11 cursor-pointer items-center gap-2 rounded-md border border-border bg-background px-3 py-2 transition-colors hover:bg-muted focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ring"
                 >
                   <input
                     type="radio"
                     name="eventMode"
                     value={mode}
                     defaultChecked={initialSettings.eventMode === mode || (!initialSettings.eventMode && mode === 'workshops')}
-                    className="w-4 h-4 text-primary border-input focus:ring-primary"
+                    className="h-4 w-4 border-input text-primary focus:ring-ring"
                   />
                   <span className="text-sm text-foreground capitalize">
                     {mode === 'workshops' ? 'Workshop-uri' : 'Bal'}
@@ -226,7 +239,7 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               <br />
               <strong>Bal</strong> — pagina de plată arată biletele de bal cu selector de cantitate.
             </p>
-          </div>
+          </fieldset>
 
           <div>
             <label htmlFor="ballMaxTicketsPerUser" className="block text-sm font-medium text-foreground">
@@ -235,11 +248,12 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
             <div className="mt-1 max-w-xs">
               <input
                 type="number"
+                id="ballMaxTicketsPerUser"
                 name="ballMaxTicketsPerUser"
                 min="1"
                 max="50"
                 defaultValue={initialSettings.ballMaxTicketsPerUser ?? 2}
-                className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+                className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
               />
             </div>
           </div>
@@ -252,9 +266,10 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               <div className="mt-1">
                 <input
                   type="datetime-local"
+                  id="ballTicketAvailableFrom"
                   name="ballTicketAvailableFrom"
                   defaultValue={formatDateTimeLocal(initialSettings.ballTicketAvailableFrom)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
                 />
               </div>
               <p className="mt-1 text-sm text-muted-foreground">Lăsați gol pentru disponibilitate imediată.</p>
@@ -267,9 +282,10 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               <div className="mt-1">
                 <input
                   type="datetime-local"
+                  id="ballTicketAvailableTo"
                   name="ballTicketAvailableTo"
                   defaultValue={formatDateTimeLocal(initialSettings.ballTicketAvailableTo)}
-                  className="block w-full px-3 py-2 border border-input bg-background rounded-md shadow-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
                 />
               </div>
               <p className="mt-1 text-sm text-muted-foreground">Lăsați gol pentru nelimitat.</p>
@@ -278,12 +294,13 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-between pt-6 border-t border-border">
+        <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-between">
           <button
             type="button"
             onClick={handleReset}
             disabled={isPending}
-            className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-busy={isPending}
+            className="inline-flex min-h-11 items-center justify-center rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             Resetează la implicit
           </button>
@@ -291,7 +308,8 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
           <button
             type="submit"
             disabled={isPending}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-busy={isPending}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isPending && <Spinner />}
             {isPending ? 'Se salvează...' : 'Salvează setările'}

@@ -40,16 +40,21 @@ export default function RecountParticipantsButton() {
         type="button"
         onClick={handleRecount}
         disabled={loading}
-        className="inline-flex items-center px-4 py-2 border border-border shadow-sm text-sm font-medium rounded-md text-foreground bg-background hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-busy={loading}
+        className="inline-flex min-h-11 items-center justify-center rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <FaSync className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+        <FaSync aria-hidden="true" className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         {loading ? 'Se recalculează...' : 'Recalculează participanți'}
       </button>
 
       {message && (
         <div
-          className={`text-sm ${
-            message.type === 'success' ? 'text-green-600' : 'text-red-600'
+          role={message.type === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+          className={`rounded-md border px-3 py-2 text-sm ${
+            message.type === 'success'
+              ? 'border-accent/40 bg-accent/10 text-foreground'
+              : 'border-destructive/40 bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}

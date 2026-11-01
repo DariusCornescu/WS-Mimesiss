@@ -1,156 +1,196 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link';
-import type { Workshop, UserWithAttendance } from '@/types/models';
-import { FaCalendarAlt, FaEdit, FaUsers, FaMapMarkerAlt, FaUser, FaChevronDown, FaChevronUp, FaLink, FaCheckCircle, FaTimesCircle } from 'react-icons/fa'
+import { useId, useState } from 'react'
+import Link from 'next/link'
+import {
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaChevronDown,
+  FaChevronUp,
+  FaEdit,
+  FaLink,
+  FaMapMarkerAlt,
+  FaTimesCircle,
+  FaUser,
+  FaUsers,
+} from 'react-icons/fa'
+import type { UserWithAttendance, Workshop } from '@/types/models'
 import DeleteWorkshopButton from '@/components/admin/DeleteWorkshopButton'
 import { RemoveUserButton } from '@/components/admin/RemoveUserButton'
 
-export default function WorkshopAdminRow({ workshop, registrations }: { workshop: Workshop, registrations: UserWithAttendance[] }) {
-	const [isExpanded, setIsExpanded] = useState(false)
+interface WorkshopAdminRowProps {
+  registrations: UserWithAttendance[]
+  workshop: Workshop
+}
 
-	return (
-		<li key={workshop._id?.toString() || workshop.id || ''}>
-			<div className="px-3 py-4 sm:px-6">
-				<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-					<div className="flex-1 min-w-0">
-						<div className="space-y-2">
-							<div className="text-sm font-medium text-foreground flex items-center space-x-2">
-									<span>{workshop.title} </span>
-									<span className="pill">{workshop.wsType ? workshop.wsType : 'N/A'}</span>
-									{workshop.url && (
-										<Link href={`${workshop.url}`} target="_blank" className="inline-flex items-center text-sm text-primary hover:underline mt-1">
-											<FaLink className="mr-1 h-4 w-4" />
-										</Link>
-									)}
-							</div>
-							<div>
-								<p className="text-sm text-muted-foreground line-clamp-2">
-									{workshop.description}
-								</p>
+export default function WorkshopAdminRow({ workshop, registrations }: WorkshopAdminRowProps) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const registrationsId = useId()
+  const workshopId = workshop._id?.toString() || workshop.id || ''
+  const registrationCount = registrations.length
 
-							</div>
-						</div>
-					</div>
-					<div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-3 sm:ml-4">
-						<div className="flex space-x-2">
-							<Link
-								href={`/admin/workshops/edit/${workshop._id?.toString() || workshop.id}`}
-								className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-primary-foreground bg-primary hover:bg-primary/90"
-							>
-								<FaEdit className="mr-1 h-3 w-3" />
-								<span className="hidden sm:inline">Editează</span>
-								<span className="sm:hidden">Edit</span>
-							</Link>
-							<DeleteWorkshopButton
-								workshopId={workshop._id?.toString() || workshop.id || ''}
-								workshopTitle={workshop.title}
-							/>
-						</div>
-					</div>
-				</div>
-				<div className="mt-3 flex flex-col sm:flex-row sm:items-center text-sm text-muted-foreground space-y-2 sm:space-y-0 sm:space-x-4">
-					{workshop.date && (
-						<div className="flex items-center">
-							<FaCalendarAlt className="flex-shrink-0 mr-1.5 h-4 w-4" />
-							<span className="truncate">{new Date(workshop.date).toLocaleDateString('ro-RO')} la {workshop.time}</span>
-						</div>
-					)}
-					{workshop.location && (
-						<div className="flex items-center">
-							<FaMapMarkerAlt className="flex-shrink-0 mr-1.5 h-4 w-4" />
-							<span className="truncate">{workshop.location}</span>
-						</div>
-					)}
-					<div className="flex items-center">
-						<FaUsers className="flex-shrink-0 mr-1.5 h-4 w-4" />
-						<span>
-							{workshop.wsType === 'conferinta' 
-								? `${workshop.currentParticipants || 0} participanți (nelimitat)`
-								: `${workshop.currentParticipants || 0}/${workshop.maxParticipants} participanți`
-							}
-						</span>
-					</div>
-					{workshop.instructor && (
-						<div className="flex items-center">
-							<FaUser className="flex-shrink-0 mr-1.5 h-4 w-4" />
-							<span className="truncate">{workshop.instructor}</span>
-						</div>
-					)}
-				</div>
+  return (
+    <li className="overflow-hidden rounded-xl border border-border/60 bg-card/90 shadow-lg shadow-background/10">
+      <article aria-labelledby={`workshop-${workshopId}`}>
+        <div className="p-4 sm:p-6">
+          <header className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id={`workshop-${workshopId}`} className="text-lg font-semibold text-foreground sm:text-xl">
+                  {workshop.title}
+                </h2>
+                <span className="inline-flex min-h-7 items-center rounded-full border border-accent/30 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-wide text-accent">
+                  {workshop.wsType || 'N/A'}
+                </span>
+                {workshop.url && (
+                  <Link
+                    href={workshop.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`Deschide pagina workshop-ului ${workshop.title} într-o filă nouă`}
+                    className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-md text-accent transition-colors hover:bg-accent/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                  >
+                    <FaLink aria-hidden="true" className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {workshop.description}
+              </p>
+            </div>
 
-				{/* Expandable Users Section */}
-				<div className="mt-4 border-t border-border pt-3">
-					<button
-						type="button"
-						onClick={() => setIsExpanded(!isExpanded)}
-						className="flex items-center justify-between w-full text-left hover:bg-muted/50 rounded px-2 py-1 transition-colors"
-					>
-						<h4 className="text-sm font-medium text-foreground">
-							Utilizatori înregistrați ({registrations?.length || 0})
-						</h4>
-						{isExpanded ? (
-							<FaChevronUp className="h-4 w-4 text-muted-foreground" />
-						) : (
-							<FaChevronDown className="h-4 w-4 text-muted-foreground" />
-						)}
-					</button>
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              <Link
+                href={`/admin/workshops/edit/${workshopId}`}
+                className="inline-flex min-h-11 items-center justify-center rounded-md border border-accent/40 bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+              >
+                <FaEdit aria-hidden="true" className="mr-2 h-4 w-4" />
+                Editează
+              </Link>
+              <DeleteWorkshopButton workshopId={workshopId} workshopTitle={workshop.title} />
+            </div>
+          </header>
 
-					{isExpanded && (
-						<div className="mt-2">
-							{registrations && registrations.length > 0 ? (
-								<table className="min-w-full divide-y divide-border">
-									<thead>
-										<tr>
-											<th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Utilizator</th>
-											<th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Email</th>
-											<th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Prezență</th>
-											<th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">Acțiuni</th>
-										</tr>
-									</thead>
-									<tbody className="divide-y divide-border">
-										{registrations.map((user: UserWithAttendance) => (
-											<tr key={user._id} className="hover:bg-muted">
-												<td className="px-4 py-2 text-sm text-foreground">{user.firstName} {user.lastName}</td>
-												<td className="px-4 py-2 text-sm text-muted-foreground">{user.email}</td>
-												<td className="px-4 py-2 text-sm">
-													{user.attendance?.confirmed ? (
-														<div className="flex items-center space-x-1 text-green-600">
-															<FaCheckCircle className="h-4 w-4" />
-															<span>Confirmat</span>
-														</div>
-													) : (
-														<div className="flex items-center space-x-1 text-gray-400">
-															<FaTimesCircle className="h-4 w-4" />
-															<span>Neconfirmat</span>
-														</div>
-													)}
-												</td>
-												<td className="px-4 py-2 text-sm text-muted-foreground">
-													<div className="flex items-center space-x-3">
-														<Link href={`/admin/attendance/${user.clerkId}`} className="text-primary hover:underline">
-															Prezenta
-														</Link>
-														<RemoveUserButton 
-															userId={user.clerkId}
-															workshopId={workshop._id?.toString() || workshop.id || ''}
-															userName={`${user.firstName} ${user.lastName}`}
-														/>
-													</div>
-												</td>
-											</tr>
-										))}
-									</tbody>
-								</table>
-							) : (
-								<p className="text-sm text-muted-foreground px-2 py-3">Niciun utilizator înregistrat</p>
-							)}
-						</div>
-					)}
-				</div>
-			</div>
+          <dl className="mt-5 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-4">
+            {workshop.date && (
+              <div className="flex min-w-0 items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
+                <FaCalendarAlt aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-accent" />
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Data</dt>
+                  <dd className="mt-1 break-words text-foreground">
+                    {new Date(workshop.date).toLocaleDateString('ro-RO')} la {workshop.time}
+                  </dd>
+                </div>
+              </div>
+            )}
+            {workshop.location && (
+              <div className="flex min-w-0 items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
+                <FaMapMarkerAlt aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-accent" />
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Locație</dt>
+                  <dd className="mt-1 break-words text-foreground">{workshop.location}</dd>
+                </div>
+              </div>
+            )}
+            <div className="flex min-w-0 items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
+              <FaUsers aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-accent" />
+              <div className="min-w-0">
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Participanți</dt>
+                <dd className="mt-1 text-foreground">
+                  {workshop.wsType === 'conferinta'
+                    ? `${workshop.currentParticipants || 0} (nelimitat)`
+                    : `${workshop.currentParticipants || 0}/${workshop.maxParticipants}`}
+                </dd>
+              </div>
+            </div>
+            {workshop.instructor && (
+              <div className="flex min-w-0 items-start gap-2 rounded-lg border border-border/50 bg-background/40 p-3">
+                <FaUser aria-hidden="true" className="mt-0.5 h-4 w-4 flex-none text-accent" />
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Instructor</dt>
+                  <dd className="mt-1 break-words text-foreground">{workshop.instructor}</dd>
+                </div>
+              </div>
+            )}
+          </dl>
+        </div>
 
-		</li>
-	);
+        <div className="border-t border-border/60 bg-background/20 px-4 py-3 sm:px-6">
+          <button
+            type="button"
+            onClick={() => setIsExpanded((expanded) => !expanded)}
+            aria-expanded={isExpanded}
+            aria-controls={registrationsId}
+            className="flex min-h-11 w-full items-center justify-between gap-4 rounded-md px-3 py-2 text-left text-sm font-semibold text-foreground transition-colors hover:bg-muted/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+          >
+            <span>Participanți înregistrați ({registrationCount})</span>
+            {isExpanded ? (
+              <FaChevronUp aria-hidden="true" className="h-4 w-4 flex-none text-accent" />
+            ) : (
+              <FaChevronDown aria-hidden="true" className="h-4 w-4 flex-none text-accent" />
+            )}
+          </button>
+
+          {isExpanded && (
+            <div id={registrationsId} className="pb-3 pt-2">
+              {registrationCount > 0 ? (
+                <ul className="grid gap-3 lg:grid-cols-2">
+                  {registrations.map((user) => {
+                    const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+
+                    return (
+                      <li key={user._id} className="rounded-lg border border-border/60 bg-card p-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="font-semibold text-foreground">{userName}</p>
+                            <a
+                              href={`mailto:${user.email}`}
+                              className="mt-1 inline-block break-all text-sm text-muted-foreground underline-offset-4 hover:text-accent hover:underline"
+                            >
+                              {user.email}
+                            </a>
+                            <div className="mt-3">
+                              {user.attendance?.confirmed ? (
+                                <span className="inline-flex items-center gap-2 rounded-full border border-secondary/35 bg-secondary/10 px-3 py-1 text-xs font-semibold text-secondary">
+                                  <FaCheckCircle aria-hidden="true" className="h-4 w-4" />
+                                  Prezență confirmată
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1 text-xs font-semibold text-muted-foreground">
+                                  <FaTimesCircle aria-hidden="true" className="h-4 w-4" />
+                                  Prezență neconfirmată
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-start gap-2 sm:justify-end">
+                            <Link
+                              href={`/admin/attendance/${user.clerkId}`}
+                              className="inline-flex min-h-11 items-center justify-center rounded-md border border-accent/40 bg-accent/10 px-3 py-2 text-sm font-medium text-accent transition-colors hover:bg-accent/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                            >
+                              Gestionează prezența
+                            </Link>
+                            <RemoveUserButton
+                              userId={user.clerkId}
+                              workshopId={workshopId}
+                              userName={userName}
+                            />
+                          </div>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              ) : (
+                <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                  Niciun participant înregistrat.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </article>
+    </li>
+  )
 }

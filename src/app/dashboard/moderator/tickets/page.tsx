@@ -1,13 +1,13 @@
 import { requireRoleOrRedirect } from '@/lib/auth'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
-import { FaTicketAlt, FaCalendar, FaSearch } from 'react-icons/fa'
+import { FaTicketAlt, FaCalendar } from 'react-icons/fa'
 import TicketStatusToggle from '@/components/moderator/TicketStatusToggle'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ModeratorTicketsPage() {
-  await requireRoleOrRedirect('admin', 'moderator')
+  const staff = await requireRoleOrRedirect('admin', 'moderator')
 
   await connectDB()
 
@@ -33,17 +33,17 @@ export default async function ModeratorTicketsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="mimesiss-card p-4 text-center">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="mimesiss-card p-3 text-center sm:p-4">
           <div className="text-2xl font-bold text-foreground">{total}</div>
           <div className="text-xs text-muted-foreground mt-1">Total</div>
         </div>
-        <div className="mimesiss-card p-4 text-center">
-          <div className="text-2xl font-bold text-green-400">{used}</div>
+        <div className="mimesiss-card p-3 text-center sm:p-4">
+          <div className="text-2xl font-bold text-secondary">{used}</div>
           <div className="text-xs text-muted-foreground mt-1">Folosite</div>
         </div>
-        <div className="mimesiss-card p-4 text-center">
-          <div className="text-2xl font-bold text-primary">{active}</div>
+        <div className="mimesiss-card p-3 text-center sm:p-4">
+          <div className="text-2xl font-bold text-accent">{active}</div>
           <div className="text-xs text-muted-foreground mt-1">Active</div>
         </div>
       </div>
@@ -80,7 +80,7 @@ export default async function ModeratorTicketsPage() {
 
                   return (
                     <tr key={(ticket._id as { toString(): string }).toString()} className="hover:bg-muted/20 transition-colors">
-                      <td className="px-4 py-3 font-mono text-primary font-semibold">
+                      <td className="px-4 py-3 font-mono text-accent font-semibold">
                         #{String(ticket.ticketNumber).padStart(4, '0')}
                       </td>
                       <td className="px-4 py-3">
@@ -102,7 +102,7 @@ export default async function ModeratorTicketsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <TicketStatusToggle
+                        <TicketStatusToggle canReactivate={staff.role === 'admin'}
                           ticketId={(ticket._id as { toString(): string }).toString()}
                           initialStatus={ticket.status as 'active' | 'used' | 'cancelled'}
                         />

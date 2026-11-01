@@ -8,6 +8,7 @@ import type { User as UserType } from '@/types/models';
 import Link from 'next/link';
 import { getAppSettings } from '@/lib/settings';
 import TicketQRPopover from '@/components/TicketQRPopover';
+import PageIntro from '@/components/ui/PageIntro';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -47,12 +48,11 @@ export default async function MyTicketsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Biletele mele</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Toate biletele achiziționate pentru MIMESISS 2025
-        </p>
-      </div>
+      <PageIntro
+        eyebrow="Participarea mea"
+        title="Biletele mele"
+        description="Toate biletele achiziționate pentru evenimentele ASMM, într-un singur loc."
+      />
 
       {/* Buy more / buy first banner */}
       {ticketsRemaining > 0 && (
@@ -86,12 +86,12 @@ export default async function MyTicketsPage() {
           <FaTicketAlt className="mx-auto h-12 w-12 text-muted-foreground mb-3" />
           <h3 className="text-lg font-medium text-foreground">Nu ai bilete achiziționate</h3>
           <p className="text-muted-foreground text-sm mt-1 mb-6">
-            Cumpără un bilet pentru a participa la MIMESISS 2025
+            Cumpără un bilet pentru a participa la următorul eveniment.
           </p>
-          <a href="/payment" className="mimesiss-btn-primary inline-flex items-center gap-2">
+          <Link href="/payment" className="mimesiss-btn-primary inline-flex items-center gap-2">
             <FaTicketAlt className="h-4 w-4" />
             Cumpără bilet
-          </a>
+          </Link>
         </div>
       )}
 
@@ -100,7 +100,7 @@ export default async function MyTicketsPage() {
         <section className="space-y-4">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-foreground">Bilete Bal</h2>
-            <span className="bg-primary/10 text-primary text-xs font-medium px-2 py-1 rounded-full">
+            <span className="bg-primary/10 text-accent text-xs font-medium px-2 py-1 rounded-full">
               {ballCount} bilet{ballCount !== 1 ? 'e' : ''}
             </span>
           </div>
@@ -109,14 +109,14 @@ export default async function MyTicketsPage() {
               <div key={(ticket._id as { toString(): string }).toString()} className="bg-card border border-border rounded-lg overflow-hidden">
                 {/* Serial strip */}
                 <div className="bg-primary/10 border-b border-border px-5 py-2 flex items-center justify-between">
-                  <span className="text-xs font-mono font-semibold text-primary tracking-widest">
+                  <span className="text-xs font-mono font-semibold text-accent tracking-widest">
                     Bilet #{String(ticket.ticketNumber).padStart(4, '0')}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border ${ticket.status === 'used'
                     ? 'bg-muted text-muted-foreground border-border'
                     : ticket.status === 'cancelled'
-                      ? 'bg-red-500/10 text-red-400 border-red-500/20'
-                      : 'bg-green-500/10 text-green-400 border-green-500/20'
+                      ? 'bg-destructive/10 text-destructive border-destructive/20'
+                      : 'bg-secondary/10 text-secondary border-secondary/20'
                     }`}>
                     <FaCheck className="h-2.5 w-2.5" />
                     {ticket.status === 'used' ? 'Folosit' : ticket.status === 'cancelled' ? 'Anulat' : 'Activ'}
@@ -162,7 +162,7 @@ export default async function MyTicketsPage() {
               return (
                 <div key={(payment._id as { toString(): string }).toString()} className="bg-card border border-border rounded-lg p-5 flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <FaTicketAlt className="h-5 w-5 text-primary" />
+                    <FaTicketAlt className="h-5 w-5 text-accent" />
                   </div>
                   <div className="flex-1 min-w-0 flex">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -170,8 +170,8 @@ export default async function MyTicketsPage() {
                         {ticketProduct?.title || payment.ticketType}
                       </h3>
                       <span className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border ${payment.status === 'completed'
-                        ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                        : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                        ? 'bg-secondary/10 text-secondary border-secondary/20'
+                        : 'bg-accent/10 text-accent border-accent/20'
                         }`}>
                         {payment.status === 'completed'
                           ? <><FaCheck className="h-2.5 w-2.5" /> Plătit</>
@@ -185,7 +185,7 @@ export default async function MyTicketsPage() {
                       <ul className="mt-2 space-y-1">
                         {ticketProduct.features.slice(0, 3).map((f) => (
                           <li key={f} className="text-xs text-muted-foreground flex items-center gap-1.5">
-                            <FaCheck className="h-2.5 w-2.5 text-primary flex-shrink-0" />
+                            <FaCheck className="h-2.5 w-2.5 text-accent flex-shrink-0" />
                             {f}
                           </li>
                         ))}

@@ -12,7 +12,7 @@ export default function Loading() {
 
 		{/* Spinner + text */}
 		<div className="flex flex-col items-center gap-3">
-		 <AiOutlineLoading className="animate-spin h-14 w-14 text-primary" />
+		 <AiOutlineLoading className="animate-spin h-14 w-14 text-accent" />
 		  
 		</div>
 	  </div>

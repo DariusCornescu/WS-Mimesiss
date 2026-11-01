@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Select from 'react-select'
+import type { StylesConfig } from 'react-select'
 import type { User as UserType, Workshop as WorkshopType } from '@/types/models'
 import { manuallyAssignUserToWorkshop } from '@/app/admin/workshops/actions'
 import { useRouter } from 'next/navigation'
@@ -14,6 +15,67 @@ interface ManualAssignmentFormProps {
 type SelectOption = {
   value: string
   label: string
+}
+
+const selectStyles: StylesConfig<SelectOption, false> = {
+  control: (base, state) => ({
+    ...base,
+    minHeight: '44px',
+    backgroundColor: 'hsl(var(--background))',
+    borderColor: state.isFocused ? 'hsl(var(--primary))' : 'hsl(var(--border))',
+    boxShadow: state.isFocused ? '0 0 0 2px hsl(var(--ring))' : 'none',
+    '&:hover': {
+      borderColor: state.isFocused ? 'hsl(var(--primary))' : 'hsl(var(--border))'
+    }
+  }),
+  menu: (base) => ({
+    ...base,
+    zIndex: 20,
+    overflow: 'hidden',
+    backgroundColor: 'hsl(var(--popover))',
+    border: '1px solid hsl(var(--border))'
+  }),
+  option: (base, state) => ({
+    ...base,
+    backgroundColor: state.isSelected
+      ? 'hsl(var(--primary))'
+      : state.isFocused
+        ? 'hsl(var(--accent))'
+        : 'hsl(var(--popover))',
+    color: state.isSelected
+      ? 'hsl(var(--primary-foreground))'
+      : state.isFocused
+        ? 'hsl(var(--accent-foreground))'
+        : 'hsl(var(--foreground))',
+    '&:active': {
+      backgroundColor: 'hsl(var(--primary))',
+      color: 'hsl(var(--primary-foreground))'
+    }
+  }),
+  input: (base) => ({
+    ...base,
+    color: 'hsl(var(--foreground))'
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: 'hsl(var(--foreground))'
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: 'hsl(var(--muted-foreground))'
+  }),
+  indicatorSeparator: (base) => ({
+    ...base,
+    backgroundColor: 'hsl(var(--border))'
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: 'hsl(var(--muted-foreground))'
+  }),
+  clearIndicator: (base) => ({
+    ...base,
+    color: 'hsl(var(--muted-foreground))'
+  })
 }
 
 export function ManualAssignmentForm({ users, workshops }: ManualAssignmentFormProps) {
@@ -80,112 +142,61 @@ export function ManualAssignmentForm({ users, workshops }: ManualAssignmentFormP
       {/* User Selection */}
       <div>
         <label htmlFor="user-select" className="block text-sm font-medium text-foreground mb-2">
-          Selectează Utilizator
+          Selectează utilizatorul
         </label>
         <Select
-          id="user-select"
+          inputId="user-select"
+          instanceId="manual-assignment-user"
           value={selectedUser}
           onChange={setSelectedUser}
           options={userOptions}
           placeholder="Caută utilizator după nume sau email..."
           isClearable
           isSearchable
+          isDisabled={isSubmitting}
+          aria-invalid={message?.type === 'error' && !selectedUser}
+          aria-describedby={message ? 'manual-assignment-message' : undefined}
+          noOptionsMessage={() => 'Nu a fost găsit niciun utilizator.'}
           className="react-select-container"
           classNamePrefix="react-select"
-          styles={{
-            control: (base) => ({
-              ...base,
-              backgroundColor: 'hsl(var(--background))',
-              borderColor: 'hsl(var(--border))',
-              '&:hover': {
-                borderColor: 'hsl(var(--border))'
-              }
-            }),
-            menu: (base) => ({
-              ...base,
-              backgroundColor: 'hsl(var(--background))',
-              borderColor: 'hsl(var(--border))',
-              border: '1px solid hsl(var(--border))'
-            }),
-            option: (base, state) => ({
-              ...base,
-              backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--background))',
-              color: state.isFocused ? 'hsl(var(--accent-foreground))' : 'hsl(var(--foreground))',
-              '&:hover': {
-                backgroundColor: 'hsl(var(--accent))',
-                color: 'hsl(var(--accent-foreground))'
-              }
-            }),
-            input: (base) => ({
-              ...base,
-              color: 'hsl(var(--foreground))'
-            }),
-            singleValue: (base) => ({
-              ...base,
-              color: 'hsl(var(--foreground))'
-            })
-          }}
+          styles={selectStyles}
         />
       </div>
 
       {/* Workshop Selection */}
       <div>
         <label htmlFor="workshop-select" className="block text-sm font-medium text-foreground mb-2">
-          Selectează Workshop
+          Selectează workshop-ul
         </label>
         <Select
-          id="workshop-select"
+          inputId="workshop-select"
+          instanceId="manual-assignment-workshop"
           value={selectedWorkshop}
           onChange={setSelectedWorkshop}
           options={workshopOptions}
           placeholder="Caută workshop după nume..."
           isClearable
           isSearchable
+          isDisabled={isSubmitting}
+          aria-invalid={message?.type === 'error' && !selectedWorkshop}
+          aria-describedby={message ? 'manual-assignment-message' : undefined}
+          noOptionsMessage={() => 'Nu a fost găsit niciun workshop.'}
           className="react-select-container"
           classNamePrefix="react-select"
-          styles={{
-            control: (base) => ({
-              ...base,
-              backgroundColor: 'hsl(var(--background))',
-              borderColor: 'hsl(var(--border))',
-              '&:hover': {
-                borderColor: 'hsl(var(--border))'
-              }
-            }),
-            menu: (base) => ({
-              ...base,
-              backgroundColor: 'hsl(var(--background))',
-              borderColor: 'hsl(var(--border))',
-              border: '1px solid hsl(var(--border))'
-            }),
-            option: (base, state) => ({
-              ...base,
-              backgroundColor: state.isFocused ? 'hsl(var(--accent))' : 'hsl(var(--background))',
-              color: state.isFocused ? 'hsl(var(--accent-foreground))' : 'hsl(var(--foreground))',
-              '&:hover': {
-                backgroundColor: 'hsl(var(--accent))',
-                color: 'hsl(var(--accent-foreground))'
-              }
-            }),
-            input: (base) => ({
-              ...base,
-              color: 'hsl(var(--foreground))'
-            }),
-            singleValue: (base) => ({
-              ...base,
-              color: 'hsl(var(--foreground))'
-            })
-          }}
+          styles={selectStyles}
         />
       </div>
 
       {/* Message Display */}
       {message && (
         <div
-          className={`p-4 rounded-md ${
+          id="manual-assignment-message"
+          role={message.type === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+          className={`rounded-lg border p-4 text-sm ${
             message.type === 'success'
-              ? 'bg-green-100 text-green-800 border border-green-300'
-              : 'bg-red-100 text-red-800 border border-red-300'
+              ? 'border-accent/40 bg-accent/10 text-foreground'
+              : 'border-destructive/40 bg-destructive/10 text-destructive'
           }`}
         >
           {message.text}
@@ -193,13 +204,14 @@ export function ManualAssignmentForm({ users, workshops }: ManualAssignmentFormP
       )}
 
       {/* Submit Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-stretch sm:justify-end">
         <button
           type="submit"
           disabled={isSubmitting || !selectedUser || !selectedWorkshop}
-          className="inline-flex items-center px-6 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-busy={isSubmitting}
+          className="inline-flex min-h-11 w-full items-center justify-center rounded-md border border-transparent bg-primary px-6 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
-          {isSubmitting ? 'Se procesează...' : 'Alocă Utilizatorul'}
+          {isSubmitting ? 'Se procesează...' : 'Alocă utilizatorul'}
         </button>
       </div>
     </form>

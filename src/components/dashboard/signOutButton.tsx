@@ -3,7 +3,7 @@
 import { useClerk } from '@clerk/nextjs'
 import { FaSignOutAlt } from 'react-icons/fa'
 
-export default function SignOutButton() {
+export default function SignOutButton({ className = '' }: { className?: string }) {
 	const { signOut } = useClerk()
 
 	const handleSignOut = async () => {
@@ -17,11 +17,11 @@ export default function SignOutButton() {
 	return (
 		<button
 			onClick={handleSignOut}
-			className="flex items-center px-3 py-2 text-sm font-medium rounded-md text-destructive hover:bg-destructive/10 transition-colors"
+			className={`flex items-center px-3 py-2 text-sm font-medium rounded-md text-destructive hover:bg-destructive/10 transition-colors ${className}`}
 			type='button'
 		>
 			<FaSignOutAlt className="h-4 w-4" />
-			<span className="ml-2 hidden sm:inline">Ieșire</span>
+			<span className="ml-2 hidden sm:inline">Ieșire din cont</span>
 		</button>
 	)
 }

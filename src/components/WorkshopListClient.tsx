@@ -105,7 +105,7 @@ export default function WorkshopListClient({ initialWorkshops }: WorkshopListCli
 					<label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
 						<input
 							type="checkbox"
-							className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+							className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-primary"
 							checked={showAvailable}
 							onChange={e => setShowAvailable(e.target.checked)}
 						/>
@@ -114,7 +114,7 @@ export default function WorkshopListClient({ initialWorkshops }: WorkshopListCli
 					<label className="flex items-center gap-2 cursor-pointer text-sm font-medium">
 						<input
 							type="checkbox"
-							className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+							className="h-4 w-4 rounded border-gray-300 text-accent focus:ring-primary"
 							checked={showMyRegistrations}
 							onChange={e => setShowMyRegistrations(e.target.checked)}
 						/>
