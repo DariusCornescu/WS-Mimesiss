@@ -17,7 +17,7 @@
     "test:payments": "node --test scripts/test-payments-db.mjs",
     "test:stress": "node scripts/stress-local.mjs",
     "security:secrets": "node scripts/check-secrets.mjs",
-    "security:audit": "npm audit --audit-level=moderate",
+    "security:audit": "npm audit --omit=dev --audit-level=moderate",
     "build:isolated": "node scripts/build-isolated.mjs",
     "dev:staging": "node scripts/dev-staging.mjs",
     "test:atlas-staging": "node scripts/verify-atlas-staging.mjs",

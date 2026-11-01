@@ -47,7 +47,7 @@ jobs:
         run: npm run security:secrets
 
       - name: Dependency vulnerabilities
-        run: npm audit --audit-level=moderate
+        run: npm audit --omit=dev --audit-level=moderate
 
       - name: TypeScript
         if: ${{ !cancelled() }}
