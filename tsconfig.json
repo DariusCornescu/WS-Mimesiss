@@ -38,6 +38,7 @@
     ".next-gallery-check/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "docs"
   ]
 }
