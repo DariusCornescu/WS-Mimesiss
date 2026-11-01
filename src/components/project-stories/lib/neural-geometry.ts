@@ -42,8 +42,8 @@ function organicBody(detail: number) {
 
 // A slightly wider shell around a branch carries the travelling signal; `value`
 // is written per vertex so the shader can offset or route each branch.
-function signalShell(points: THREE.Vector3[], radius: number, segments: number, attribute: string, value: number) {
-  const geometry = taperedBranch(points, radius * 1.18 + .03, segments, 5)
+function signalShell(points: THREE.Vector3[], radius: number, segments: number, attribute: string, value: number, sides = 4) {
+  const geometry = taperedBranch(points, radius * 1.18 + .03, segments, sides)
   geometry.setAttribute(attribute, new THREE.BufferAttribute(new Float32Array(geometry.getAttribute('position').count).fill(value), 1))
   return geometry
 }
@@ -60,8 +60,9 @@ function neurites(seed: number, count: number, detailed: boolean, shells?: THREE
     const length = 7 + random() * 7
     const points = [root, root.clone().addScaledVector(direction, 2), root.clone().addScaledVector(direction, length * .55).add(new THREE.Vector3((random() - .5) * 3, (random() - .5) * 3, (random() - .5) * 5)), root.clone().addScaledVector(direction, length).add(new THREE.Vector3((random() - .5) * 4, (random() - .5) * 4, (random() - .5) * 8))]
     const radius = detailed ? .35 + random() * .15 : .22
-    geometries.push(taperedBranch(points, radius, detailed ? 26 : 16, detailed ? 6 : 4))
-    shells?.push(signalShell(points, radius, 26, 'phase', phases()))
+    geometries.push(taperedBranch(points, radius, detailed ? 26 : 11, detailed ? 6 : 4))
+    const shellPhase = phases()
+    shells?.push(signalShell(points, radius, 20, 'phase', shellPhase))
     if (detailed) {
       for (let fork = 0; fork < 2; fork++) {
         const origin = points[2].clone()
@@ -70,6 +71,8 @@ function neurites(seed: number, count: number, detailed: boolean, shells?: THREE
         const end = origin.clone().add(new THREE.Vector3(Math.cos(forkAngle) * reach, Math.sin(forkAngle) * reach, (random() - .5) * 7))
         const middle = origin.clone().lerp(end, .5).add(new THREE.Vector3(0, (random() - .5) * 2, 1))
         geometries.push(taperedBranch([origin, middle, end], .11, 14, 4))
+        // Fork shells carry the same impulse past the junction: phase + 10 marks them for the shader.
+        shells?.push(signalShell([origin, middle, end], .11, 8, 'phase', 10 + shellPhase))
       }
     }
   }
@@ -118,7 +121,7 @@ export function buildNeuralGeometryStage(stage: NeuralGeometryStage): Record<str
     group.rotation.set(random(), random(), random() * Math.PI)
     group.scale.setScalar(.55 + random() * .55)
     group.updateMatrix()
-    bodies.push(organicBody(16).applyMatrix4(group.matrix))
+    bodies.push(organicBody(12).applyMatrix4(group.matrix))
     branches.push((neurites(800 + i, 6, false)).applyMatrix4(group.matrix))
   }
   meshes.backgroundBodies = mergeGeometries(bodies)
