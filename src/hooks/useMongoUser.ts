@@ -16,9 +16,10 @@ export function useMongoUser(): UseMongoUserReturn {
   const [mongoUser, setMongoUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const clerkUserId = clerkUser?.id
 
   const fetchUser = useCallback(async () => {
-    if (!clerkUser?.id) {
+    if (!clerkUserId) {
       setIsLoading(false)
       setMongoUser(null)
       return
@@ -28,7 +29,7 @@ export function useMongoUser(): UseMongoUserReturn {
       setIsLoading(true)
       setError(null)
       
-      const response = await fetch(`/api/users/${clerkUser.id}`)
+      const response = await fetch(`/api/users/${clerkUserId}`)
       
       if (!response.ok) {
         throw new Error(`Failed to fetch user: ${response.statusText}`)
@@ -43,7 +44,7 @@ export function useMongoUser(): UseMongoUserReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [clerkUser?.id])
+  }, [clerkUserId])
 
   useEffect(() => {
     if (isLoaded) {
