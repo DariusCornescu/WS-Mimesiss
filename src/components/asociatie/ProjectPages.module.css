@@ -1,0 +1,11 @@
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 28px; }
+.card { overflow: hidden; border: 1px solid hsl(var(--border)); border-radius: 16px; background: hsl(var(--card)); }
+.cardLink { display: flex; height: 100%; flex-direction: column; color: hsl(var(--foreground)); text-decoration: none; }
+.cardLink:focus-visible { outline: 3px solid hsl(var(--ring)); outline-offset: -3px; }
+.cover, .placeholder { width: 100%; aspect-ratio: 8 / 5; object-fit: cover; }
+.placeholder { display: grid; place-items: center; background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); font-size: 36px; letter-spacing: .1em; }
+.copy { display: flex; flex: 1; flex-direction: column; gap: 18px; padding: 28px; overflow-wrap: anywhere; }
+.kicker { color: hsl(var(--accent)); font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.copy h2 { margin: 0; font-size: clamp(24px, 3vw, 32px); line-height: 1.15; }
+.summary { color: hsl(var(--muted-foreground)); line-height: 1.7; white-space: pre-line; }
+.readMore { align-self: flex-start; margin-top: auto; padding-top: 8px; border-bottom: 1px solid hsl(var(--accent)); font-size: 14px; font-weight: 600; }

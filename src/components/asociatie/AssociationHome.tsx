@@ -36,7 +36,7 @@ export default function AssociationHome({ projects, partners = [] }: { projects:
           <Link href="/congres" className={styles.button}>Explorează congresul <FaArrowRight aria-hidden="true" /></Link>
         </div>
         <div className={styles.featureImage}>
-          <Image src={congress?.coverImage || '/old/1.jpeg'} alt="Congresul MIMESISS" fill sizes="(max-width: 760px) 100vw, 50vw" className={styles.cover} />
+          <Image src={congress?.coverImage || '/old/1.jpeg'} alt="Congresul MIMESISS" style={{ objectPosition: `${congress?.coverPositionX ?? 50}% ${congress?.coverPositionY ?? 50}%` }} fill sizes="(max-width: 760px) 100vw, 50vw" className={styles.cover} />
         </div>
       </section>
       {otherProjects.length > 0 && <section className={styles.projects} aria-labelledby="projects-title">
@@ -46,8 +46,8 @@ export default function AssociationHome({ projects, partners = [] }: { projects:
         </div>
         <div className={styles.projectGrid}>
           {otherProjects.map(project => <Link key={project.slug} href={project.href} className={styles.project}>
-            {project.coverImage && <div className={styles.projectImage}><Image src={project.coverImage} alt="" fill sizes="(max-width: 760px) 100vw, 33vw" className={styles.cover} /></div>}
-            <p className={styles.projectKicker}>{project.kicker || 'Proiect ASMM'}</p>
+            {project.coverImage && <div className={styles.projectImage}><Image src={project.coverImage} alt="" style={{ objectPosition: `${project.coverPositionX ?? 50}% ${project.coverPositionY ?? 50}%` }} fill sizes="(max-width: 760px) 100vw, 33vw" className={styles.cover} /></div>}
+            <p className={styles.projectKicker}>{project.kicker || (project.kind === 'announcement' ? 'Anunț ASMM' : 'Proiect ASMM')}</p>
             <h3>{project.title}</h3><p>{project.summary}</p>
             <span className={styles.textLink}>Află mai multe <FaArrowRight aria-hidden="true" /></span>
           </Link>)}

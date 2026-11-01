@@ -13,9 +13,11 @@ export type ProjectDoc = {
   summary: string
   description?: string
   coverImage?: string
+  coverPositionX?: number
+  coverPositionY?: number
   order: number
   status: 'draft' | 'published'
-  kind: 'congress' | 'standard'
+  kind: 'congress' | 'standard' | 'announcement'
 }
 
 export type ProjectCard = {
@@ -25,7 +27,9 @@ export type ProjectCard = {
   summary: string
   description?: string
   coverImage?: string
-  kind: 'congress' | 'standard'
+  coverPositionX?: number
+  coverPositionY?: number
+  kind: 'congress' | 'standard' | 'announcement'
   /** Clase de grid, calculate ca grila să nu rămână cu goluri. */
   span: string
   /** Congresul are secțiunea lui; restul au pagină de proiect. */
@@ -62,6 +66,7 @@ export async function getPublishedProjects(): Promise<ProjectCard[]> {
   await connectDB()
 
   const docs = await Project.find({ status: 'published' })
+    .select('slug title kicker summary coverImage coverPositionX coverPositionY order status kind')
     .sort({ order: 1, createdAt: 1 })
     .lean<ProjectDoc[]>()
 
@@ -79,6 +84,8 @@ export async function getPublishedProjects(): Promise<ProjectCard[]> {
       summary: doc.summary,
       description: doc.description,
       coverImage: doc.coverImage,
+      coverPositionX: doc.coverPositionX ?? 50,
+      coverPositionY: doc.coverPositionY ?? 50,
       kind: doc.kind,
       href: isCongress ? '/proiecte/mimesiss' : `/proiecte/${doc.slug}`,
       span: isCongress ? FEATURED_SPAN : i === all.length - 1 ? lastSpan : '',
