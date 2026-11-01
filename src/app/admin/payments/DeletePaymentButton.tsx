@@ -52,14 +52,17 @@ export default function DeletePaymentButton({ paymentId, userName }: DeletePayme
       type="button"
       onClick={handleDelete}
       disabled={isDeleting}
-      className="text-destructive hover:text-destructive/80 disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md hover:bg-destructive/10 transition-colors"
+      aria-busy={isDeleting}
+      aria-label={isDeleting ? 'Se șterge plata' : `Șterge plata${userName ? ` pentru ${userName}` : ''}`}
+      className="inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-lg border border-destructive/25 bg-destructive/10 px-3 py-2 text-sm font-semibold text-destructive transition hover:bg-destructive/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 disabled:cursor-not-allowed disabled:opacity-50"
       title="Șterge plata"
     >
       {isDeleting ? (
-        <FaSpinner className="h-4 w-4 animate-spin" />
+        <FaSpinner aria-hidden="true" className="h-4 w-4 animate-spin" />
       ) : (
-        <FaTrash className="h-4 w-4" />
+        <FaTrash aria-hidden="true" className="h-4 w-4" />
       )}
+      <span className="hidden sm:inline">{isDeleting ? 'Se șterge…' : 'Șterge'}</span>
     </button>
   )
 }

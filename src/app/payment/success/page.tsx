@@ -1,75 +1,79 @@
-import { Suspense } from 'react';
-import { FaCheckCircle } from 'react-icons/fa';
-import Link from 'next/link';
-import { getAppSettings } from '@/lib/settings';
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+import connectDB from '@/lib/mongodb'
+import { Payment } from '@/models'
+import { PaymentAttempt } from '@/models/PaymentAttempt'
+import PaymentStatusRefresh from '@/components/payments/PaymentStatusRefresh'
+import PaymentResult from '@/components/payments/PaymentResult'
+import PaymentShell from '@/components/payments/PaymentShell'
 
-async function SuccessContent() {
-  const settings = await getAppSettings();
-  const isBall = settings?.eventMode === 'ball';
+type SearchParams = Promise<{ payment_intent?: string | string[] }>
+
+export default async function PaymentSuccessPage({ searchParams }: { searchParams: SearchParams }) {
+  const { userId } = await auth()
+  if (!userId) redirect('/auth/login')
+
+  const value = (await searchParams).payment_intent
+  const paymentIntentId = typeof value === 'string' && /^pi_[a-zA-Z0-9]+$/.test(value) ? value : null
+  let state: 'complete' | 'pending' | 'unverified' = 'unverified'
+
+  if (paymentIntentId) {
+    await connectDB()
+    const payment = await Payment.findOne({
+      clerkId: userId,
+      stripePaymentIntentId: paymentIntentId,
+      status: 'completed',
+      fulfillmentComplete: true,
+    }).select('_id').lean()
+    if (payment) state = 'complete'
+    else {
+      const attempt = await PaymentAttempt.findOne({
+        clerkId: userId,
+        stripePaymentIntentId: paymentIntentId,
+        status: 'pending',
+      }).select('_id').lean()
+      if (attempt) state = 'pending'
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full text-center space-y-6">
-        <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-          <FaCheckCircle className="h-8 w-8 text-primary" />
-        </div>
-        
-        <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-foreground">
-            Plată finalizată cu succes!
-          </h1>
-          <p className="text-muted-foreground">
-            {isBall
-              ? 'Mulțumim pentru achiziționarea biletului la Balul MIMESISS 2026.'
-              : 'Mulțumim pentru achiziționarea biletului pentru MIMESISS 2025.'}
-          </p>
-        </div>
-
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-          <p className="text-sm text-foreground">
-            {isBall
-              ? ' Biletul dvs. este disponibil în secțiunea Biletele mele.'
-              : 'Veți primi în curând un email de confirmare cu detaliile biletului. Nivelul dvs. de acces a fost actualizat automat.'}
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <Link
-            href="/dashboard"
-            className="block w-full bg-primary text-primary-foreground py-3 px-4 rounded-md font-medium hover:bg-primary/90 transition-colors"
-          >
-            Mergi la Dashboard
-          </Link>
-          
-          {isBall ? (
-            <Link
-              href="/dashboard/tickets"
-              className="block w-full border border-border bg-background text-foreground py-3 px-4 rounded-md font-medium hover:bg-muted transition-colors"
-            >
-              Vezi biletele mele
-            </Link>
-          ) : (
-            <Link
-              href="/congres/workshops"
-              className="block w-full border border-border bg-background text-foreground py-3 px-4 rounded-md font-medium hover:bg-muted transition-colors"
-            >
-              Vezi Workshop-urile
-            </Link>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function PaymentSuccessPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    }>
-      <SuccessContent />
-    </Suspense>
-  );
+    <PaymentShell
+      eyebrow="ASMM · STAREA PLĂȚII"
+      title="Confirmarea biletului"
+      description="Verificăm plata și îți arătăm imediat starea biletului asociat contului tău."
+    >
+      {state === 'complete' ? (
+        <PaymentResult
+          variant="success"
+          title="Biletul tău este pregătit"
+          description="Plata a fost confirmată, iar biletul a fost emis în contul tău."
+          detail="Îl poți deschide oricând din secțiunea „Biletele mele”."
+          actions={[{ href: '/dashboard/tickets', label: 'Vezi biletele mele' }]}
+        />
+      ) : state === 'pending' ? (
+        <PaymentResult
+          variant="pending"
+          title="Plata este în curs de verificare"
+          description="Biletul nu este emis încă. Așteptăm confirmarea procesatorului de plată."
+          detail="Nu începe o a doua plată. Poți verifica din nou această stare sau poți vedea dacă biletul a apărut deja în cont."
+          extraAction={<PaymentStatusRefresh />}
+          actions={[
+            { href: '/dashboard/tickets', label: 'Verifică biletele mele' },
+            { href: '/payment', label: 'Înapoi la selecția biletelor', variant: 'secondary' },
+          ]}
+        />
+      ) : (
+        <PaymentResult
+          variant="unverified"
+          title="Plata nu a putut fi confirmată"
+          description="Nu am găsit o plată finalizată pentru acest cont."
+          detail="Verifică biletele existente sau revino la selecție înainte de a încerca din nou."
+          actions={[
+            { href: '/dashboard/tickets', label: 'Verifică biletele mele' },
+            { href: '/payment', label: 'Înapoi la selecția biletelor', variant: 'secondary' },
+          ]}
+        />
+      )}
+    </PaymentShell>
+  )
 }

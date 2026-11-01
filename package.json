@@ -12,7 +12,9 @@
     "test:partners": "node --test scripts/test-partners.mjs",
     "test:startup": "node --test scripts/test-public-startup.mjs",
     "test:stories": "node --test scripts/test-project-stories.mjs scripts/test-photo-viewer.mjs scripts/test-tent-story-copy.mjs scripts/test-neural-startup.mjs scripts/test-project-rendering.mjs",
-    "test:registration": "node --test scripts/test-registration-profile.mjs"
+    "test:registration": "node --test scripts/test-registration-profile.mjs",
+    "test:payments": "node --test scripts/test-payments-db.mjs",
+    "test:stress": "node scripts/stress-local.mjs"
   },
   "engines": {
     "node": ">=22.0.0"

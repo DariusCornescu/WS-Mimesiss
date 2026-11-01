@@ -1,10 +1,13 @@
 'use server'
 
 import { currentUser } from '@clerk/nextjs/server'
+import { syncUserWithDatabase } from '@/lib/auth'
+import { limitRequests, RequestError } from '@/lib/request-security'
 import { revalidatePath } from 'next/cache'
-import { Workshop, Registration } from '@/models'
+import mongoose from 'mongoose'
+import { Workshop, Registration, User } from '@/models'
 import connectDB from '@/lib/mongodb'
-import { getAppSettings } from '@/lib/settings'
+import { getUncachedAppSettings } from '@/lib/settings'
 import type { Workshop as WorkshopType, Registrations } from '@/types/models'
 import { registerUserForWorkshop } from '@/lib/registration'
 import { getActiveEdition } from '@/lib/editions'
@@ -22,6 +25,8 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
     return { success: false, error: 'Authentication required' }
   }
 
+  await syncUserWithDatabase(clerkUser)
+
   const parsed = parseWith(registrationInput, {
     workshopId: formData.get('workshopId'),
     action: formData.get('action'),
@@ -36,7 +41,8 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
   await connectDB()
 
   try {
-    const appSettings = await getAppSettings()
+    await limitRequests(clerkUser.id, 'workshop-registration', 20)
+    const appSettings = await getUncachedAppSettings()
 
     if (!appSettings.globalRegistrationEnabled) {
       return { success: false, error: 'Inregistrarile sunt inchise in acest moment' }
@@ -49,6 +55,7 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
         userId: clerkUser.id,
         activeEditionId: activeEdition?._id ?? null,
         workshopId,
+        registrationStartTime: appSettings.registrationStartTime ? new Date(appSettings.registrationStartTime) : null,
         registrationDeadline: appSettings.registrationDeadline
           ? new Date(appSettings.registrationDeadline)
           : null,
@@ -62,15 +69,14 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
         return { success: false, error: 'Registration cancellation is not allowed' }
       }
 
-      // Decrement only when a registration was actually deleted, so a double
-      // cancel cannot drive the counter down twice.
-      const deleted = await Registration.findOneAndDelete({ userId: clerkUser.id, workshopId })
-
-      if (!deleted) {
-        return { success: false, error: 'No registration found to cancel' }
-      }
-
-      await Workshop.updateOne({ _id: workshopId }, { $inc: { currentParticipants: -1 } })
+      const removed = await mongoose.connection.transaction(async session => {
+        await User.updateOne({ clerkId: clerkUser.id }, { $inc: { registrationRevision: 1 } }, { session })
+        const deleted = await Registration.findOneAndDelete({ userId: clerkUser.id, workshopId }, { session })
+        if (!deleted) return false
+        await Workshop.updateOne({ _id: workshopId, currentParticipants: { $gt: 0 } }, { $inc: { currentParticipants: -1 } }, { session })
+        return true
+      })
+      if (!removed) return { success: false, error: 'Nu există o înscriere de anulat.' }
     }
 
     // Only revalidate on success
@@ -80,6 +86,7 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
     return { success: true }
 
   } catch (error) {
+    if (error instanceof RequestError) return { success: false, error: error.message }
     console.error('Registration action error:', error)
     return {
       success: false,

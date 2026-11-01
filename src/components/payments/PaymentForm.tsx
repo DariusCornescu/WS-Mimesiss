@@ -3,6 +3,9 @@ import type { Ticket } from '@/types/models';
 import type { User } from '@/types/models';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { FaArrowLeft, FaCreditCard } from 'react-icons/fa';
+import PageIntro from '@/components/ui/PageIntro';
 
 export default function PaymentForm({users, tickets}: {users: User[], tickets: Ticket[]}) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +33,7 @@ export default function PaymentForm({users, tickets}: {users: User[], tickets: T
 			const paymentData = {
 				clerkId: userId,
 				ticketId: ticketId,
-				ticketType: tickets.find(t => t._id === ticketId)?.type || 'unknown',
+				ticketType: tickets.find(t => (t._id || t.id) === ticketId)?.type || 'unknown',
 
 				amount: Number(amount) * 100, // Convert to cents
 				currency: 'RON',
@@ -72,71 +75,93 @@ export default function PaymentForm({users, tickets}: {users: User[], tickets: T
 	};
 
 	return (
-		<form onSubmit={handleSubmit}>
-			<h1 className="text-2xl font-bold">Creează o plată nouă</h1>
-			
-			{error && (
-				<div className="mt-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded-md">
-					{error}
-				</div>
-			)}
+		<div className="space-y-6">
+			<PageIntro
+				eyebrow="Administrare · Plăți"
+				title="Înregistrează o plată"
+				description="Adaugă manual o plată finalizată și asociaz-o unui participant și unui tip de bilet."
+				actions={(
+					<Link
+						href="/admin/payments"
+						className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-border bg-muted/60 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+					>
+						<FaArrowLeft aria-hidden="true" className="h-4 w-4" />
+						Înapoi la plăți
+					</Link>
+				)}
+			/>
 
-			<div className="grid grid-cols-2 gap-4">
+			<form onSubmit={handleSubmit} aria-busy={isSubmitting} className="mimesiss-section-card p-5 sm:p-7">
+				<div className="mb-6 flex items-start gap-4 border-b border-border/70 pb-5">
+					<div className="grid h-11 w-11 shrink-0 place-items-center rounded-lg border border-accent/25 bg-primary/20 text-accent">
+						<FaCreditCard aria-hidden="true" />
+					</div>
+					<div>
+						<h2 className="text-xl font-semibold text-foreground">Detaliile plății</h2>
+						<p className="mt-1 text-sm leading-6 text-muted-foreground">Înregistrarea va fi salvată direct cu statusul „Finalizată”.</p>
+					</div>
+				</div>
+
+				{error && (
+					<div role="alert" className="mb-5 rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+						{error}
+					</div>
+				)}
+
 				{users.length > 0 ? (
-					<div className="mt-4">
-						<label htmlFor="user" className="block text-sm font-medium text-foreground mb-2">
-							Selectează utilizator
-						</label>
-						<select id="user" name="user" className="mimesiss-input" required>
-							<option value="">Alege un utilizator</option>
-							{users.map(user => (
-								<option key={user.clerkId} value={user.clerkId}>
-									{user.email}
-								</option>
-							))}
-						</select>
+					<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+						<div>
+							<label htmlFor="user" className="mb-2 block text-sm font-semibold text-foreground">Participant</label>
+							<select id="user" name="user" className="mimesiss-input min-h-12" required disabled={isSubmitting}>
+								<option value="">Alege un participant</option>
+								{users.map(user => (
+									<option key={user.clerkId} value={user.clerkId}>{user.email}</option>
+								))}
+							</select>
+						</div>
+
+						<div>
+							<label htmlFor="ticket" className="mb-2 block text-sm font-semibold text-foreground">Tipul biletului</label>
+							<select id="ticket" name="ticket" className="mimesiss-input min-h-12" required disabled={isSubmitting}>
+								<option value="">Alege un bilet</option>
+								{tickets.map(ticket => (
+									<option key={ticket._id || ticket.id} value={ticket._id || ticket.id}>{ticket.title}</option>
+								))}
+							</select>
+						</div>
+
+						<div className="md:col-span-2 md:max-w-sm">
+							<label htmlFor="amount" className="mb-2 block text-sm font-semibold text-foreground">Sumă (RON)</label>
+							<input
+								type="number"
+								id="amount"
+								name="amount"
+								placeholder="0,00"
+								className="mimesiss-input min-h-12"
+								step="0.01"
+								min="0"
+								required
+								disabled={isSubmitting}
+							/>
+							<p className="mt-2 text-xs leading-5 text-muted-foreground">Introdu valoarea în lei; sistemul o salvează în formatul necesar plăților.</p>
+						</div>
 					</div>
 				) : (
-					<p>Toți utilizatorii au deja un nivel de acces atribuit.</p>
+					<div className="rounded-lg border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
+						Nu există participanți eligibili pentru o plată manuală.
+					</div>
 				)}
-				<div className="mt-4">
-					<label htmlFor="ticket" className="block text-sm font-medium text-foreground mb-2">
-						Selectează bilet
-					</label>
-					<select id="ticket" name="ticket" className="mimesiss-input" required>
-						<option value="">Alege un bilet</option>
-						{tickets.map(ticket => (
-							<option key={ticket._id} value={ticket._id}>
-								{ticket.title}
-							</option>
-						))}
-					</select>
+
+				<div className="mt-7 flex justify-end border-t border-border/70 pt-5">
+					<button
+						type="submit"
+						disabled={isSubmitting || users.length === 0}
+						className="inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-accent/45 bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+					>
+						{isSubmitting ? 'Se înregistrează…' : 'Înregistrează plata'}
+					</button>
 				</div>
-			</div>
-
-			<div className="mt-4">
-				<label htmlFor="amount" className="block text-sm font-medium text-foreground mb-2">
-					Sumă Plată (RON)
-				</label>
-				<input 
-					type="number" 
-					id="amount"
-					name="amount"
-					placeholder="Sumă" 
-					className="mimesiss-input"
-					step="0.01"
-					min="0"
-					required
-				/>
-			</div>
-
-			<button
-				type="submit"
-				disabled={isSubmitting || users.length === 0}
-				className="mt-6 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-			>
-				{isSubmitting ? 'Se creează...' : 'Creează Plata'}
-			</button>
-		</form>
+			</form>
+		</div>
 	);
 }
