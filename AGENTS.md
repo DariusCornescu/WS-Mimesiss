@@ -61,6 +61,9 @@ For performance changes, follow `docs/performance-rules.md`. Use
 `lighthouserc.cjs` for repeatable public-route audits against a production build.
 Record before/after measurements and preserve authorization and cache invalidation.
 
+For visible UI changes, attach before/after screenshots to the PR with `npm run screenshots:pr`
+(see `docs/pr-screenshots.md`).
+
 Server components by default; `'use client'` only for interactivity. The codebase favours route
 handlers plus `fetch` over server actions — follow whichever pattern the file already uses. Always
 `await connectDB()` before touching a model. Surface errors to the user rather than swallowing them.

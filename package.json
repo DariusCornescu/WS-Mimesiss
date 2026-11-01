@@ -24,7 +24,8 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:e2e:list": "playwright test --list"
+    "test:e2e:list": "playwright test --list",
+    "screenshots:pr": "node scripts/pr-screenshots.mjs"
   },
   "engines": {
     "node": ">=22.0.0"
