@@ -59,7 +59,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ use
 				{/* User Info Card */}
 				<div className="mimesiss-card p-6 mb-6">
 					<h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-						<FaUser className="text-primary" />
+						<FaUser className="text-accent" />
 						Informații Utilizator
 					</h2>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -83,7 +83,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ use
 				{/* Registrations */}
 				<div className="space-y-4">
 					<h2 className="text-2xl font-semibold flex items-center gap-2">
-						<FaCalendarCheck className="text-primary" />
+						<FaCalendarCheck className="text-accent" />
 						Înnregistrări Workshop-uri
 					</h2>
 
@@ -114,7 +114,7 @@ export default async function AttendancePage({ params }: { params: Promise<{ use
 											</div>
 											<div className="flex flex-col items-end gap-2">
 												<span className={`inline-block px-2 py-1 rounded text-sm ${registration.attendance.confirmed
-														? 'bg-primary/10 text-primary border border-primary/20'
+														? 'bg-primary/10 text-accent border border-primary/20'
 														: 'bg-muted text-muted-foreground'
 													}`}>
 													{registration.attendance.confirmed ? 'Prezent' : 'Neconfirmat'}

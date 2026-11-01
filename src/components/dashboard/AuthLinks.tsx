@@ -123,7 +123,7 @@ export default function AuthLinks({ variant, isMobileMenuOpen, onLinkClick }: Au
 					<div className="flex items-center space-x-3">
 						<div className="flex-shrink-0">
 							<div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-								<FaUser className="h-5 w-5 text-primary" />
+								<FaUser className="h-5 w-5 text-accent" />
 							</div>
 						</div>
 						<div className="flex-1 min-w-0">

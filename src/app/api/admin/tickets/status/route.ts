@@ -5,7 +5,7 @@ import { parseWith, issuedTicketStatusInput } from '@/lib/validation'
 
 export async function PATCH(req: NextRequest) {
   try {
-    await requireRole('admin', 'moderator')
+    const staff = await requireRole('admin', 'moderator')
 
     const parsed = parseWith(issuedTicketStatusInput, await req.json())
 
@@ -15,13 +15,14 @@ export async function PATCH(req: NextRequest) {
 
     const { ticketId, status } = parsed.data
 
-    const ticket = await IssuedTicket.findByIdAndUpdate(
-      ticketId,
+    if (status !== 'used' && staff.role !== 'admin') return NextResponse.json({ error: 'Doar administratorul poate reactiva sau anula un bilet.' }, { status: 403 })
+    const ticket = await IssuedTicket.findOneAndUpdate(
+      { _id: ticketId, ...(status === 'used' ? { status: 'active' } : {}) },
       { $set: { status } },
       { new: true }
     )
 
-    if (!ticket) return NextResponse.json({ error: 'Ticket not found' }, { status: 404 })
+    if (!ticket) return NextResponse.json({ error: 'Biletul nu este activ sau a fost deja folosit.' }, { status: 409 })
 
     return NextResponse.json({ success: true, ticket })
   } catch (error) {

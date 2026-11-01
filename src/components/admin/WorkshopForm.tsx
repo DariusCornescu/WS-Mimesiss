@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition, useId } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createWorkshop, updateWorkshop } from '@/app/admin/workshops/actions'
@@ -16,7 +16,10 @@ interface WorkshopFormProps {
 // Simple CSS spinner component
 function Spinner() {
   return (
-    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]" />
+    <span
+      aria-hidden="true"
+      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite]"
+    />
   )
 }
 
@@ -26,11 +29,10 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
   const [success, setSuccess] = useState('')
   const [selectedType, setSelectedType] = useState<'workshop' | 'conferinta'>(workshop?.wsType || 'workshop')
   const router = useRouter()
-  const maxParticipantsId = useId()
 
   const isEdit = mode === 'edit'
-  const title = isEdit ? 'Editează Workshop' : 'Creează Workshop Nou'
-  const submitText = isEdit ? 'Actualizează Workshop' : 'Creează Workshop'
+  const title = isEdit ? 'Editează workshop-ul' : 'Creează un workshop nou'
+  const submitText = isEdit ? 'Actualizează workshop-ul' : 'Creează workshop-ul'
   const loadingText = isEdit ? 'Se actualizează...' : 'Se creează...'
   const successMessage = isEdit ? 'Workshop actualizat cu succes!' : 'Workshop creat cu succes!'
 
@@ -69,33 +71,40 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
         </p>
       </div>
 
-      <div className="bg-card shadow border border-border sm:rounded-lg">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <div className="px-4 py-5 sm:p-6">
           <form action={handleSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <p className="text-red-800 text-sm">{error}</p>
+              <div
+                role="alert"
+                className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive"
+              >
+                {error}
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 border border-green-200 rounded-md p-4">
-                <p className="text-green-800 text-sm">{success}</p>
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-lg border border-accent/40 bg-accent/10 p-4 text-sm text-foreground"
+              >
+                {success}
               </div>
             )}
 
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-foreground">
-                Titlu Workshop *
+                Titlu workshop <span aria-hidden="true">*</span>
               </label>
               <div className="mt-1">
                 <input
                   type="text"
                   name="title"
-                  id={useId()}
+                  id="title"
                   required
                   defaultValue={workshop?.title || ''}
-                  className="mimesiss-input"
+                  className="mimesiss-input min-h-11"
                   placeholder="ex. Introducere în React"
                 />
               </div>
@@ -103,12 +112,12 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
 
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-foreground">
-                Descriere *
+                Descriere <span aria-hidden="true">*</span>
               </label>
               <div className="mt-1">
                 <textarea
                   name="description"
-                  id={useId()}
+                  id="description"
                   rows={4}
                   required
                   defaultValue={workshop?.description || ''}
@@ -126,9 +135,9 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
                 <input
                   type="text"
                   name="url"
-                  id={useId()}
+                  id="url"
                   defaultValue={workshop?.url || ''}
-                  className="mimesiss-input"
+                  className="mimesiss-input min-h-11"
                   placeholder="Instagram post URL"
                 />
               </div>
@@ -136,14 +145,14 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
 
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-foreground">
-                Tip workshop *
+                Tip workshop <span aria-hidden="true">*</span>
               </label>
               <div className="mt-1">
                 <select 
                   name="type" 
-                  id={useId()} 
+                  id="type"
                   defaultValue={workshop?.wsType || 'workshop'} 
-                  className="mimesiss-input"
+                  className="mimesiss-input min-h-11"
                   onChange={(e) => setSelectedType(e.target.value as 'workshop' | 'conferinta')}
                 >
                   <option value="workshop">Workshop</option>
@@ -162,9 +171,9 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
                   <input
                     type="date"
                     name="date"
-                    id={useId()}
+                    id="date"
                     defaultValue={workshop?.date?.toString() || ''}
-                    className="mimesiss-input"
+                    className="mimesiss-input min-h-11"
                   />
                 </div>
               </div>
@@ -177,9 +186,9 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
                   <input
                     type="time"
                     name="time"
-                    id={useId()}
+                    id="time"
                     defaultValue={workshop?.time?.toString() || ''}
-                    className="mimesiss-input"
+                    className="mimesiss-input min-h-11"
                   />
                 </div>
               </div>
@@ -193,9 +202,9 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
                 <input
                   type="text"
                   name="location"
-                  id={useId()}
+                  id="location"
                   defaultValue={workshop?.location || ''}
-                  className="mimesiss-input"
+                  className="mimesiss-input min-h-11"
                   placeholder="ex. Sala de conferințe A, Online"
                 />
               </div>
@@ -209,21 +218,28 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
                 <input
                   type="text"
                   name="instructor"
-                  id={useId()}
+                  id="instructor"
                   defaultValue={workshop?.instructor || ''}
-                  className="mimesiss-input"
+                  className="mimesiss-input min-h-11"
                   placeholder="Numele instructorului"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="maxParticipants" className="block text-sm font-medium text-foreground">
-                Numărul maxim de participanți {selectedType === 'workshop' ? '*' : ''}
+              <label
+                id="maxParticipants-label"
+                htmlFor={selectedType === 'workshop' ? 'maxParticipants' : undefined}
+                className="block text-sm font-medium text-foreground"
+              >
+                Numărul maxim de participanți {selectedType === 'workshop' && <span aria-hidden="true">*</span>}
               </label>
               <div className="mt-1">
                 {selectedType === 'conferinta' ? (
-                  <div className="mimesiss-input bg-muted flex items-center justify-between">
+                  <div
+                    aria-labelledby="maxParticipants-label"
+                    className="mimesiss-input min-h-11 bg-muted flex items-center justify-between"
+                  >
                     <span className="text-muted-foreground">Nelimitat (Conferință)</span>
                     <input type="hidden" name="maxParticipants" value="999999" />
                   </div>
@@ -231,16 +247,17 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
                   <input
                     type="number"
                     name="maxParticipants"
-                    id={maxParticipantsId}
+                    id="maxParticipants"
+                    aria-describedby="maxParticipants-hint"
                     required
                     min={isEdit && workshop ? workshop.currentParticipants : 1}
                     max="1000"
                     defaultValue={workshop?.maxParticipants || defaultSettings?.defaultMaxParticipants || 30}
-                    className="mimesiss-input"
+                    className="mimesiss-input min-h-11"
                   />
                 )}
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p id="maxParticipants-hint" className="mt-1 text-sm text-muted-foreground">
                 {selectedType === 'conferinta' 
                   ? 'Conferințele au locuri nelimitate'
                   : isEdit && workshop 
@@ -251,15 +268,15 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
             </div>
 
             {isEdit && workshop && (
-              <div className="bg-muted p-4 rounded-md">
-                <h4 className="text-sm font-medium text-foreground mb-2">Workshop Statistics</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="rounded-lg border border-border bg-muted/60 p-4">
+                <h4 className="mb-3 text-sm font-semibold text-foreground">Statistici workshop</h4>
+                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                   <div>
-                    <span className="text-muted-foreground">Current Participants:</span>
+                    <span className="text-muted-foreground">Participanți actuali:</span>
                     <span className="ml-2 font-medium">{workshop.currentParticipants}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Status:</span>
+                    <span className="text-muted-foreground">Stare:</span>
                     <span className="ml-2 font-medium capitalize">{workshop.status}</span>
                   </div>
                   <div>
@@ -270,17 +287,18 @@ export default function WorkshopForm({ mode, workshop, defaultSettings }: Worksh
               </div>
             )}
 
-            <div className="flex justify-end space-x-3">
+            <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:justify-end">
               <Link
                 href="/admin/workshops"
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/80 px-4 py-2 rounded-md font-medium"
+                className="inline-flex min-h-11 items-center justify-center rounded-md bg-secondary px-4 py-2 font-medium text-secondary-foreground transition-colors hover:bg-secondary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               >
                 Anulează
               </Link>
               <button
                 type="submit"
                 disabled={isPending}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-busy={isPending}
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending && <Spinner />}
                 {isPending ? loadingText : submitText}

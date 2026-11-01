@@ -166,7 +166,7 @@ export default function QRScanner() {
   }
 
   const statusColor = (s: string) =>
-    s === 'used' ? 'text-green-400' : s === 'cancelled' ? 'text-red-400' : 'text-primary'
+    s === 'used' ? 'text-green-400' : s === 'cancelled' ? 'text-red-400' : 'text-accent'
   const statusLabel = (s: string) =>
     s === 'used' ? 'Folosit' : s === 'cancelled' ? 'Anulat' : 'Activ'
 
@@ -225,8 +225,8 @@ export default function QRScanner() {
             <div className="border border-border rounded-lg p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <FaTicketAlt className="h-4 w-4 text-primary" />
-                  <span className="font-mono text-primary font-semibold">
+                  <FaTicketAlt className="h-4 w-4 text-accent" />
+                  <span className="font-mono text-accent font-semibold">
                     #{String(found.ticketNumber).padStart(4, '0')}
                   </span>
                 </div>

@@ -1,238 +1,171 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import {
-  FaUser,
+  FaBars,
   FaCalendarAlt,
   FaChartBar,
-  FaUsers,
-  FaHome,
   FaCogs,
   FaCreditCard,
+  FaHome,
+  FaImages,
   FaProjectDiagram,
-  FaTicketAlt
+  FaTicketAlt,
+  FaTimes,
+  FaUser,
+  FaUsers,
 } from 'react-icons/fa'
+import type { IconType } from 'react-icons'
 import type { User } from '@/types/models'
 import SignOutButton from '@/components/dashboard/signOutButton'
 import { useAppSettings } from '@/contexts/AppSettingsContext'
+import styles from './DashboardSidebar.module.css'
 
 interface DashboardSidebarProps {
-  user: User
+  user: DashboardNavigationUser
+}
+
+export type DashboardNavigationUser = Pick<User, 'email' | 'firstName' | 'lastName' | 'role'>
+
+interface NavigationItem {
+  href: string
+  icon: IconType
+  label: string
+}
+
+interface NavigationGroup {
+  label: string
+  links: NavigationItem[]
+}
+
+function isCurrentPath(pathname: string, href: string) {
+  if (href === '/dashboard' || href === '/admin' || href === '/dashboard/moderator') {
+    return pathname === href
+  }
+  return pathname === href || pathname.startsWith(`${href}/`)
 }
 
 export default function DashboardSidebar({ user }: DashboardSidebarProps) {
   const pathname = usePathname()
   const { eventMode } = useAppSettings()
-  const baseLinks = [
-    { href: '/dashboard', icon: FaHome, label: 'Dashboard' },
-    { href: '/dashboard/profile', icon: FaUser, label: 'Profil' },
-    ...(eventMode !== 'ball' ? [{ href: '/dashboard/registrations', icon: FaCalendarAlt, label: 'Înregistrările mele' }] : []),
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const accountLinks: NavigationItem[] = [
+    { href: '/dashboard', icon: FaHome, label: 'Prezentare generală' },
+    { href: '/dashboard/profile', icon: FaUser, label: 'Profilul meu' },
+    ...(eventMode !== 'ball'
+      ? [{ href: '/dashboard/registrations', icon: FaCalendarAlt, label: 'Înscrierile mele' }]
+      : []),
     { href: '/dashboard/tickets', icon: FaTicketAlt, label: 'Biletele mele' },
-    ...(eventMode !== 'ball' ? [{ href: '/congres/workshops', icon: FaCalendarAlt, label: 'Workshop-uri' }] : []),
-    { href: '/payment', icon: FaCreditCard, label: 'Cumpără Bilet' },
+    ...(eventMode !== 'ball'
+      ? [{ href: '/congres/workshops', icon: FaCalendarAlt, label: 'Workshopuri' }]
+      : []),
+    { href: '/payment', icon: FaCreditCard, label: 'Cumpără bilet' },
   ]
 
-  const adminLinks = [
+  const adminLinks: NavigationItem[] = [
+    { href: '/admin', icon: FaChartBar, label: 'Prezentare admin' },
+    { href: '/admin/workshops', icon: FaCalendarAlt, label: 'Workshopuri' },
+    { href: '/admin/proiecte', icon: FaProjectDiagram, label: 'Proiecte și anunțuri' },
+    { href: '/admin/galerie', icon: FaImages, label: 'Galerie MIMESISS' },
     { href: '/admin/parteneri', icon: FaUsers, label: 'Parteneri și sponsori' },
-    { href: '/admin', icon: FaChartBar, label: 'Dashboard Admin' },
-    { href: '/admin/workshops', icon: FaCalendarAlt, label: 'Administrare Workshop-uri' },
-    { href: '/admin/proiecte', icon: FaProjectDiagram, label: 'Administrare Proiecte' },
-    { href: '/admin/users', icon: FaUsers, label: 'Administrare Utilizatori' },
-    { href: '/admin/tickets', icon: FaTicketAlt, label: 'Administrare Bilete' },
-    { href: '/admin/payments', icon: FaCreditCard, label: 'Administrare Plăți' },
-    { href: '/admin/settings', icon: FaCogs, label: 'Setări Aplicație' },
+    { href: '/admin/users', icon: FaUsers, label: 'Utilizatori' },
+    { href: '/admin/tickets', icon: FaTicketAlt, label: 'Bilete' },
+    { href: '/admin/payments', icon: FaCreditCard, label: 'Plăți' },
+    { href: '/admin/settings', icon: FaCogs, label: 'Setări' },
   ]
 
-  const moderatorLinks = [
-    { href: '/dashboard/moderator', icon: FaCalendarAlt, label: 'Moderator' },
+  const operationsLinks: NavigationItem[] = [
+    { href: '/dashboard/moderator', icon: FaCalendarAlt, label: 'Panou moderator' },
     { href: '/dashboard/moderator/tickets', icon: FaTicketAlt, label: 'Bilete emise' },
   ]
 
+  const groups: NavigationGroup[] = [
+    { label: 'Contul meu', links: accountLinks },
+    ...(user.role === 'admin' ? [{ label: 'Administrare', links: adminLinks }] : []),
+    ...(user.role === 'admin' || user.role === 'moderator'
+      ? [{ label: 'Operațional', links: operationsLinks }]
+      : []),
+  ]
 
-  adminLinks.push(...moderatorLinks);
-  
+  const displayName = user.firstName && user.lastName
+    ? `${user.firstName} ${user.lastName}`
+    : user.email
+  const roleLabel = user.role === 'admin'
+    ? 'Administrator'
+    : user.role === 'moderator'
+      ? 'Moderator'
+      : 'Participant'
 
-  const isAdmin = user.role === 'admin';
-  const isModerator = user.role === 'moderator';
+  const navigation = (onNavigate?: () => void) => (
+    <nav className={styles.nav} aria-label="Navigația contului">
+      {groups.map((group) => (
+        <div className={styles.group} key={group.label}>
+          <p className={styles.groupLabel}>{group.label}</p>
+          {group.links.map((link) => {
+            const active = isCurrentPath(pathname, link.href)
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                aria-current={active ? 'page' : undefined}
+                onClick={onNavigate}
+                className={`${styles.navLink} ${active ? styles.navLinkActive : ''}`}
+              >
+                <link.icon aria-hidden="true" />
+                <span>{link.label}</span>
+              </Link>
+            )
+          })}
+        </div>
+      ))}
+    </nav>
+  )
 
-
+  const identity = (
+    <div className={styles.identity}>
+      <p className={styles.identityKicker}>Spațiul personal</p>
+      <p className={styles.identityName}>{displayName}</p>
+      <p className={styles.identityRole}>{roleLabel}</p>
+    </div>
+  )
 
   return (
     <>
-      {/* Desktop Sidebar */}
-      <aside className="hidden lg:block lg:flex-shrink-0">
-        <div className="h-full bg-background border-r border-border">
-          <div className="flex flex-col h-full p-4 min-w-max">
-            {/* User Info */}
-            <div className="flex items-center p-4 border-b border-border mb-4 min-w-max">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-foreground whitespace-nowrap">
-                  {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
-                </p>
-                <p className="text-xs text-muted-foreground whitespace-nowrap">
-                  {isAdmin ? 'Administrator' : 'Utilizator'}
-                </p>
-              </div>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 space-y-1 min-w-max">
-              {baseLinks.map((link) => {
-                const isActive = pathname === link.href
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                      isActive
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                    }`}
-                  >
-                    <link.icon className="mr-3 h-4 w-4 flex-shrink-0" />
-                    {link.label}
-                  </Link>
-                )
-              })}
-
-              {isAdmin && (
-                <>
-                  <div className="border-t border-border my-4" />
-                  {adminLinks.map((link) => {
-                    const isActive = pathname === link.href
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
-                      >
-                        <link.icon className="mr-3 h-4 w-4 flex-shrink-0" />
-                        {link.label}
-                      </Link>
-                    )
-                  })}
-                </>
-              )}
-
-              {isModerator && (
-                <>
-                  <div className="border-t border-border my-4" />
-                  {moderatorLinks.map((link) => {
-                    const isActive = pathname === link.href
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground'
-                            : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
-                      >
-                        <link.icon className="mr-3 h-4 w-4 flex-shrink-0" />
-                        {link.label}
-                      </Link>
-                    )
-                  })}
-                </>
-              )}
-            </nav>
-
-            {/* Sign Out */}
-            <div className="border-t border-border mt-4 pt-4 min-w-max">
-              <SignOutButton />
-            </div>
+      <aside className={styles.desktopSidebar} aria-label="Meniu cont">
+        <div className={styles.desktopInner}>
+          <div className={styles.desktopIdentity}>{identity}</div>
+          <div className={styles.desktopNav}>{navigation()}</div>
+          <div className={styles.signOutArea}>
+            <SignOutButton className={styles.signOutButton} />
           </div>
         </div>
       </aside>
 
-      {/* Mobile Navigation */}
-      <div className="lg:hidden bg-background border-b border-border">
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center space-x-3">
-            <div>
-              <p className="text-sm font-medium text-foreground truncate max-w-[200px]">
-                {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {user.role === 'admin' && 'Administrator'}
-                {user.role === 'moderator' && 'Moderator'}
-                {user.role !== 'user' && 'Utilizator'}
-              </p>
+      <div className={styles.mobileNavigation}>
+        <div className={styles.mobileBar}>
+          {identity}
+          <button
+            type="button"
+            className={styles.menuButton}
+            aria-expanded={mobileOpen}
+            aria-controls="account-mobile-menu"
+            onClick={() => setMobileOpen((value) => !value)}
+          >
+            {mobileOpen ? <FaTimes aria-hidden="true" /> : <FaBars aria-hidden="true" />}
+            <span>{mobileOpen ? 'Închide' : 'Meniu cont'}</span>
+          </button>
+        </div>
+        {mobileOpen && (
+          <div className={styles.mobilePanel} id="account-mobile-menu">
+            {navigation(() => setMobileOpen(false))}
+            <div className={styles.signOutArea}>
+              <SignOutButton className={styles.signOutButton} />
             </div>
           </div>
-          <SignOutButton />
-        </div>
-
-        {/* Navigation Grid */}
-        <div className="p-3">
-          <div className="grid grid-cols-2 gap-2">
-            {baseLinks.map((link) => {
-              const isActive = pathname === link.href
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex flex-col items-center p-3 text-xs font-medium rounded-md transition-colors text-center ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  <link.icon className="h-5 w-5 mb-1" />
-                  {link.label}
-                </Link>
-              )
-            })}
-
-            {isAdmin && adminLinks.map((link) => {
-              const isActive = pathname === link.href
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`flex flex-col items-center p-3 text-xs font-medium rounded-md transition-colors text-center ${
-                    isActive
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                  }`}
-                >
-                  <link.icon className="h-5 w-5 mb-1" />
-                  {link.label}
-                </Link>
-              )
-            })}
-
-            {isModerator && (
-              <>
-                <div className="border-t border-border my-4" />
-                {moderatorLinks.map((link) => {
-                  const isActive = pathname === link.href
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground'
-                          : 'text-foreground hover:bg-accent hover:text-accent-foreground'
-                      }`}
-                    >
-                      <link.icon className="mr-3 h-4 w-4 flex-shrink-0" />
-                      {link.label}
-                    </Link>
-                  )
-                })}
-              </>
-            )}
-          </div>
-        </div>
+        )}
       </div>
     </>
   )
