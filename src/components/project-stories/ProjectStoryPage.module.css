@@ -12,6 +12,8 @@
   color: hsl(var(--foreground));
   font-family: Arial, Helvetica, sans-serif;
   min-width: 0;
+  /* The full-bleed story is 100vw wide, which includes the scrollbar; clip keeps sticky positioning intact. */
+  overflow-x: clip;
 }
 .page button { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 .navigation { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 28px; padding: 14px 20px; border-bottom: 1px solid hsl(var(--border) / .35); }

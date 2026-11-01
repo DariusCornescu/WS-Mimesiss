@@ -1,5 +1,12 @@
-.track { position: relative; height: 580svh; margin: 0 calc(0px - min(34px, 3vw)); color: hsl(var(--foreground)); }
-.stage { position: sticky; top: 0; height: 100svh; min-height: 0; overflow: clip; isolation: isolate; background: hsl(var(--background)); border: 1px solid hsl(var(--border) / .35); }
+/* Full bleed: the scene spans the viewport regardless of the page's content column. */
+.track { position: relative; height: 580svh; width: 100vw; margin-inline: calc(50% - 50vw); color: hsl(var(--foreground)); }
+.stage { position: sticky; top: 0; height: 100svh; min-height: 0; overflow: clip; isolation: isolate; background: hsl(var(--background)); }
+/* Legibility comes from light, not boxes: a soft falloff behind the copy column plus a vignette. */
+.scrim { position: absolute; z-index: 1; inset: 0; pointer-events: none; background:
+  linear-gradient(to left, hsl(var(--background) / .9) 0%, hsl(var(--background) / .66) 30%, hsl(var(--background) / 0) 58%),
+  linear-gradient(to top, hsl(var(--background) / .75) 0%, hsl(var(--background) / 0) 24%),
+  radial-gradient(ellipse 80% 90% at 32% 50%, hsl(var(--background) / 0) 55%, hsl(var(--background) / .6) 100%); }
+.staticMode .scrim { display: none; }
 .world { position: absolute; z-index: 1; inset: 0; opacity: 0; transition: opacity .24s ease-out; }
 .world[data-scene-ready="true"] { opacity: 1; }
 .world canvas { display: block; width: 100%; height: 100%; }
@@ -10,13 +17,20 @@
 .photoTargets { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .scenePhoto { position: absolute; display: block; visibility: hidden; border: 0; padding: 0; background: transparent; cursor: zoom-in; pointer-events: auto; }
 .scenePhoto > span { position: absolute; display: inline-flex; gap: 8px; align-items: center; bottom: 8%; left: 50%; transform: translateX(-50%); white-space: nowrap; padding: 9px 12px; background: hsl(var(--background) / .9); border: 0; border-radius: 0; color: hsl(var(--foreground)); font-size: 12px; opacity: calc(var(--photo-label-opacity, 1) * var(--target-label-opacity, 1)); }
-.intro { position: absolute; z-index: 2; right: 3%; top: 6%; width: min(66%, 860px); padding: 22px 26px; border-radius: 0; background: linear-gradient(105deg, hsl(var(--background) / .9), hsl(var(--background) / .82)); pointer-events: none; }
+.intro { position: absolute; z-index: 2; right: 3%; top: 6%; width: min(66%, 860px); padding: 22px 26px; border-radius: 0; pointer-events: none; }
 .sceneError { position: relative; z-index: 3; grid-column: 1 / -1; padding: 16px; color: hsl(var(--foreground)); background: hsl(var(--card)); font-size: 16px; line-height: 1.7; }
 .eyebrow { font-size: 11px; line-height: 1.8; color: hsl(var(--brand-sand)); letter-spacing: .12em; text-transform: uppercase; }
 .intro h1 { margin: 16px 0 18px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(58px, 6.8vw, 96px); font-weight: 400; line-height: .95; letter-spacing: -.055em; }
 .tagline { max-width: 720px; font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(23px, 2.05vw, 28px); line-height: 1.4; color: hsl(var(--foreground)); text-shadow: 0 2px 15px hsl(var(--background)); }
-.scrollPrompt { display: flex; align-items: center; gap: 12px; margin-top: 22px; font-size: 13px; color: hsl(var(--brand-sand)); }
-.copyPanel { position: absolute; z-index: 3; top: 16%; right: 4%; width: min(44%, 540px); max-height: calc(84svh - 92px); overflow: auto; padding: clamp(26px, 3vw, 42px); border: 0; border-radius: 0; background: linear-gradient(110deg, hsl(var(--background) / .93), hsl(var(--background) / .75)); opacity: 0; transform: translateY(18px); will-change: opacity, transform; }
+.scrollPrompt { display: flex; align-items: center; gap: 14px; margin-top: 30px; font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: hsl(var(--brand-sand) / .8); }
+.scrollPrompt > span { position: relative; width: 1px; height: 34px; overflow: hidden; background: hsl(var(--brand-sand) / .25); }
+.scrollPrompt > span::after { content: ''; position: absolute; inset: 0; background: hsl(var(--story-copper)); animation: scrollCue 2.4s cubic-bezier(.6, 0, .2, 1) infinite; }
+@keyframes scrollCue { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
+.copyPanel { position: absolute; z-index: 3; top: 16%; right: 4%; width: min(44%, 540px); max-height: calc(84svh - 92px); overflow: auto; padding: clamp(26px, 3vw, 42px); border: 0; border-radius: 0; opacity: 0; will-change: opacity; text-shadow: 0 1px 18px hsl(var(--background) / .85); }
+/* Each line of a chapter settles a little later than the one above it. */
+.copyPanel > :nth-child(2) { translate: 0 calc((1 - var(--reveal, 1)) * 10px); }
+.copyPanel > :nth-child(3) { translate: 0 calc((1 - var(--reveal, 1)) * 18px); }
+.copyPanel > :nth-child(4) { translate: 0 calc((1 - var(--reveal, 1)) * 26px); }
 .copyPanel h2 { margin: 18px 0 22px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(29px, 3.3vw, 46px); font-weight: 400; line-height: 1.12; letter-spacing: -.035em; }
 .chapterBody { color: hsl(var(--muted-foreground)); font-size: 17px; line-height: 1.75; }
 .viewPhoto { display: inline-flex; align-items: center; gap: 16px; min-height: 44px; margin-top: 18px; color: hsl(var(--brand-sand)); font-size: 13px; cursor: pointer; }
@@ -27,7 +41,7 @@
 .chapters button > span:first-child { color: hsl(var(--accent)); font-variant-numeric: tabular-nums; }
 .chapters button[aria-current], .chapters button:hover { color: hsl(var(--foreground)); border-bottom-color: hsl(var(--brand-sand) / .55); }
 .progress { position: absolute; z-index: 4; bottom: 0; left: 0; right: 0; height: 2px; background: hsl(var(--border) / .5); overflow: hidden; }
-.progress span { display: block; width: 100%; height: 100%; background: hsl(var(--accent)); transform-origin: 0 50%; transform: scaleX(0); }
+.progress span { display: block; width: 100%; height: 100%; background: hsl(var(--story-copper)); transform-origin: 0 50%; transform: scaleX(0); }
 
 .staticMode { height: auto; }
 .staticMode .stage { position: relative; height: auto; min-height: 0; overflow: hidden; padding: 34px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 34px; }
@@ -51,7 +65,7 @@
   .chapterBody { font-size: 16px; }
 }
 @media (max-width: 700px) {
-  .track { margin: 0 -16px; height: 440svh; }
+  .track { height: 440svh; }
   .stage { min-height: 0; }
   .intro { top: 70px; left: 6%; width: 88%; padding: 16px; }
   .intro .eyebrow { font-size: 10px; letter-spacing: .07em; }
@@ -89,9 +103,6 @@
   .chapters { gap: 8px; }
   .chapters button { padding: 10px 12px; }
 }
-@media (max-width: 1000px) and (max-height: 600px) {
-  .track { margin: 0 -16px; }
-}
 @media (prefers-reduced-motion: reduce) {
   .poster { display: none; }
   .world { transition: none; }
@@ -103,16 +114,12 @@
   .staticPhoto { display: block; width: 100%; height: 320px; margin-bottom: 22px; }
 }
 
-.intro .eyebrow { white-space: nowrap; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.5; letter-spacing: .055em; }
-@media (max-width: 700px) { .intro .eyebrow { white-space: normal; font-size: 14px; letter-spacing: .025em; } }
 
 .tagline > span { display: block; }
-@media (min-width: 1001px) { .tagline > span:last-child { white-space: nowrap; font-size: min(2.05vw, 28px); } }
 
 @media (max-width: 700px) {
   .intro { top: max(20px, env(safe-area-inset-top)); padding: 16px; }
   .tagline { font-size: clamp(20px, 5.4vw, 23px); line-height: 1.35; }
-  .tagline > span:first-child { white-space: nowrap; }
   .copyPanel { bottom: calc(88px + env(safe-area-inset-bottom)); max-height: min(48svh, calc(100svh - 220px)); }
   .chapters { bottom: calc(12px + env(safe-area-inset-bottom)); }
   .chapters button { display: grid; gap: 4px; min-height: 56px; padding: 8px 0; font-size: 11px; }
@@ -168,12 +175,13 @@
 .fullName { max-width: 100%; margin: -4px 0 22px; font-size: clamp(14px, 1.4vw, 20px); line-height: 1.4; color: hsl(var(--brand-sand)); text-wrap: balance; }
 .staticMode .staticPhoto { cursor: default; }
 
+/* Desktop: one copy column on the right, aligned to a shared left edge and resting on the scrim. */
 @media (min-width: 701px) and (min-height: 501px) {
-  .track:not(.staticMode) .intro, .track:not(.staticMode) .copyPanel { left: auto; right: 3%; width: 43%; padding: 24px; }
-  .track:not(.staticMode) .intro { top: 8%; }
-  .track:not(.staticMode) .intro .eyebrow { white-space: normal; font-size: clamp(15px, 1.3vw, 20px); }
-  .track:not(.staticMode) .intro h1 { font-size: clamp(44px, 5.4vw, 78px); }
-  .track:not(.staticMode) .tagline, .track:not(.staticMode) .tagline > span:last-child { white-space: normal; font-size: clamp(20px, 1.65vw, 25px); }
+  .track:not(.staticMode) .intro, .track:not(.staticMode) .copyPanel { left: auto; right: 6%; width: min(38%, 540px); padding: 0; }
+  .track:not(.staticMode) .intro { top: auto; bottom: 16%; }
+  /* Passages are short; visible overflow keeps settling lines and their shadow unclipped. */
+  .track:not(.staticMode) .copyPanel { top: 50%; translate: 0 -50%; overflow: visible; }
+  .track:not(.staticMode) .tagline { font-size: clamp(22px, 1.9vw, 30px); }
 }
 
 @media (max-width: 1000px) and (max-height: 500px) and (orientation: landscape) {
@@ -188,14 +196,39 @@
 .copyPanel[data-empty="true"] > :not(.staticPhoto), .mobilePanel[data-empty="true"] > * { display: none; }
 .chapterBody { white-space: pre-line; overflow-wrap: anywhere; }
 
-/* Keep the complete congress descriptor on one line without widening the photo overlay. */
-.intro { container-type: inline-size; }
-.intro .eyebrow { white-space: nowrap; font-size: min(20px, 3.4cqi); letter-spacing: .025em; }
-@media (min-width: 701px) and (min-height: 501px) {
-  .track:not(.staticMode) .intro .eyebrow { white-space: nowrap; font-size: min(20px, 3.4cqi); }
+/* Type scale: small tracked label, the official wordmark, one sans line, one serif statement. */
+.intro .eyebrow { font-size: 12px; line-height: 1.7; letter-spacing: .22em; color: hsl(var(--brand-sand) / .85); }
+.wordmark { margin: 18px 0 14px; line-height: 0; }
+.wordmark img { display: block; width: min(100%, 500px); height: auto; }
+.intro .fullName { margin: 0 0 26px; font-size: 13px; letter-spacing: .08em; color: hsl(var(--muted-foreground)); }
+.tagline { text-shadow: 0 1px 22px hsl(var(--background) / .9); }
+.tagline > span { display: block; }
+/* The statement settles line by line once, after the first paint. */
+.track:not(.staticMode) .tagline > span { animation: lineIn .7s cubic-bezier(.2, .7, .2, 1) both; }
+.track:not(.staticMode) .tagline > span:nth-child(2) { animation-delay: .12s; }
+.track:not(.staticMode) .tagline > span:nth-child(3) { animation-delay: .24s; }
+@keyframes lineIn { from { opacity: 0; translate: 0 .45em; } }
+@media (prefers-reduced-motion: reduce) {
+  .tagline > span, .scrollPrompt > span::after { animation: none !important; }
+}
+@media (max-width: 700px) {
+  .intro .eyebrow { font-size: 10px; letter-spacing: .18em; }
+  .wordmark { margin: 12px 0 10px; }
+  .wordmark img { width: min(100%, 300px); }
+  .intro .fullName { margin-bottom: 14px; font-size: 11px; }
 }
 @media (max-width: 1000px) and (max-height: 500px) and (orientation: landscape) {
-  .intro .eyebrow { white-space: nowrap; font-size: min(13px, 3.4cqi); }
+  .wordmark img { width: min(100%, 260px); }
+}
+/* Phones: the scene sits between the opening copy and the chapter text, faded at both ends. */
+@media (max-width: 700px), (max-width: 1000px) and (max-height: 500px) {
+  .scrim { background:
+    linear-gradient(to bottom, hsl(var(--background) / .92) 0%, hsl(var(--background) / .5) 30%, hsl(var(--background) / 0) 46%),
+    linear-gradient(to top, hsl(var(--background) / .96) 0%, hsl(var(--background) / .7) 30%, hsl(var(--background) / 0) 50%); }
+  /* Own layers, so fading copy and the static scrim are composited instead of repainted every scroll frame. */
+  .track:not(.staticMode) .mobilePanel { background: none; text-shadow: 0 1px 8px hsl(var(--background)); will-change: opacity; }
+  .track:not(.staticMode) .intro, .track:not(.staticMode) .scrim { will-change: opacity; }
+  .track:not(.staticMode) .chapters { background: none; }
 }
 
 .copyPanel .chapterBody { font-size: clamp(12px, 1.2vw, 16px); line-height: 1.5; }

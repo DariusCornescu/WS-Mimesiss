@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { FiArrowDown } from 'react-icons/fi'
 import type { CSSProperties } from 'react'
 import { neuralStoryPassages } from '../lib/neural-story-copy'
 import { mimesissScenePhotos } from '../lib/mimesiss-scene'
@@ -70,6 +69,27 @@ export default function MimesissScrollStory({ chapters, kicker }: { chapters: { 
     return () => { cancelled = true; observer.disconnect(); abort.abort(); controller?.dispose(); if (spaceRef.current === controller) spaceRef.current = null }
   }, [staticMode])
 
+  // Idle signal animation: about 30 fps, only while the stage is on screen and the tab is
+  // visible, and not on phones, where it would cost battery for a background detail.
+  useEffect(() => {
+    const stage = stageRef.current
+    if (staticMode || !stage || window.matchMedia('(max-width: 700px)').matches) return
+    let frame = 0
+    let visible = false
+    let last = 0
+    const loop = (now: number) => {
+      frame = 0
+      if (!visible || document.hidden) return
+      if (now - last >= 33) { last = now; spaceRef.current?.animate(now / 1000) }
+      frame = window.requestAnimationFrame(loop)
+    }
+    const start = () => { if (!frame && visible && !document.hidden) frame = window.requestAnimationFrame(loop) }
+    const observer = new IntersectionObserver(entries => { visible = entries.some(entry => entry.isIntersecting); start() })
+    observer.observe(stage)
+    document.addEventListener('visibilitychange', start)
+    return () => { observer.disconnect(); document.removeEventListener('visibilitychange', start); if (frame) window.cancelAnimationFrame(frame) }
+  }, [staticMode])
+
   useEffect(() => {
     const track = trackRef.current
     const stage = stageRef.current
@@ -84,7 +104,7 @@ export default function MimesissScrollStory({ chapters, kicker }: { chapters: { 
         panelRefs.current.forEach(panel => {
           if (!panel) return
           panel.style.opacity = '1'
-          panel.style.transform = ''
+          panel.style.removeProperty('--reveal')
           panel.inert = false
           panel.removeAttribute('aria-hidden')
         })
@@ -136,7 +156,7 @@ export default function MimesissScrollStory({ chapters, kicker }: { chapters: { 
         const fade = Math.min(.035, partSpan * .2)
         const opacity = reading || !visualReady ? 0 : between(progress, partStart, partStart + fade) * (1 - between(progress, partStart + partSpan - fade, partStart + partSpan))
         panel.style.opacity = String(opacity)
-        panel.style.transform = `translateY(${((1 - opacity) * 18).toFixed(1)}px)`
+        panel.style.setProperty('--reveal', opacity.toFixed(3))
         panel.inert = opacity < .85
         panel.setAttribute('aria-hidden', String(opacity < .1))
       })
@@ -163,12 +183,19 @@ export default function MimesissScrollStory({ chapters, kicker }: { chapters: { 
         <source media="(max-width: 700px) and (orientation: portrait)" srcSet="/project-stories/neural-space/intro-mobile.webp" />
         <Image src="/project-stories/neural-space/intro-desktop.webp" alt="" fill unoptimized loading="eager" fetchPriority="high" />
       </picture>
+      <div className={styles.scrim} aria-hidden="true" />
       <div ref={introRef} className={styles.intro}>
-        <p className={styles.eyebrow}>{kicker}</p>
-        <h1 id="mimesiss-scroll-title">MIMESISS</h1>
+        {/* Non-breaking hyphens keep "a V-a" together when the label wraps on phones. */}
+        <p className={styles.eyebrow}>{kicker.replaceAll('-', '‑')}</p>
+        <h1 id="mimesiss-scroll-title" className={styles.wordmark}>
+          <picture>
+            <source media="(max-width: 700px)" srcSet="/project-stories/neural-space/mimesiss-wordmark-640.webp" />
+            <Image src="/project-stories/neural-space/mimesiss-wordmark-1120.webp" alt="MIMESISS" width={1120} height={277} unoptimized loading="eager" fetchPriority="low" />
+          </picture>
+        </h1>
         <p className={styles.fullName}>Military Medicine Scientific Session for Students</p>
-        <p className={styles.tagline}><span>Cunoașterea ne formează, </span><span>experiența ne definește, iar medicina ne unește.</span></p>
-        <p className={styles.scrollPrompt}><FiArrowDown aria-hidden="true" />Descoperă prin scroll</p>
+        <p className={styles.tagline}><span>Cunoașterea ne formează,</span> <span>experiența ne definește,</span> <span>iar medicina ne unește.</span></p>
+        <p className={styles.scrollPrompt}><span aria-hidden="true" />Derulează</p>
       </div>
       {sceneError && <p className={styles.sceneError} role="status">{sceneError}</p>}
       {(staticMode ? chapters.map((chapter, chapterIndex) => ({ ...chapter, chapterIndex })) : desktopPassages).map((chapter, index) => <div key={index} ref={element => { panelRefs.current[index] = element }} className={styles.copyPanel} data-empty={!chapter.title && !chapter.body} aria-hidden={!staticMode} inert={!staticMode}>
