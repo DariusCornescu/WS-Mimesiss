@@ -37,6 +37,18 @@ jobs:
 
       # `!cancelled()` so a lint failure still reports type errors in the same
       # run, rather than costing a second round trip to discover them.
+      - name: Security regression tests
+        run: npm run test:security
+
+      - name: Load-test target safeguards
+        run: node --test scripts/test-load-guard.mjs
+
+      - name: Secret pattern check
+        run: npm run security:secrets
+
+      - name: Dependency vulnerabilities
+        run: npm audit --audit-level=moderate
+
       - name: TypeScript
         if: ${{ !cancelled() }}
         run: npm run typecheck
@@ -173,3 +185,22 @@ jobs:
           path: .preview/startup-matrix
           include-hidden-files: true
           retention-days: 14
+
+  payment-security:
+    name: Payment concurrency and rollback
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Isolated MongoDB transaction tests
+        run: npm run test:payments
+
+      - name: Small isolated concurrency regression
+        env:
+          STRESS_LEVELS: '25'
+        run: npm run test:stress

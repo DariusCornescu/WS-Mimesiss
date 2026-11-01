@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/.stress-results/
+/stress-http-summary.json
 
 # next.js
 /.next/
@@ -47,3 +49,9 @@ scripts/*.js
 # Isolated public design preview (no production credentials)
 /.preview/
 /.pnpm-store/
+/.lighthouseci/
+
+# Local scratch output
+/.next-gallery-check/
+/output/
+/tmp/

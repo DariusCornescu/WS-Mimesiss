@@ -1,0 +1,75 @@
+name: Test suite
+
+# Security checks, isolated MongoDB payment tests, lint, typecheck and build
+# already run in ci.yml. This workflow adds the Vitest suite and an optional,
+# manually dispatched browser run against a preview deployment.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: 'Preview origin, for example https://<preview>.vercel.app (production hosts are rejected by playwright.config.ts)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-suite-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  unit:
+    name: Unit, component and handler tests
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:unit
+
+  preview-browser:
+    name: Browser tests against preview
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # No Clerk keys or other secrets are provided, so only the public projects
+    # run. The checkout is the dispatched revision; no input selects code.
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Install browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run browser tests
+        # The input is passed through the environment only, never interpolated
+        # into the shell. playwright.config.ts validates it before any browser starts.
+        env:
+          E2E_BASE_URL: ${{ inputs.preview_url }}
+        run: npm run test:e2e -- --workers=1
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: playwright-preview-${{ github.run_id }}
+          path: |
+            .preview/test-suite/playwright-report
+            .preview/test-suite/test-results
+          retention-days: 7
+          if-no-files-found: ignore
