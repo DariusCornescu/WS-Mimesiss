@@ -176,3 +176,63 @@
   .aboutActions { margin-top: 32px; }
 }
 @media (prefers-reduced-motion: reduce) { .event, .eventArrow { transition: none; } .event:hover { transform: none; } }
+
+/* Următorul eveniment: card evidențiat, cu numărătoare inversă până la start. */
+.nextEvent {
+  --ne-bg: radial-gradient(ellipse at 85% 130%, #96373b, hsl(var(--brand-deep)) 68%);
+  --ne-fg: hsl(var(--brand-ivory)); --ne-muted: hsl(var(--brand-ivory) / .74); --ne-accent: hsl(var(--brand-sand));
+  --cd-fg: var(--ne-fg); --cd-muted: var(--ne-muted); --cd-cell: hsl(var(--brand-ivory) / .07); --cd-border: hsl(var(--brand-ivory) / .2);
+  position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 40px; align-items: center;
+  margin-bottom: 16px; padding: 40px 44px; border-radius: 22px; background: var(--ne-bg); color: var(--ne-fg);
+}
+.nextEvent[data-theme="path"] {
+  --ne-bg: radial-gradient(ellipse at 88% 120%, hsl(var(--path-cyan) / .22), transparent 58%), linear-gradient(135deg, hsl(var(--path-night)), hsl(var(--path-navy)));
+  --ne-fg: #fff; --ne-muted: hsl(var(--path-ice) / .76); --ne-accent: hsl(var(--path-cyan));
+  --cd-cell: hsl(var(--path-cyan) / .07); --cd-border: hsl(var(--path-cyan) / .3);
+}
+.nextEvent[data-theme="path"]::after { content: ''; position: absolute; z-index: -1; right: -90px; top: -150px; width: 380px; height: 380px; border-radius: 50%; border: 1px solid hsl(var(--path-cyan) / .22); box-shadow: 0 0 0 46px hsl(var(--path-cyan) / .04), 0 0 0 92px hsl(var(--path-cyan) / .025); pointer-events: none; }
+.nextEventCopy { min-width: 0; }
+.nextEventKicker { margin-bottom: 14px; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--ne-accent); }
+.nextEvent h3 { font-size: clamp(32px, 4vw, 50px); font-weight: 800; line-height: 1.05; letter-spacing: -.03em; overflow-wrap: anywhere; }
+.nextEventProject { margin-top: 8px; font-size: 16px; color: var(--ne-muted); }
+.nextEventWhen { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 20px; font-size: 16px; font-weight: 650; }
+.nextEventWhen span { font-weight: 500; color: var(--ne-muted); }
+.nextEventWhen span::before { content: '·'; margin-right: 14px; color: var(--ne-accent); }
+.nextEventLink { display: inline-flex; align-items: center; gap: 14px; margin-top: 26px; padding: 13px 24px; border-radius: 999px; background: var(--ne-fg); color: hsl(var(--brand-deep)); font-size: 15px; font-weight: 650; transition: transform .2s, box-shadow .2s; }
+.nextEvent[data-theme="path"] .nextEventLink { color: hsl(var(--path-night)); }
+.nextEventLink svg { width: 14px; transition: transform .25s; }
+.nextEventLink:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0, 0, 0, .28); }
+.nextEventLink:hover svg { transform: translateX(4px); }
+.home .nextEventLink:focus-visible { outline-color: var(--ne-accent); }
+.nextEventTimer { display: grid; gap: 12px; width: min(100%, 420px); }
+.nextEventTimerLabel { font-size: 12px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: var(--ne-muted); }
+.nextEventLive { display: inline-flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; }
+.nextEventLive::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--ne-accent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--ne-accent) 22%, transparent); }
+@media (max-width: 900px) {
+  .nextEvent { grid-template-columns: 1fr; gap: 28px; padding: 32px 28px; }
+  .nextEventTimer { width: 100%; }
+}
+@media (max-width: 760px) {
+  .nextEvent { padding: 26px 20px; border-radius: 18px; }
+  .nextEventWhen { flex-direction: column; }
+  .nextEventWhen span::before { content: none; }
+}
+@media (prefers-reduced-motion: reduce) { .nextEventLink, .nextEventLink svg { transition: none; } .nextEventLink:hover, .nextEventLink:hover svg { transform: none; } }
+
+/* Hero cu fotografia echipei: fețele rămân vizibile sus, textul stă jos, peste un degrade. */
+.hero { min-height: clamp(560px, 47vw, 820px); place-items: end center; }
+.hero::after { display: none; }
+.heroPhoto { object-position: center 74%; }
+/* Peste 1700px înălțimea hero-ului e plafonată, deci cadrul coboară ca să nu taie capetele din ultimul rând. */
+@media (min-width: 1700px) { .heroPhoto { object-position: center 62%; } }
+@media (min-width: 2200px) { .heroPhoto { object-position: center 45%; } }
+.heroShade { background: linear-gradient(180deg, rgba(36, 9, 16, .34) 0%, rgba(36, 9, 16, .16) 32%, rgba(36, 9, 16, .8) 64%, rgba(36, 9, 16, .97) 100%); }
+.heroContent { transform: none; padding: 0 24px 56px; }
+.hero h1 { margin-bottom: 28px; text-shadow: 0 2px 26px rgba(20, 5, 9, .6); }
+@media (max-width: 900px) {
+  /* Pe telefon și tabletă fotografia întreagă stă sus, iar textul continuă sub ea. */
+  .hero { display: block; min-height: 0; }
+  .heroPhoto { inset: 0 0 auto 0 !important; height: auto !important; aspect-ratio: 4 / 3; object-position: center; }
+  .heroShade { inset: 0 0 auto 0; height: 75vw; background: linear-gradient(180deg, rgba(36, 9, 16, .3) 0%, rgba(36, 9, 16, .08) 45%, #2a1118 100%); }
+  .heroContent { padding: calc(75vw - 34px) 22px 44px; }
+}

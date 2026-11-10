@@ -134,6 +134,7 @@
   .mobileProjectLinks img { width: 54px; height: 54px; object-fit: cover; border-radius: 7px; }
   .mobileProjectLinks span { flex: 1; font-size: 16px; font-weight: 600; }
   .mobileProjectLinks svg { width: 12px; margin-right: 6px; color: hsl(var(--muted-foreground)); }
+  .mobileProjectLinks em { padding: 4px 9px; border-radius: 999px; background: hsl(var(--brand-sand)); color: hsl(var(--brand-deep)); font-size: 10px; font-style: normal; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
   .mobileCongressGroup { margin-top: 20px; border-top: 1px solid hsl(var(--border)); padding-top: 12px; }
   .mobileCongressToggle { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 10px 8px; font-weight: 600; font-size: 15px; }
   .mobileCongressToggle svg { transition: transform .2s ease; }

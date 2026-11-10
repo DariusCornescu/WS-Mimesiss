@@ -44,7 +44,7 @@ export default function Footer() {
             Comunitatea studenților care învață, organizează și construiește împreună viitorul medicinei militare.
           </p>
           <div className="mt-6 flex items-center gap-5">
-            <a href="mailto:secretariat@asmm-bucuresti.com" aria-label="Trimite un e-mail către ASMM" className={linkClass}>
+            <a href="mailto:office.asmm@gmail.com" aria-label="Trimite un e-mail către ASMM" className={linkClass}>
               <FaEnvelope className="h-5 w-5" aria-hidden="true" />
             </a>
             <a href="https://www.instagram.com/asmm.bucuresti?igsh=MWExZHc0Y3hrNWh1bg==" target="_blank" rel="noopener noreferrer" aria-label="ASMM pe Instagram" className={linkClass}>

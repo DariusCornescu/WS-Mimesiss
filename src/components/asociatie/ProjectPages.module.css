@@ -9,3 +9,10 @@
 .copy h2 { margin: 0; font-size: clamp(24px, 3vw, 32px); line-height: 1.15; }
 .summary { color: hsl(var(--muted-foreground)); line-height: 1.7; white-space: pre-line; }
 .readMore { align-self: flex-start; margin-top: auto; padding-top: 8px; border-bottom: 1px solid hsl(var(--accent)); font-size: 14px; font-weight: 600; }
+/* Un singur proiect în listă: card orizontal, ca imaginea să nu ocupe tot ecranul. */
+@media (min-width: 761px) {
+  .card:only-child .cardLink { flex-direction: row; align-items: stretch; }
+  .card:only-child .cover, .card:only-child .placeholder { width: 52%; height: auto; }
+  .card:only-child .copy { justify-content: center; padding: 44px; }
+  .card:only-child .readMore { margin-top: 0; }
+}

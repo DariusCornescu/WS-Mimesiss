@@ -5,6 +5,7 @@ import type { ProjectCard } from '@/lib/projects'
 import type { Partner } from '@/lib/partner-types'
 import type { UpcomingEvent } from '@/lib/events'
 import { associationMission, associationPillars, associationStats } from '@/lib/association-content'
+import Countdown from '@/components/ui/Countdown'
 import PartnerMarquee from './PartnerMarquee'
 import styles from './AssociationHome.module.css'
 
@@ -22,10 +23,14 @@ function eventDates(event: UpcomingEvent) {
 }
 
 export default function AssociationHome({ projects, partners = [], events = [] }: { projects: ProjectCard[]; partners?: Partner[]; events?: UpcomingEvent[] }) {
+  // Cel mai apropiat eveniment cu dată primește cardul cu numărătoare inversă;
+  // restul rămân în listă. O ediție anunțată fără dată nu are ce număra.
+  const featured = events[0]?.startDate ? events[0] : undefined
+  const listed = featured ? events.slice(1) : events
   return (
     <div className={styles.home} id="continut" tabIndex={-1}>
       <section className={styles.hero} aria-labelledby="association-title">
-        <Image src="/old/3.jpeg" alt="" fill priority sizes="100vw" className={styles.heroPhoto} />
+        <Image src="/home/echipa-mimesiss-2025.jpg" alt="" fill priority sizes="100vw" className={styles.heroPhoto} />
         <div className={styles.heroShade} />
         <div className={styles.heroContent}>
           <p className={styles.heroEyebrow}>Asociația Studenților în Medicină Militară</p>
@@ -46,8 +51,25 @@ export default function AssociationHome({ projects, partners = [], events = [] }
           <div><p className={styles.eyebrow}>Urmează</p><h2 id="events-title">Evenimente viitoare</h2></div>
           <Link href="/proiecte" className={styles.textLink}>Toate proiectele <FaArrowRight aria-hidden="true" /></Link>
         </div>
-        {events.length > 0 ? <ol className={styles.eventList}>
-          {events.map(event => {
+        {featured?.startDate && <article className={styles.nextEvent} data-theme={featured.theme}>
+          <div className={styles.nextEventCopy}>
+            <p className={styles.nextEventKicker}>{featured.status === 'active' ? 'În desfășurare' : 'Următorul eveniment'}</p>
+            <h3>{featured.title}</h3>
+            <p className={styles.nextEventProject}>{featured.projectTitle}</p>
+            <p className={styles.nextEventWhen}>{eventDates(featured)}{featured.note && <span>{featured.note}</span>}</p>
+            <Link href={featured.href} className={styles.nextEventLink}>Vezi detalii <FaArrowRight aria-hidden="true" /></Link>
+          </div>
+          <div className={styles.nextEventTimer}>
+            {featured.status === 'active' ? <p className={styles.nextEventLive}>Se desfășoară acum</p> : <Countdown
+              target={featured.startDate}
+              label={`Timp rămas până la ${featured.title}`}
+              caption={<p className={styles.nextEventTimerLabel}>Începe în</p>}
+              done={<p className={styles.nextEventLive}>Se desfășoară acum</p>}
+            />}
+          </div>
+        </article>}
+        {listed.length > 0 ? <ol className={styles.eventList}>
+          {listed.map(event => {
             const start = event.startDate ? new Date(event.startDate) : null
             return <li key={event.id}>
               <Link href={event.href} className={styles.event}>
@@ -64,7 +86,7 @@ export default function AssociationHome({ projects, partners = [], events = [] }
               </Link>
             </li>
           })}
-        </ol> : <div className={styles.eventsEmpty}>
+        </ol> : !featured && <div className={styles.eventsEmpty}>
           <div>
             <h3>Pregătim următoarele evenimente.</h3>
             <p>Datele noilor workshopuri, conferințe și ale următoarei ediții MIMESISS apar aici imediat ce sunt anunțate. Până atunci, urmărește-ne pe Instagram.</p>
