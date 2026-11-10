@@ -2,6 +2,7 @@ import AssociationHome from '@/components/asociatie/AssociationHome'
 import { getPublishedProjects } from '@/lib/projects'
 import { getPartners } from '@/lib/partners'
 import { getUpcomingEvents, type UpcomingEvent } from '@/lib/events'
+import { withPathEvent, withPathProject } from '@/lib/path-project'
 import type { Partner } from '@/lib/partner-types'
 
 export const metadata = {
@@ -24,5 +25,7 @@ export default async function HomePage() {
       console.warn('Homepage preview: MongoDB unavailable; showing local fallback content.')
     }
   }
-  return <AssociationHome projects={projects} partners={partners} events={events} />
+  // Grila de proiecte apare doar când există proiecte publicate din admin; PATH
+  // nu o pornește singur, fiindcă ar arăta ca singurul proiect al asociației.
+  return <AssociationHome projects={projects.length > 0 ? withPathProject(projects) : projects} partners={partners} events={withPathEvent(events)} />
 }

@@ -1,0 +1,130 @@
+/* PATH: bleumarin și cyan pe suprafețele proiectului, ivoriul asociației în rest. */
+.page {
+  --night: hsl(var(--path-night)); --navy: hsl(var(--path-navy)); --cyan: hsl(var(--path-cyan)); --ice: hsl(var(--path-ice)); --teal: hsl(var(--path-teal));
+  --ink: hsl(var(--path-navy)); --ink-soft: hsl(var(--path-navy) / .74);
+  color: var(--ink); background: #fcf8f3; font-family: var(--font-inter), Arial, sans-serif;
+}
+.page a, .page button { -webkit-tap-highlight-color: transparent; }
+.page a:focus-visible { outline: 3px solid var(--cyan); outline-offset: 4px; }
+
+/* Hero */
+.hero { position: relative; isolation: isolate; overflow: hidden; background: var(--night); color: #fff; --cd-fg: #fff; --cd-muted: hsl(var(--path-ice) / .7); --cd-cell: hsl(var(--path-cyan) / .07); --cd-border: hsl(var(--path-cyan) / .3); }
+.heroArt { z-index: -2; object-fit: cover; object-position: 70% center; animation: artArrive 1.8s cubic-bezier(.2, .7, .2, 1) both; }
+.heroShade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(100deg, hsl(var(--path-night) / .96) 0%, hsl(var(--path-night) / .82) 38%, hsl(var(--path-night) / .2) 78%, hsl(var(--path-night) / .05) 100%); }
+.heroInner { max-width: 1280px; margin: auto; padding: 44px 24px 72px; }
+.heroInner > * { animation: copyArrive .8s cubic-bezier(.2, .7, .2, 1) both; }
+.heroInner > :nth-child(3) { animation-delay: .06s; } .heroInner > :nth-child(4) { animation-delay: .12s; } .heroInner > :nth-child(5) { animation-delay: .18s; } .heroInner > :nth-child(6) { animation-delay: .24s; } .heroInner > :nth-child(7) { animation-delay: .3s; }
+.back { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; margin-bottom: 44px; font-size: 14px; font-weight: 600; color: hsl(var(--path-ice) / .78); transition: color .2s; }
+.back svg { width: 12px; transition: transform .25s; }
+.back:hover { color: #fff; } .back:hover svg { transform: translateX(-4px); }
+.kicker { margin-bottom: 18px; font-size: 13px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: var(--cyan); }
+.wordmark { position: relative; display: inline-block; margin: 0; font-size: clamp(84px, 15vw, 196px); font-weight: 900; line-height: .88; letter-spacing: .01em; color: #fff; }
+/* Linia de puls care traversează logotipul, ca în identitatea proiectului. */
+.wordmark::after { content: ''; position: absolute; left: -4%; right: -4%; top: 50%; height: 2px; background: linear-gradient(90deg, transparent, hsl(var(--path-cyan) / .85) 18%, hsl(var(--path-cyan) / .85) 82%, transparent); mix-blend-mode: screen; opacity: .7; pointer-events: none; }
+.tagline { margin-top: 20px; font-size: clamp(16px, 2.1vw, 24px); letter-spacing: .06em; text-transform: lowercase; color: var(--ice); }
+.lead { max-width: 620px; margin-top: 26px; font-size: clamp(17px, 1.6vw, 20px); line-height: 1.7; color: hsl(var(--path-ice) / .86); }
+.facts { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 0; padding: 0; list-style: none; }
+.facts li { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border: 1px solid hsl(var(--path-cyan) / .34); border-radius: 999px; background: hsl(var(--path-night) / .55); font-size: 14px; font-weight: 600; }
+.facts svg { width: 13px; color: var(--cyan); }
+.heroBottom { display: flex; flex-wrap: wrap; align-items: end; gap: 32px 56px; margin-top: 44px; }
+.heroTimer { display: grid; gap: 12px; width: min(100%, 420px); }
+.timerLabel { font-size: 12px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; color: var(--cd-muted); }
+.heroStatus { display: inline-flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; }
+.heroStatus[data-live]::before { content: ''; width: 10px; height: 10px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 0 6px hsl(var(--path-cyan) / .22); }
+.heroActions { display: flex; flex-wrap: wrap; gap: 14px; }
+
+/* Butoane */
+.primaryButton, .ghostButton, .contactButton { display: inline-flex; align-items: center; justify-content: center; gap: 14px; min-height: 52px; padding: 14px 26px; border-radius: 999px; font-size: 15px; font-weight: 650; line-height: 1.3; transition: transform .2s, box-shadow .2s, background .2s, border-color .2s; }
+.primaryButton { background: var(--cyan); color: var(--night); }
+.primaryButton:hover { transform: translateY(-3px); box-shadow: 0 12px 28px hsl(var(--path-cyan) / .3); }
+.ghostButton { border: 1px solid hsl(var(--path-ice) / .4); color: #fff; }
+.ghostButton:hover { border-color: var(--cyan); background: hsl(var(--path-cyan) / .1); }
+.primaryButton svg, .ghostButton svg, .contactButton svg { flex-shrink: 0; width: 14px; transition: transform .25s; }
+.primaryButton:hover svg, .contactButton:hover svg { transform: translateX(4px); }
+
+/* Despre */
+.eyebrow { margin-bottom: 18px; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--teal); }
+.eyebrow::before { content: ''; display: block; width: 68px; height: 5px; margin-bottom: 16px; background: var(--cyan); }
+.about { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 72px; max-width: 1280px; margin: auto; padding: 88px 24px 56px; }
+.about h2, .sectionHeading h2, .registration h2 { font-size: clamp(30px, 3.4vw, 46px); font-weight: 800; line-height: 1.12; letter-spacing: -.03em; }
+.statement { margin-top: 28px; padding-left: 20px; border-left: 3px solid var(--cyan); font-size: clamp(18px, 1.7vw, 22px); font-weight: 600; line-height: 1.5; }
+.aboutCopy { display: grid; gap: 20px; align-content: start; }
+.aboutCopy p { font-size: 17px; line-height: 1.85; color: var(--ink-soft); }
+.aboutCopy .invitation { color: var(--ink); font-weight: 650; }
+
+/* Ce găsești */
+.highlights { max-width: 1280px; margin: auto; padding: 0 24px 88px; }
+.highlights ul { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 0; padding: 0; list-style: none; }
+.highlights li { padding: 28px; border: 1px solid hsl(var(--path-navy) / .12); border-radius: 18px; background: #fff; }
+.highlights span { display: block; margin-bottom: 18px; font-size: 13px; font-weight: 700; letter-spacing: .12em; color: var(--teal); }
+.highlights h3 { margin-bottom: 10px; font-size: 21px; line-height: 1.25; }
+.highlights p { font-size: 15px; line-height: 1.7; color: var(--ink-soft); }
+
+/* Workshopuri și medici */
+.workshops { background: radial-gradient(ellipse at 90% 0%, hsl(var(--path-cyan) / .14), transparent 55%), linear-gradient(160deg, var(--night), var(--navy)); color: #fff; scroll-margin-top: 16px; }
+.workshopsInner { max-width: 1280px; margin: auto; padding: 88px 24px; }
+.workshops .eyebrow { color: var(--cyan); }
+.sectionHeading { max-width: 640px; margin-bottom: 44px; }
+.sectionHeading > p:last-child { margin-top: 16px; font-size: 17px; line-height: 1.7; color: hsl(var(--path-ice) / .8); }
+.workshopGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 24px; margin: 0; padding: 0; list-style: none; }
+.workshop { display: flex; flex-direction: column; overflow: hidden; border: 1px solid hsl(var(--path-cyan) / .2); border-radius: 18px; background: hsl(var(--path-ice) / .05); }
+.workshopImage { position: relative; aspect-ratio: 3 / 2; }
+.workshopImage img { object-fit: cover; }
+.workshopBody { display: flex; flex: 1; flex-direction: column; gap: 14px; padding: 26px; }
+.workshop h3 { font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
+.doctor { display: flex; align-items: start; gap: 12px; font-size: 15px; line-height: 1.4; }
+.doctor svg { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; color: var(--cyan); }
+.doctor span { display: grid; gap: 2px; }
+.doctor small { font-size: 13px; color: hsl(var(--path-ice) / .72); }
+.workshopText { font-size: 15px; line-height: 1.7; color: hsl(var(--path-ice) / .84); white-space: pre-line; }
+.workshopMeta { display: flex; flex-wrap: wrap; gap: 8px; margin: auto 0 0; padding: 6px 0 0; list-style: none; }
+.workshopMeta li { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 999px; background: hsl(var(--path-cyan) / .1); font-size: 13px; font-weight: 600; }
+.workshopMeta svg { width: 12px; color: var(--cyan); }
+.workshopsSoon { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 34px 36px; border: 1px dashed hsl(var(--path-cyan) / .4); border-radius: 18px; background: hsl(var(--path-ice) / .04); }
+.workshopsSoon h3 { margin-bottom: 8px; font-size: 22px; }
+.workshopsSoon p { max-width: 620px; font-size: 15px; line-height: 1.7; color: hsl(var(--path-ice) / .8); }
+.workshopsSoon .ghostButton { flex-shrink: 0; gap: 10px; }
+
+/* Înscrieri */
+.registrationSection { max-width: 1280px; margin: auto; padding: 88px 24px; scroll-margin-top: 16px; --cd-fg: var(--ink); --cd-muted: var(--ink-soft); --cd-cell: #fff; --cd-border: hsl(var(--path-navy) / .14); }
+.registration { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px 56px; }
+.registration > div:first-child { flex: 1 1 420px; max-width: 640px; }
+.registration p { margin-top: 16px; font-size: 17px; line-height: 1.8; color: var(--ink-soft); }
+.registrationTimer { display: grid; gap: 12px; width: min(100%, 420px); }
+.registrationSection .timerLabel { color: var(--teal); }
+
+/* Contact: banda asociației, ca pe homepage. */
+.contact { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 55px max(24px, calc((100% - 1232px) / 2)); background: radial-gradient(ellipse at 80% 140%, #96373b, #351016 65%); color: #fff; }
+.contact h2 { font-size: clamp(26px, 2.7vw, 38px); line-height: 1.3; }
+.contactEyebrow { margin-bottom: 10px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #f2ddbf; }
+.contactButton { flex-shrink: 0; background: hsl(var(--brand-ivory)); color: #4b171c; }
+.contactButton:hover { transform: translateY(-3px); background: hsl(var(--brand-sand)); }
+.page .contactButton:focus-visible { outline-color: hsl(var(--brand-sand)); }
+
+@keyframes artArrive { from { transform: scale(1.06); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+@keyframes copyArrive { from { opacity: 0; translate: 0 20px; } to { opacity: 1; translate: 0 0; } }
+
+@media (max-width: 900px) {
+  .about { grid-template-columns: 1fr; gap: 32px; padding: 64px 24px 44px; }
+  .highlights ul { grid-template-columns: 1fr; gap: 14px; }
+  .highlights { padding-bottom: 64px; }
+  .workshopsInner, .registrationSection { padding: 64px 24px; }
+}
+@media (max-width: 760px) {
+  .heroInner { padding: 20px 22px 52px; }
+  .heroShade { background: linear-gradient(180deg, hsl(var(--path-night) / .9) 0%, hsl(var(--path-night) / .78) 60%, hsl(var(--path-night) / .55) 100%); }
+  .back { margin-bottom: 28px; }
+  .kicker { font-size: 11px; letter-spacing: .14em; }
+  .heroBottom { margin-top: 34px; gap: 28px; }
+  .heroActions { width: 100%; } .heroActions a { flex: 1 1 100%; }
+  .about, .highlights, .workshopsInner, .registrationSection { padding-left: 22px; padding-right: 22px; }
+  .about { padding-top: 48px; } .workshopsInner, .registrationSection { padding-top: 48px; padding-bottom: 48px; }
+  .highlights li, .workshopBody { padding: 22px; }
+  .workshopsSoon { flex-direction: column; align-items: start; padding: 26px 22px; gap: 20px; }
+  .contact { flex-direction: column; align-items: start; padding: 42px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .heroArt, .heroInner > * { animation: none; }
+  .page a, .page a svg { transition: none; }
+  .primaryButton:hover, .contactButton:hover, .primaryButton:hover svg, .contactButton:hover svg, .back:hover svg { transform: none; }
+}

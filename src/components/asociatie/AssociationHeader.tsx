@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { FaBars, FaChevronDown, FaTimes, FaUser, FaArrowRight } from 'react-icons/fa'
+import { PATH_COVER, PATH_HREF } from '@/lib/path-project'
 import styles from './AssociationHeader.module.css'
 
 const links = [
@@ -15,8 +16,9 @@ const links = [
   { href: '/contact', label: 'Contact' },
 ]
 
-const projectLinks = [
+const projectLinks: { href: string; label: string; image: string; badge?: string }[] = [
   { href: '/proiecte/mimesiss', label: 'MIMESISS', image: '/project-stories/neural-space/photo-1.webp' },
+  { href: PATH_HREF, label: 'PATH', image: PATH_COVER, badge: 'Nou' },
   { href: '/proiecte/balul-bobocilor', label: 'Balul bobocilor', image: '/project-stories/originals/ball/img-9112-355bf49.webp' },
   { href: '/proiecte/cortul-imm', label: 'Cortul IMM', image: '/project-stories/originals/tent/photo-2026-10-10-10-44-29-3-jpg-20a4e92.webp' },
 ]
@@ -171,7 +173,7 @@ export default function AssociationHeader() {
           <section className={styles.mobileProjects} aria-labelledby="mobile-projects-title">
             <div className={styles.mobileSectionHeading}><h2 id="mobile-projects-title">Proiectele noastre</h2><Link href="/proiecte" onClick={closeMenu}>Vezi toate <FaArrowRight aria-hidden="true" /></Link></div>
             <nav aria-label="Proiecte ASMM" className={styles.mobileProjectLinks}>
-              {projectLinks.map(project => <Link key={project.href} href={project.href} aria-current={pathname === project.href ? 'page' : undefined} onClick={closeMenu}><Image src={project.image} alt="" width={54} height={54} sizes="54px" /><span>{project.label}</span><FaArrowRight aria-hidden="true" /></Link>)}
+              {projectLinks.map(project => <Link key={project.href} href={project.href} aria-current={pathname === project.href ? 'page' : undefined} onClick={closeMenu}><Image src={project.image} alt="" width={54} height={54} sizes="54px" /><span>{project.label}</span>{project.badge && <em>{project.badge}</em>}<FaArrowRight aria-hidden="true" /></Link>)}
             </nav>
           </section>
           <div className={styles.mobileCongressGroup}>

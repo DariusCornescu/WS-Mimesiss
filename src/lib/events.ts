@@ -15,6 +15,10 @@ export type UpcomingEvent = {
   startDate?: string
   endDate?: string
   status: 'upcoming' | 'active'
+  /** Rând scurt sub dată pe cardul evidențiat, ex. când se deschid înscrierile. */
+  note?: string
+  /** Paleta cardului evidențiat; fără valoare se folosește cea a asociației. */
+  theme?: 'path'
 }
 
 type EditionDoc = {

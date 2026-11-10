@@ -49,6 +49,12 @@
     --brand-deep: 354.146 45.055% 17.843%; /* #42191D */
     --brand-ivory: 33.103 52.727% 89.216%; /* #F2E5D5 */
     --brand-sand: 35.000 56.604% 79.216%; /* #E8CFAC */
+    /* PATH: paleta proiectului, folosită doar pe suprafețele lui. */
+    --path-night: 224 64% 7%; /* #060D1D */
+    --path-navy: 220 58% 13%; /* #0E1B34 */
+    --path-cyan: 190 86% 56%; /* #2ECFEF */
+    --path-ice: 195 60% 92%; /* #DEF1F7 */
+    --path-teal: 192 90% 28%; /* #076E88 - cyan lizibil pe fundal deschis */
     --radius: 0.5rem;
   }
 }
