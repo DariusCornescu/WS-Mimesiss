@@ -17,5 +17,5 @@ const appearance = { variables: {
 } }
 
 export default function AccountProvider({ children }: { children: React.ReactNode }) {
-  return <ClerkProvider appearance={appearance}>{children}</ClerkProvider>
+  return <ClerkProvider appearance={appearance} signInUrl="/auth/login" signUpUrl="/auth/signup">{children}</ClerkProvider>
 }

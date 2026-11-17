@@ -87,3 +87,22 @@ test('profile persistence creates ordinary users and preserves existing roles', 
   assert.equal(clerkFields.fields.unsafeMetadata, undefined)
   await assert.rejects(profile.saveProfile({ ...user, primaryEmailAddress: null }, valid))
 })
+test('profile details are saved only when asked for, and empty optional ones are cleared', async () => {
+  let write
+  const profile = load('src/lib/profile.ts', {
+    '@clerk/nextjs/server': { clerkClient: async () => ({ users: { updateUser: async () => {} } }) },
+    '@/lib/mongodb': { default: async () => {}, __esModule: true }, '@/lib/registration-profile': validation,
+    '@/models': { User: { findOneAndUpdate: (filter, fields) => { write = { filter, fields }; return { lean: async () => ({}) } } } },
+  })
+  const details = { phone: '0722 123 456', institution: 'UMF', studyUnit: '', studyYear: '4', city: 'București' }
+  // Finishing sign-up sends no details and must not touch stored ones.
+  await profile.saveProfile(user, { ...valid, ...details })
+  assert.equal(write.fields.$set.phone, undefined)
+  assert.equal(write.fields.$unset, undefined)
+  await profile.saveProfile(user, { ...valid, ...details, role: 'admin' }, { withDetails: true })
+  assert.equal(write.fields.$set.phone, '0722123456')
+  assert.equal(write.fields.$set.studyYear, 4)
+  assert.equal(write.fields.$set.role, undefined)
+  assert.deepEqual(Object.keys(write.fields.$unset), ['studyUnit'])
+  await assert.rejects(profile.saveProfile(user, { ...valid, ...details, phone: '123' }, { withDetails: true }), /telefon/)
+})

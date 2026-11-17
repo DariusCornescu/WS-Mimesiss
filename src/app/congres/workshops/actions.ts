@@ -55,6 +55,7 @@ export async function registerForWorkshop(formData: FormData): Promise<ActionRes
         userId: clerkUser.id,
         activeEditionId: activeEdition?._id ?? null,
         workshopId,
+        requireTicket: true,
         registrationStartTime: appSettings.registrationStartTime ? new Date(appSettings.registrationStartTime) : null,
         registrationDeadline: appSettings.registrationDeadline
           ? new Date(appSettings.registrationDeadline)

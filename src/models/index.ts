@@ -10,6 +10,11 @@ export interface IUser extends Document {
   lastName?: string
   role: UserRole
   userType: UserType
+  phone?: string
+  institution?: string // university, school or hospital
+  studyUnit?: string // faculty, school profile or specialty
+  studyYear?: number // year of study or school class
+  city?: string
   paymentRevision?: number
   registrationRevision?: number
 }
@@ -77,6 +82,7 @@ export interface ITicket extends Document {
   enabled: boolean // Whether the ticket is available for purchase
   category: 'workshop' | 'ball' // Type of event this ticket belongs to
   maxQuantity?: number | null // Total units for sale; empty = unlimited
+  workshopAccess?: boolean // Holders may register for workshops
   stockRevision?: number // Bumped by each purchase of a limited ticket
 }
 
@@ -90,6 +96,11 @@ const UserSchema = new Schema<IUser>({
   registrationRevision: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin', 'moderator'], default: 'user' },
   userType: { type: String, enum: ['student', 'elev', 'rezident'], default: 'student' },
+  phone: { type: String, maxlength: 16 },
+  institution: { type: String, maxlength: 150 },
+  studyUnit: { type: String, maxlength: 150 },
+  studyYear: { type: Number, min: 1, max: 12 },
+  city: { type: String, maxlength: 100 },
 }, {
   timestamps: true
 })
@@ -236,6 +247,7 @@ const TicketSchema = new Schema<ITicket>({
   enabled: { type: Boolean, required: true, default: true },
   category: { type: String, enum: ['workshop', 'ball'], default: 'workshop', required: true },
   maxQuantity: { type: Number, min: 1, default: null },
+  workshopAccess: { type: Boolean, default: false },
   stockRevision: { type: Number, default: 0 },
 }, {
   timestamps: true

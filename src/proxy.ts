@@ -46,6 +46,11 @@ const authenticatedProxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect()
   }
+}, {
+  // Send signed-out visitors to the site's own pages. Without these the
+  // redirect goes to the provider's hosted account pages on another domain.
+  signInUrl: '/auth/login',
+  signUpUrl: '/auth/signup',
 })
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {

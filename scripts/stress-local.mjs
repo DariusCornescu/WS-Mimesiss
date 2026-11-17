@@ -117,7 +117,7 @@ try {
     // All cleanup is confined to this process-owned ephemeral DB.
     for (const model of Object.values(mongoose.models)) await model.deleteMany({})
     keys.clear(); intents.clear(); stripeCreates = 0
-    await models.User.insertMany(Array.from({ length: count }, (_, i) => ({ clerkId: `fixture-${i}`, email: `fixture-${i}@example.invalid`, firstName: 'Ana', lastName: 'Test', userType: 'student' })))
+    await models.User.insertMany(Array.from({ length: count }, (_, i) => ({ clerkId: `fixture-${i}`, email: `fixture-${i}@example.invalid`, firstName: 'Ana', lastName: 'Test', userType: 'student', phone: '0722123456', institution: 'UMF' })))
     return models.Workshop.create(Array.from({ length: workshopCount }, (_, i) => ({ title: `Test ${i}`, description: 'Synthetic fixture', maxParticipants: seats, editionId })))
   }
   const classify = result => result.ok ? 'ok' : result.code

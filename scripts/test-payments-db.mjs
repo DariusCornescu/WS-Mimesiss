@@ -43,7 +43,7 @@ beforeEach(async () => {
   for (const model of Object.values(mongoose.models)) await model.deleteMany({})
   settings = { paymentsEnabled: true, eventMode: 'ball', ballMaxTicketsPerUser: 2 }
   intents.clear(); keys.clear(); stripeCreates = 0
-  await models.User.create({ clerkId: 'buyer', email: 'buyer@example.com', firstName: 'Ana', lastName: 'Popescu', userType: 'student', role: 'user' })
+  await models.User.create({ clerkId: 'buyer', email: 'buyer@example.com', firstName: 'Ana', lastName: 'Popescu', userType: 'student', role: 'user', phone: '0722123456', institution: 'UMF' })
 })
 async function product(overrides = {}) {
   return models.Ticket.create({ title: 'Bal', description: 'Bilet de test', type: 'bal', price: 20, category: 'ball', enabled: true, features: [], ...overrides })
@@ -209,7 +209,7 @@ test('duplicate registration at full capacity keeps duplicate result and counter
 })
 
 async function buyers(count) {
-  await models.User.create(Array.from({ length: count }, (_, i) => ({ clerkId: 'buyer' + i, email: 'buyer' + i + '@example.com', firstName: 'Ana', lastName: 'Popescu', userType: 'student', role: 'user' })))
+  await models.User.create(Array.from({ length: count }, (_, i) => ({ clerkId: 'buyer' + i, email: 'buyer' + i + '@example.com', firstName: 'Ana', lastName: 'Popescu', userType: 'student', role: 'user', phone: '0722123456', institution: 'UMF' })))
   return Array.from({ length: count }, (_, i) => 'buyer' + i)
 }
 test('concurrent buyers cannot reserve more than the ticket stock', async () => {
@@ -266,5 +266,62 @@ test('congress tickets cannot be reserved before the sales start time', async ()
   await assert.rejects(purchase.reservePayment('buyer', String(ticket._id), 1), e => e.status === 403)
   assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
   settings = { paymentsEnabled: true, eventMode: 'workshops', ticketSalesStartTime: new Date(Date.now() - 1000).toISOString() }
+  await purchase.reservePayment('buyer', String(ticket._id), 1)
+})
+
+async function workshopSetup() {
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  const workshop = await models.Workshop.create({ title: 'Atelier', description: 'Test', wsType: 'workshop', maxParticipants: 5 })
+  const conference = await models.Workshop.create({ title: 'Conferință', description: 'Test', wsType: 'conferinta', maxParticipants: 5 })
+  const register = (w, extra = {}) => registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id), requireTicket: true, ...extra })
+  return { workshop, conference, register }
+}
+async function payFor(ticket) {
+  return models.Payment.create({ clerkId: 'buyer', stripeSessionId: 'pi_' + ticket._id, amount: 2000, quantity: 1, status: 'completed', ticketId: String(ticket._id), ticketType: ticket.type, ticketCategory: 'workshop' })
+}
+test('workshop registration needs a paid ticket with workshop access', async () => {
+  const { workshop, conference, register } = await workshopSetup()
+  assert.equal((await register(workshop)).code, 'ticket_required')
+  assert.equal((await models.Workshop.findById(workshop._id)).currentParticipants, 0)
+  // A ticket without workshop access is not enough.
+  await payFor(await product({ category: 'workshop', type: 'pasiv' }))
+  assert.equal((await register(workshop)).code, 'ticket_required')
+  // Conferences and admin assignment stay open.
+  assert.equal((await register(conference)).ok, true)
+  assert.equal((await register(workshop, { adminOverride: true })).ok, true)
+})
+test('a paid ticket with workshop access opens registration; refund or cancellation closes it', async () => {
+  const { workshop, register } = await workshopSetup()
+  const ticket = await product({ category: 'workshop', type: 'activ', workshopAccess: true })
+  // An unpaid checkout does not count.
+  await models.Payment.create({ clerkId: 'buyer', stripeSessionId: 'pi_pending', amount: 2000, quantity: 1, status: 'pending', ticketId: String(ticket._id) })
+  assert.equal((await register(workshop)).code, 'ticket_required')
+  const payment = await payFor(ticket)
+  assert.equal((await register(workshop)).ok, true)
+  await models.Registration.deleteMany({})
+  const issued = await models.IssuedTicket.create({ ticketNumber: 1, clerkId: 'buyer', paymentId: String(payment._id), ticketTypeId: String(ticket._id), ticketTitle: ticket.title, ticketType: ticket.type, category: 'workshop', pricePerTicket: 2000 })
+  assert.equal((await register(workshop)).ok, true)
+  await models.Registration.deleteMany({})
+  await models.IssuedTicket.updateOne({ _id: issued._id }, { $set: { status: 'cancelled' } })
+  assert.equal((await register(workshop)).code, 'ticket_required')
+  await models.IssuedTicket.updateOne({ _id: issued._id }, { $set: { status: 'used' } })
+  await models.Payment.updateOne({ _id: payment._id }, { $set: { status: 'refunded' } })
+  assert.equal((await register(workshop)).code, 'ticket_required')
+})
+test("another participant's ticket does not open registration", async () => {
+  const { workshop, register } = await workshopSetup()
+  const ticket = await product({ category: 'workshop', type: 'activ', workshopAccess: true })
+  await models.Payment.create({ clerkId: 'other', stripeSessionId: 'pi_other', amount: 2000, quantity: 1, status: 'completed', ticketId: String(ticket._id) })
+  assert.equal((await register(workshop)).code, 'ticket_required')
+})
+
+test('a ticket cannot be reserved until the profile has a phone and an institution', async () => {
+  const ticket = await product()
+  await models.User.updateOne({ clerkId: 'buyer' }, { $unset: { phone: '' } })
+  await assert.rejects(purchase.reservePayment('buyer', String(ticket._id), 1), e => e.code === 'profile_incomplete')
+  await models.User.updateOne({ clerkId: 'buyer' }, { $set: { phone: '0722123456' }, $unset: { institution: '' } })
+  await assert.rejects(purchase.reservePayment('buyer', String(ticket._id), 1), e => e.code === 'profile_incomplete')
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
+  await models.User.updateOne({ clerkId: 'buyer' }, { $set: { institution: 'UMF' } })
   await purchase.reservePayment('buyer', String(ticket._id), 1)
 })

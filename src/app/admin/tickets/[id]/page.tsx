@@ -46,6 +46,7 @@ export default async function EditTicketPage({ params }: EditTicketPageProps) {
 		enabled: ticket.enabled,
 		category: ticket.category || 'workshop',
 		maxQuantity: ticket.maxQuantity ?? null,
+		workshopAccess: ticket.workshopAccess === true,
 	}
 
 	return <EditTicketForm ticket={ticketData} />

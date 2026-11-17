@@ -1,12 +1,12 @@
 import mongoose, { Types } from 'mongoose'
 import connectDB from '@/lib/mongodb'
-import { Workshop, Registration, User } from '@/models'
+import { Workshop, Registration, User, Ticket, Payment, IssuedTicket } from '@/models'
 
 export type RegisterResult =
   | { ok: true }
   | {
       ok: false
-      code: 'not_found' | 'not_open' | 'full' | 'duplicate' | 'user_limit' | 'unknown'
+      code: 'not_found' | 'not_open' | 'full' | 'duplicate' | 'user_limit' | 'ticket_required' | 'unknown'
       message: string
     }
 
@@ -27,6 +27,27 @@ interface WorkshopGate {
   maxParticipants: number
 }
 
+/**
+ * A participant may pick workshops once they hold a paid ticket of a type the
+ * organisers marked as giving workshop access. A refunded payment does not
+ * count, and neither does one whose issued tickets were all cancelled.
+ * Manual payments have no issued tickets and count as they are.
+ */
+async function holdsWorkshopTicket(userId: string, session: mongoose.ClientSession) {
+  const granting = await Ticket.find({ workshopAccess: true }).session(session).select('_id').lean()
+  if (granting.length === 0) return false
+  const payments = await Payment.find({
+    clerkId: userId, status: 'completed', ticketId: { $in: granting.map(ticket => String(ticket._id)) },
+  }).session(session).select('_id').lean()
+  for (const payment of payments) {
+    const paymentId = String(payment._id)
+    const issued = await IssuedTicket.countDocuments({ paymentId }).session(session)
+    if (issued === 0) return true
+    if (await IssuedTicket.exists({ paymentId, status: { $ne: 'cancelled' } }).session(session)) return true
+  }
+  return false
+}
+
 /** Serialize each user's registrations and commit seat/count changes together. */
 export async function registerUserForWorkshop(opts: {
   userId: string
@@ -45,8 +66,13 @@ export async function registerUserForWorkshop(opts: {
    * keeps the capacity, per-user and duplicate guards.
    */
   adminOverride?: boolean
+  /**
+   * Public flow: a wsType 'workshop' needs a paid ticket with workshop
+   * access. Conferences and admin assignment are not affected.
+   */
+  requireTicket?: boolean
 }): Promise<RegisterResult> {
-  const { userId, workshopId, activeEditionId, registrationDeadline, registrationStartTime, adminOverride } = opts
+  const { userId, workshopId, activeEditionId, registrationDeadline, registrationStartTime, adminOverride, requireTicket } = opts
 
   await connectDB()
 
@@ -86,6 +112,9 @@ export async function registerUserForWorkshop(opts: {
         }
         if (workshop.wsType === 'workshop' && registrationDeadline && registrationDeadline < new Date()) {
           return { ok: false, code: 'not_open', message: 'Termenul limită pentru înregistrări la workshop-uri a expirat' }
+        }
+        if (requireTicket && workshop.wsType === 'workshop' && !(await holdsWorkshopTicket(userId, session))) {
+          return { ok: false, code: 'ticket_required', message: 'Pentru a te înscrie la workshopuri ai nevoie de un bilet cu acces la workshopuri. Îl poți cumpăra din pagina „Cumpără bilet”.' }
         }
       }
 

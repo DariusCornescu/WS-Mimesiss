@@ -4,7 +4,7 @@ import { Payment, Ticket, User, type IUser } from '@/models'
 import { PaymentAttempt, type PaymentAttemptRecord } from '@/models/PaymentAttempt'
 import { stripe } from '@/lib/stripe'
 import { getUncachedAppSettings } from '@/lib/settings'
-import { registrationProfile } from '@/lib/registration-profile'
+import { registrationProfile, purchaseProfile } from '@/lib/registration-profile'
 import { purchasePolicy } from '@/lib/payment-policy'
 import { RequestError } from '@/lib/request-security'
 import { ticketsTaken } from '@/lib/ticket-stock'
@@ -37,6 +37,7 @@ async function reserve(clerkId: string, ticketId: string, quantity: number): Pro
     // This shared write serializes all purchases and fulfillment for one user.
     const user = await User.findOneAndUpdate({ clerkId }, { $inc: { paymentRevision: 1 } }, { new: true, session }).lean() as IUser | null
     if (!user || !registrationProfile(user)) throw new RequestError(409, 'Completează profilul înainte de plată.', 'profile_incomplete')
+    if (!purchaseProfile(user)) throw new RequestError(409, 'Completează telefonul și instituția în profil înainte de plată.', 'profile_incomplete')
     const ticket = await Ticket.findById(ticketId).session(session).lean()
     if (!ticket) throw new RequestError(404, 'Bilet negăsit.')
     const payments = await Payment.find({ clerkId, status: 'completed', ...(ticket.category === 'ball' ? { ticketCategory: 'ball' } : { ticketType: ticket.type }) }).session(session).lean()

@@ -28,6 +28,7 @@ export default function NewTicketPage() {
 		const type = formData.get('type') as string
 		const enabled = formData.get('enabled') === 'on'
 		const category = formData.get('category') as 'workshop' | 'ball'
+		const workshopAccess = formData.get('workshopAccess') === 'on'
 		const maxQuantityValue = formData.get('maxQuantity') as string
 		const maxQuantity = maxQuantityValue ? Number(maxQuantityValue) : null
 
@@ -40,6 +41,7 @@ export default function NewTicketPage() {
 			enabled,
 			category: category || 'workshop',
 			maxQuantity,
+			workshopAccess,
 		}
 
 		startTransition(async () => {
@@ -151,6 +153,13 @@ export default function NewTicketPage() {
 			  </p>
 			</div>
 
+			<label className="mt-5 flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
+			  <input type="checkbox" id="workshopAccess" name="workshopAccess" disabled={isPending} defaultChecked className="h-4 w-4 rounded border-input bg-background accent-primary disabled:opacity-50" />
+			  <span className="text-sm font-medium text-foreground">
+			    Permite înscrierea la workshopuri
+			  </span>
+			</label>
+			<p className="mt-2 text-xs leading-5 text-muted-foreground">Doar participanții cu un bilet plătit de acest fel își pot alege workshopuri. Conferințele nu cer bilet.</p>
 			<label className="mt-5 flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
 			  <input
 				  type="checkbox"
