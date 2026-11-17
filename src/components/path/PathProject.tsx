@@ -1,11 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaInstagram, FaMapMarkerAlt, FaUserMd } from 'react-icons/fa'
-import { pathHighlights, pathProject, pathStory, pathWorkshops } from '@/lib/path-project'
+import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaInstagram, FaUserMd } from 'react-icons/fa'
+import { PATH_WORKSHOPS_HREF, pathHighlights, pathProject, pathStory, pathWorkshops } from '@/lib/path-project'
 import { PathHeroTimer, PathRegistration } from './PathTimeline'
+import { INSTAGRAM_URL } from './PathWorkshops'
 import styles from './PathProject.module.css'
-
-const INSTAGRAM_URL = 'https://www.instagram.com/asmm.bucuresti'
 
 export default function PathProject({ renderedAt }: { renderedAt: number }) {
   return (
@@ -26,7 +25,7 @@ export default function PathProject({ renderedAt }: { renderedAt: number }) {
           <div className={styles.heroBottom}>
             <PathHeroTimer renderedAt={renderedAt} />
             <div className={styles.heroActions}>
-              <a href="#workshopuri" className={styles.primaryButton}>Workshopuri și medici <FaArrowRight aria-hidden="true" /></a>
+              <Link href={PATH_WORKSHOPS_HREF} className={styles.primaryButton}>Workshopuri și medici <FaArrowRight aria-hidden="true" /></Link>
               <a href="#inscrieri" className={styles.ghostButton}>Cum mă înscriu</a>
             </div>
           </div>
@@ -55,40 +54,30 @@ export default function PathProject({ renderedAt }: { renderedAt: number }) {
         </ul>
       </section>
 
-      <section id="workshopuri" className={styles.workshops} aria-labelledby="path-workshops-title">
+      <section className={styles.workshops} aria-labelledby="path-workshops-title">
         <div className={styles.workshopsInner}>
-          <div className={styles.sectionHeading}>
-            <p className={styles.eyebrow}>Program</p>
-            <h2 id="path-workshops-title">Workshopuri și medici</h2>
-            <p>Fiecare workshop este susținut de un medic și pune accent pe practică.</p>
-          </div>
-          {pathWorkshops.length > 0 ? <ul className={styles.workshopGrid}>
-            {pathWorkshops.map(workshop => <li key={workshop.title} className={styles.workshop} data-entrance>
-              {workshop.image && (workshop.secondDoctor?.image
-                ? <div className={styles.workshopImages}>
-                  <div><Image src={workshop.image} alt={workshop.imageAlt ?? ''} fill sizes="(max-width: 760px) 50vw, (max-width: 1100px) 25vw, 17vw" /></div>
-                  <div><Image src={workshop.secondDoctor.image} alt={workshop.secondDoctor.imageAlt ?? ''} fill sizes="(max-width: 760px) 50vw, (max-width: 1100px) 25vw, 17vw" /></div>
-                </div>
-                : <div className={styles.workshopImage}><Image src={workshop.image} alt={workshop.imageAlt ?? ''} fill sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 33vw" /></div>)}
-              <div className={styles.workshopBody}>
-                <h3>{workshop.title}</h3>
-                <p className={styles.doctor}><FaUserMd aria-hidden="true" /><span><strong>{workshop.doctor}</strong>{workshop.doctorRole && <small>{workshop.doctorRole}</small>}</span></p>
-                {workshop.secondDoctor && <p className={styles.doctor}><FaUserMd aria-hidden="true" /><span><strong>{workshop.secondDoctor.name}</strong>{workshop.secondDoctor.role && <small>{workshop.secondDoctor.role}</small>}</span></p>}
-                <p className={styles.workshopText}>{workshop.description}</p>
-                {(workshop.schedule || workshop.location || workshop.seats) && <ul className={styles.workshopMeta}>
-                  {workshop.schedule && <li><FaCalendarAlt aria-hidden="true" /> {workshop.schedule}</li>}
-                  {workshop.location && <li><FaMapMarkerAlt aria-hidden="true" /> {workshop.location}</li>}
-                  {workshop.seats && <li>{workshop.seats} locuri</li>}
-                </ul>}
-              </div>
-            </li>)}
-          </ul> : <div className={styles.workshopsSoon}>
-            <div>
-              <h3>Lista se publică în curând.</h3>
-              <p>Workshopurile și medicii care le susțin apar aici imediat ce sunt anunțați. Până atunci, noutățile ajung mai întâi pe Instagram.</p>
+          <div className={styles.workshopsTeaser}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.eyebrow}>Program</p>
+              <h2 id="path-workshops-title">Workshopuri și medici</h2>
+              <p>
+                {pathWorkshops.length > 0
+                  ? `${pathWorkshops.length} workshopuri, fiecare susținut de un medic și axat pe practică.`
+                  : 'Lista workshopurilor și a medicilor se publică în curând.'}
+              </p>
             </div>
-            <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={styles.ghostButton}><FaInstagram aria-hidden="true" /> @asmm.bucuresti</a>
-          </div>}
+            {pathWorkshops.length > 0
+              ? <Link href={PATH_WORKSHOPS_HREF} className={styles.primaryButton}>Vezi workshopurile <FaArrowRight aria-hidden="true" /></Link>
+              : <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer" className={styles.ghostButton}><FaInstagram aria-hidden="true" /> @asmm.bucuresti</a>}
+          </div>
+          {pathWorkshops.length > 0 && <ul className={styles.workshopIndex}>
+            {pathWorkshops.map(workshop => <li key={workshop.title}>
+              <Link href={PATH_WORKSHOPS_HREF}>
+                <strong>{workshop.title}</strong>
+                <span><FaUserMd aria-hidden="true" /> {workshop.doctor}{workshop.secondDoctor ? `, ${workshop.secondDoctor.name}` : ''}</span>
+              </Link>
+            </li>)}
+          </ul>}
         </div>
       </section>
 
