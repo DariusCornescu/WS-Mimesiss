@@ -140,13 +140,15 @@ export default function EnhancedTicketSelector() {
 							<button
 								type="button"
 								onClick={() => handleSelectTicket(ticket)}
-								disabled={purchased}
-								className={`mt-auto min-h-12 w-full rounded-lg border px-4 py-3 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${purchased
+								disabled={purchased || ticket.soldOut}
+								className={`mt-auto min-h-12 w-full rounded-lg border px-4 py-3 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${ticket.soldOut
+									? 'cursor-not-allowed border-border bg-muted text-muted-foreground'
+									: purchased
 									? 'cursor-not-allowed border-primary/30 bg-primary/20 text-accent'
 									: 'border-accent/50 bg-primary text-primary-foreground hover:bg-primary/90'
 									}`}
 							>
-								{purchased ? 'Deja cumpărat' : 'Cumpără acum'}
+								{ticket.soldOut ? 'Epuizat' : purchased ? 'Deja cumpărat' : 'Cumpără acum'}
 							</button>
 						</article>
 					);

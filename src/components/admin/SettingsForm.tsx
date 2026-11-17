@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import type { AppSettingsPlain } from '@/lib/settings'
 import { updateSettings, resetSettings } from '@/app/admin/settings/actions'
 import ToggleSwitch from '@/components/ui/ToggleSwitch'
+import { formatBucharestLocal } from '@/lib/bucharest-time'
 
 interface SettingsFormProps {
   initialSettings: AppSettingsPlain
@@ -20,19 +21,8 @@ function Spinner() {
   )
 }
 
-// Helper to format date for datetime-local input
-// Reads stored UTC time and displays it as-is (since we store the literal time as UTC)
-function formatDateTimeLocal(date: Date | string | null | undefined): string {
-  if (!date) return ''
-  const d = new Date(date)
-  // Use UTC methods because we store "20:00" as "20:00 UTC" (not as Romania time converted to UTC)
-  const year = d.getUTCFullYear()
-  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
-  const day = String(d.getUTCDate()).padStart(2, '0')
-  const hours = String(d.getUTCHours()).padStart(2, '0')
-  const minutes = String(d.getUTCMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day}T${hours}:${minutes}`
-}
+// Dates are edited as Romanian wall-clock time, whatever the browser's zone.
+const formatDateTimeLocal = formatBucharestLocal
 
 export default function SettingsForm({ initialSettings }: SettingsFormProps) {
   const [isPending, startTransition] = useTransition()
@@ -112,6 +102,9 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
             <h3 className="text-lg font-medium text-foreground border-b border-border pb-2">
               Setări Workshop-uri
             </h3>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Toate datele și orele din această pagină sunt în ora României.
+            </p>
           </div>
 
           <div className="space-y-6">
@@ -128,6 +121,24 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
               description="Când este activat, utilizatorii pot efectua plăți pentru workshop-uri."
               defaultChecked={initialSettings.paymentsEnabled}
             />
+
+            <div>
+              <label htmlFor="ticketSalesStartTime" className="block text-sm font-medium text-foreground">
+                Deschiderea vânzării biletelor de congres
+              </label>
+              <div className="mt-1">
+                <input
+                  type="datetime-local"
+                  id="ticketSalesStartTime"
+                  name="ticketSalesStartTime"
+                  defaultValue={formatDateTimeLocal(initialSettings.ticketSalesStartTime)}
+                  className="block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm"
+                />
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Cu plățile activate, biletele pot fi cumpărate abia de la această oră. Lăsați gol pentru vânzare imediată.
+              </p>
+            </div>
 
             <ToggleSwitch
               name="workshopVisibleToPublic"

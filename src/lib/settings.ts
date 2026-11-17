@@ -17,6 +17,7 @@ export interface AppSettingsPlain {
   allowCancelRegistration: boolean
   registrationStartTime: string | null
   registrationDeadline: string | null
+  ticketSalesStartTime: string | null
   defaultMaxParticipants: number
   ballTicketAvailableFrom: string | null
   ballTicketAvailableTo: string | null
@@ -43,6 +44,7 @@ const settingsWithoutDatabase = (): AppSettingsPlain => ({
   allowCancelRegistration: DEFAULT_SETTINGS.allowCancelRegistration,
   registrationStartTime: null,
   registrationDeadline: null,
+  ticketSalesStartTime: null,
   defaultMaxParticipants: DEFAULT_SETTINGS.defaultMaxParticipants,
   ballTicketAvailableFrom: null,
   ballTicketAvailableTo: null,
@@ -70,6 +72,7 @@ async function readSettings(): Promise<AppSettingsPlain> {
     allowCancelRegistration: doc?.allowCancelRegistration ?? DEFAULT_SETTINGS.allowCancelRegistration,
     registrationStartTime: toIso(doc?.registrationStartTime),
     registrationDeadline: toIso(doc?.registrationDeadline),
+    ticketSalesStartTime: toIso(doc?.ticketSalesStartTime),
     defaultMaxParticipants: doc?.defaultMaxParticipants ?? DEFAULT_SETTINGS.defaultMaxParticipants,
     ballTicketAvailableFrom: toIso(doc?.ballTicketAvailableFrom),
     ballTicketAvailableTo: toIso(doc?.ballTicketAvailableTo),
@@ -104,9 +107,12 @@ export const getAppSettings = cache(async (): Promise<AppSettingsPlain> => {
 })
 
 /**
- * Update app settings (creates the document on first write).
+ * Update app settings (creates the document on first write). A null date
+ * clears the stored value; an undefined field is left untouched.
  */
-export async function updateAppSettings(updates: Partial<IAppSettings>): Promise<void> {
+export type AppSettingsUpdate = { [K in keyof IAppSettings]?: IAppSettings[K] | null }
+
+export async function updateAppSettings(updates: AppSettingsUpdate): Promise<void> {
   await connectDB()
 
   const settings = await AppSettings.findOne()

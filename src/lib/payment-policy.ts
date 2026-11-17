@@ -12,8 +12,11 @@ export function purchasePolicy(ticket: { enabled: boolean; category: string; pri
       throw new RequestError(403, 'Vânzarea biletelor nu este deschisă.')
     }
     if (purchased + quantity > settings.ballMaxTicketsPerUser) throw new RequestError(409, 'Ai atins limita de bilete per persoană.')
-  } else if (quantity !== 1 || purchased > 0) {
-    throw new RequestError(409, 'Poți cumpăra un singur bilet de acest tip.')
+  } else {
+    if (settings.ticketSalesStartTime && now < Date.parse(settings.ticketSalesStartTime)) {
+      throw new RequestError(403, 'Vânzarea biletelor nu este deschisă.')
+    }
+    if (quantity !== 1 || purchased > 0) throw new RequestError(409, 'Poți cumpăra un singur bilet de acest tip.')
   }
   const amount = Math.round(ticket.price * 100) * quantity
   if (!Number.isSafeInteger(amount) || amount < 1 || amount > 99999999) throw new RequestError(400, 'Preț invalid.')

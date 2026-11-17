@@ -106,6 +106,9 @@ export interface Ticket {
   features: string[]; // List of features
   enabled: boolean; // Whether the ticket is available for purchase
   category: 'workshop' | 'ball'; // Which event type this ticket belongs to
+  maxQuantity?: number | null; // Total units for sale; empty = unlimited
+  sold?: number; // Paid or held units (admin views only)
+  soldOut?: boolean; // No units left to buy
   createdAt?: Date;
   updatedAt?: Date;
 }

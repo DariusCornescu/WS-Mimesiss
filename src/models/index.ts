@@ -76,6 +76,8 @@ export interface ITicket extends Document {
   description?: string // Optional detailed description
   enabled: boolean // Whether the ticket is available for purchase
   category: 'workshop' | 'ball' // Type of event this ticket belongs to
+  maxQuantity?: number | null // Total units for sale; empty = unlimited
+  stockRevision?: number // Bumped by each purchase of a limited ticket
 }
 
 // User schema
@@ -222,6 +224,8 @@ const PaymentSchema = new Schema<IPayment>({
 // Add compound index for common queries
 PaymentSchema.index({ clerkId: 1, status: 1 })
 PaymentSchema.index({ clerkId: 1, ticketType: 1 })
+// Stock count per ticket
+PaymentSchema.index({ ticketId: 1, status: 1 })
 
 const TicketSchema = new Schema<ITicket>({
   title: { type: String, required: true },
@@ -231,6 +235,8 @@ const TicketSchema = new Schema<ITicket>({
   type: { type: String, required: true },
   enabled: { type: Boolean, required: true, default: true },
   category: { type: String, enum: ['workshop', 'ball'], default: 'workshop', required: true },
+  maxQuantity: { type: Number, min: 1, default: null },
+  stockRevision: { type: Number, default: 0 },
 }, {
   timestamps: true
 })

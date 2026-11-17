@@ -213,9 +213,10 @@ export default function BallTicketSelector({
               <button
                 type="button"
                 onClick={() => handleSelectTicket(ticket)}
-                className="min-h-12 w-full rounded-lg border border-accent/50 bg-primary px-4 py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                disabled={ticket.soldOut}
+                className="min-h-12 w-full rounded-lg border border-accent/50 bg-primary px-4 py-3 font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
               >
-                Cumpără {quantity} bilet{quantity !== 1 ? 'e' : ''}
+                {ticket.soldOut ? 'Epuizat' : `Cumpără ${quantity} bilet${quantity !== 1 ? 'e' : ''}`}
               </button>
             </article>
           ))}
