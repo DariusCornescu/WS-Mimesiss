@@ -64,10 +64,16 @@ export default function PathProject({ renderedAt }: { renderedAt: number }) {
           </div>
           {pathWorkshops.length > 0 ? <ul className={styles.workshopGrid}>
             {pathWorkshops.map(workshop => <li key={workshop.title} className={styles.workshop} data-entrance>
-              {workshop.image && <div className={styles.workshopImage}><Image src={workshop.image} alt={workshop.imageAlt ?? ''} fill sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 33vw" /></div>}
+              {workshop.image && (workshop.secondDoctor?.image
+                ? <div className={styles.workshopImages}>
+                  <div><Image src={workshop.image} alt={workshop.imageAlt ?? ''} fill sizes="(max-width: 760px) 50vw, (max-width: 1100px) 25vw, 17vw" /></div>
+                  <div><Image src={workshop.secondDoctor.image} alt={workshop.secondDoctor.imageAlt ?? ''} fill sizes="(max-width: 760px) 50vw, (max-width: 1100px) 25vw, 17vw" /></div>
+                </div>
+                : <div className={styles.workshopImage}><Image src={workshop.image} alt={workshop.imageAlt ?? ''} fill sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 33vw" /></div>)}
               <div className={styles.workshopBody}>
                 <h3>{workshop.title}</h3>
                 <p className={styles.doctor}><FaUserMd aria-hidden="true" /><span><strong>{workshop.doctor}</strong>{workshop.doctorRole && <small>{workshop.doctorRole}</small>}</span></p>
+                {workshop.secondDoctor && <p className={styles.doctor}><FaUserMd aria-hidden="true" /><span><strong>{workshop.secondDoctor.name}</strong>{workshop.secondDoctor.role && <small>{workshop.secondDoctor.role}</small>}</span></p>}
                 <p className={styles.workshopText}>{workshop.description}</p>
                 {(workshop.schedule || workshop.location || workshop.seats) && <ul className={styles.workshopMeta}>
                   {workshop.schedule && <li><FaCalendarAlt aria-hidden="true" /> {workshop.schedule}</li>}

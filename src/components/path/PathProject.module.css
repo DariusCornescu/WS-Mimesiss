@@ -70,6 +70,10 @@
 .workshop { display: flex; flex-direction: column; overflow: hidden; border: 1px solid hsl(var(--path-cyan) / .2); border-radius: 18px; background: hsl(var(--path-ice) / .05); }
 .workshopImage { position: relative; aspect-ratio: 3 / 2; }
 .workshopImage img { object-fit: cover; }
+/* Two doctors: the same 3:2 frame, shared by two portraits. */
+.workshopImages { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; aspect-ratio: 3 / 2; }
+.workshopImages > div { position: relative; }
+.workshopImages img { object-fit: cover; object-position: center 30%; }
 .workshopBody { display: flex; flex: 1; flex-direction: column; gap: 14px; padding: 26px; }
 .workshop h3 { font-size: 22px; line-height: 1.25; overflow-wrap: anywhere; }
 .doctor { display: flex; align-items: start; gap: 12px; font-size: 15px; line-height: 1.4; }
