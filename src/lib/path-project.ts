@@ -62,7 +62,7 @@ export type PathWorkshop = {
   /** Specialitatea sau funcția, ex. „Medic primar chirurgie generală”. */
   doctorRole?: string
   /** Al doilea medic, când workshopul este susținut de doi. */
-  secondDoctor?: { name: string; role?: string }
+  secondDoctor?: { name: string; role?: string; image?: string; imageAlt?: string }
   description: string
   /** Cale locală din /public, ex. „/projects/path/workshops/sutura.webp”. */
   image?: string
