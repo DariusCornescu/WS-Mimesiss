@@ -57,7 +57,13 @@ export default function EnhancedTicketSelector() {
 				<div>
 					<button
 						type="button"
-						onClick={() => setShowCheckout(false)}
+						onClick={() => {
+							// Going back means choosing again: nothing was bought, so no
+							// card may stay marked as selected or disabled.
+							setShowCheckout(false);
+							setSelectedTicket(null);
+							setSelectedAddOn(null);
+						}}
 						className="mb-6 flex items-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 					>
 						<FaArrowLeft className="h-3 w-3" aria-hidden="true" />

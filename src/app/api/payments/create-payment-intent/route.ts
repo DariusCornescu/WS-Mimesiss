@@ -15,7 +15,11 @@ export async function POST(request: Request) {
     const attempt = await reservePayment(user.id, parsed.data.ticketId, parsed.data.quantity, parsed.data.addOnTicketId)
     const intent = await intentForAttempt(attempt)
     if (['succeeded', 'processing', 'canceled'].includes(intent.status)) throw new RequestError(409, 'Plata a fost deja procesată. Actualizează pagina pentru starea biletelor.')
-    return NextResponse.json({ clientSecret: intent.client_secret }, { headers: { 'Cache-Control': 'no-store' } })
+    // The buyer's own profile name, so the payment form can send it as the billing name.
+    return NextResponse.json(
+      { clientSecret: intent.client_secret, ...(attempt.buyerName ? { buyerName: attempt.buyerName } : {}) },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
   } catch (error) {
     const response = requestErrorResponse(error)
     if (response) return response

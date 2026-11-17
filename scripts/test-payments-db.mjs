@@ -392,6 +392,9 @@ test('a workshop ticket and its add-on are paid together and fulfilled as two pu
   const intent = await purchase.intentForAttempt(attempt)
   assert.equal(intent.amount, 7000)
   assert.equal(intent.metadata.addOnTicketId, String(addOn._id))
+  // The profile name travels with the payment, so Stripe shows who paid.
+  assert.equal(attempt.buyerName, 'Ana Popescu')
+  assert.equal(intent.metadata.buyerName, 'Ana Popescu')
   intent.status = 'succeeded'; intent.amount_received = intent.amount
   await Promise.all(Array.from({ length: 10 }, () => fulfillment.fulfillPayment(intent)))
   const payments = await models.Payment.find().sort({ amount: -1 }).lean()
