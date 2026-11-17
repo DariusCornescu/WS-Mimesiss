@@ -35,6 +35,8 @@ const ticketFields = {
   enabled: z.boolean().optional(),
   category: z.enum(['workshop', 'ball'], { message: 'Categorie invalidă' }).optional(),
   workshopAccess: z.boolean().optional(),
+  // 0 = not an add-on
+  extraWorkshops: z.number({ message: 'Numărul de workshopuri suplimentare trebuie să fie un număr întreg' }).int('Numărul de workshopuri suplimentare trebuie să fie un număr întreg').min(0, 'Minim 0').max(5, 'Maxim 5 workshopuri suplimentare').optional(),
   // null = unlimited stock
   maxQuantity: z.number({ message: 'Numărul de bilete trebuie să fie un număr întreg' }).int('Numărul de bilete trebuie să fie un număr întreg').min(1, 'Minim 1 bilet').max(100000, 'Maxim 100.000 de bilete').nullable().optional(),
 }

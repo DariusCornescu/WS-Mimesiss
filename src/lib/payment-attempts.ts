@@ -8,6 +8,7 @@ import { registrationProfile, purchaseProfile } from '@/lib/registration-profile
 import { purchasePolicy } from '@/lib/payment-policy'
 import { RequestError } from '@/lib/request-security'
 import { ticketsTaken } from '@/lib/ticket-stock'
+import { holdsWorkshopTicket } from '@/lib/registration'
 
 // An open checkout holds its tickets. Past this age the hold may be released
 // for another buyer, after Stripe confirms the payment can no longer succeed.
@@ -40,6 +41,9 @@ async function reserve(clerkId: string, ticketId: string, quantity: number): Pro
     if (!purchaseProfile(user)) throw new RequestError(409, 'Completează telefonul și instituția în profil înainte de plată.', 'profile_incomplete')
     const ticket = await Ticket.findById(ticketId).session(session).lean()
     if (!ticket) throw new RequestError(404, 'Bilet negăsit.')
+    if ((ticket.extraWorkshops ?? 0) > 0 && !(await holdsWorkshopTicket(clerkId, session))) {
+      throw new RequestError(409, 'Workshopul suplimentar se poate cumpăra doar după biletul cu acces la workshopuri.', 'base_ticket_required')
+    }
     const payments = await Payment.find({ clerkId, status: 'completed', ...(ticket.category === 'ball' ? { ticketCategory: 'ball' } : { ticketType: ticket.type }) }).session(session).lean()
     const purchased = payments.reduce((sum, payment) => sum + (payment.quantity || 1), 0)
     const amount = purchasePolicy(ticket, quantity, settings, purchased)

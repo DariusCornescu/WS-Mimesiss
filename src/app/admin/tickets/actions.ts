@@ -32,6 +32,7 @@ export async function createTicket(data: {
 	category?: 'workshop' | 'ball';
 	maxQuantity?: number | null;
 	workshopAccess?: boolean;
+	extraWorkshops?: number;
 }): Promise<void> {
 	await requireRole('admin');
 
@@ -40,12 +41,15 @@ export async function createTicket(data: {
 		throw new Error(parsed.error);
 	}
 
+	const extraWorkshops = parsed.data.category === 'ball' ? 0 : parsed.data.extraWorkshops ?? 0;
 	const ticket = new Ticket({
 		...parsed.data,
 		enabled: parsed.data.enabled ?? true,
 		category: parsed.data.category ?? 'workshop',
 		maxQuantity: parsed.data.maxQuantity ?? null,
-		workshopAccess: parsed.data.workshopAccess ?? false,
+		// An add-on extends a workshop ticket; it never opens registration alone.
+		workshopAccess: extraWorkshops > 0 ? false : parsed.data.workshopAccess ?? false,
+		extraWorkshops,
 	});
 	await ticket.save();
 	revalidatePath('/admin/tickets');
@@ -61,6 +65,7 @@ export async function updateTicket(ticketId: string, data: {
 	category?: 'workshop' | 'ball';
 	maxQuantity?: number | null;
 	workshopAccess?: boolean;
+	extraWorkshops?: number;
 }): Promise<void> {
 	await requireRole('admin');
 
@@ -84,6 +89,10 @@ export async function updateTicket(ticketId: string, data: {
 	// null clears the limit; undefined leaves it as it is.
 	if (parsed.data.maxQuantity !== undefined) ticket.maxQuantity = parsed.data.maxQuantity;
 	if (parsed.data.workshopAccess !== undefined) ticket.workshopAccess = parsed.data.workshopAccess;
+	if (parsed.data.extraWorkshops !== undefined) ticket.extraWorkshops = parsed.data.extraWorkshops;
+	if (ticket.category === 'ball') ticket.extraWorkshops = 0;
+	// An add-on extends a workshop ticket; it never opens registration alone.
+	if ((ticket.extraWorkshops ?? 0) > 0) ticket.workshopAccess = false;
 	await ticket.save();
 
 	revalidatePath('/admin/tickets');

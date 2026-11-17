@@ -18,9 +18,10 @@ export default function EnhancedTicketSelector() {
 	useEffect(() => {
 		const fetchTickets = async () => {
 			const allTickets = await getPublicTickets();
-			// Filter only enabled tickets
+			// Filter only enabled tickets; add-ons follow the tickets they extend
 			const enabledTickets = allTickets.filter(ticket => ticket.enabled !== false);
-			setTickets(enabledTickets);
+			const isAddOn = (ticket: TicketType) => (ticket.extraWorkshops ?? 0) > 0;
+			setTickets([...enabledTickets.filter(ticket => !isAddOn(ticket)), ...enabledTickets.filter(isAddOn)]);
 		};
 
 		fetchTickets();
@@ -101,6 +102,8 @@ export default function EnhancedTicketSelector() {
 			<div className="grid gap-5 xl:grid-cols-2">
 				{tickets.map((ticket) => {
 					const purchased = ticket._id === selectedTicket?._id;
+					const addOn = (ticket.extraWorkshops ?? 0) > 0;
+					const unavailable = ticket.soldOut || ticket.requiresBaseTicket;
 
 					return (
 						<article
@@ -117,6 +120,11 @@ export default function EnhancedTicketSelector() {
 							)}
 
 							<div className="mb-4">
+								{addOn && (
+									<p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+										Supliment
+									</p>
+								)}
 								<h3 className="text-xl font-bold text-foreground mb-2">
 									{ticket.title}
 								</h3>
@@ -137,18 +145,24 @@ export default function EnhancedTicketSelector() {
 								))}
 							</ul>
 
+							{ticket.requiresBaseTicket && !ticket.soldOut && (
+								<p className="mb-4 text-sm leading-relaxed text-muted-foreground">
+									Disponibil după ce cumperi un bilet cu acces la workshopuri.
+								</p>
+							)}
+
 							<button
 								type="button"
 								onClick={() => handleSelectTicket(ticket)}
-								disabled={purchased || ticket.soldOut}
-								className={`mt-auto min-h-12 w-full rounded-lg border px-4 py-3 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${ticket.soldOut
+								disabled={purchased || unavailable}
+								className={`mt-auto min-h-12 w-full rounded-lg border px-4 py-3 font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background ${unavailable
 									? 'cursor-not-allowed border-border bg-muted text-muted-foreground'
 									: purchased
 									? 'cursor-not-allowed border-primary/30 bg-primary/20 text-accent'
 									: 'border-accent/50 bg-primary text-primary-foreground hover:bg-primary/90'
 									}`}
 							>
-								{ticket.soldOut ? 'Epuizat' : purchased ? 'Deja cumpărat' : 'Cumpără acum'}
+								{ticket.soldOut ? 'Epuizat' : ticket.requiresBaseTicket ? 'Necesită biletul de bază' : purchased ? 'Deja cumpărat' : 'Cumpără acum'}
 							</button>
 						</article>
 					);

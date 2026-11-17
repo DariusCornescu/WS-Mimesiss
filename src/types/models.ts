@@ -113,6 +113,8 @@ export interface Ticket {
   category: 'workshop' | 'ball'; // Which event type this ticket belongs to
   maxQuantity?: number | null; // Total units for sale; empty = unlimited
   workshopAccess?: boolean; // Holders may register for workshops
+  extraWorkshops?: number; // Add-on: extra workshop places, needs a workshop-access ticket
+  requiresBaseTicket?: boolean; // Add-on the current visitor cannot buy yet (payment page only)
   sold?: number; // Paid or held units (admin views only)
   soldOut?: boolean; // No units left to buy
   createdAt?: Date;

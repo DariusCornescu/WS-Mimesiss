@@ -47,7 +47,7 @@ export default async function ManualAssignmentPage() {
       <PageIntro
         eyebrow="Administrare ASMM"
         title="Alocarea manuală a participanților"
-        description="Alocă manual utilizatori la workshopuri. Limita de două workshopuri per utilizator și capacitatea fiecărui workshop sunt verificate automat."
+        description="Alocă manual utilizatori la workshopuri. Limita de două workshopuri per utilizator (plus cele cumpărate ca supliment) și capacitatea fiecărui workshop sunt verificate automat."
         actions={
           <Link
             href="/admin/workshops"

@@ -27,25 +27,48 @@ interface WorkshopGate {
   maxParticipants: number
 }
 
+type Session = mongoose.ClientSession | null
+
 /**
- * A participant may pick workshops once they hold a paid ticket of a type the
- * organisers marked as giving workshop access. A refunded payment does not
- * count, and neither does one whose issued tickets were all cancelled.
- * Manual payments have no issued tickets and count as they are.
+ * The participant's paid purchases of these ticket types that still stand. A
+ * refunded payment does not count, and neither does one whose issued tickets
+ * were all cancelled. Manual payments have no issued tickets and count as
+ * they are.
  */
-async function holdsWorkshopTicket(userId: string, session: mongoose.ClientSession) {
-  const granting = await Ticket.find({ workshopAccess: true }).session(session).select('_id').lean()
-  if (granting.length === 0) return false
-  const payments = await Payment.find({
-    clerkId: userId, status: 'completed', ticketId: { $in: granting.map(ticket => String(ticket._id)) },
-  }).session(session).select('_id').lean()
+async function standingPayments(userId: string, ticketIds: string[], session: Session) {
+  if (ticketIds.length === 0) return []
+  const payments = await Payment.find({ clerkId: userId, status: 'completed', ticketId: { $in: ticketIds } })
+    .session(session).select('_id ticketId quantity').lean()
+  const standing: typeof payments = []
   for (const payment of payments) {
     const paymentId = String(payment._id)
     const issued = await IssuedTicket.countDocuments({ paymentId }).session(session)
-    if (issued === 0) return true
-    if (await IssuedTicket.exists({ paymentId, status: { $ne: 'cancelled' } }).session(session)) return true
+    if (issued === 0 || await IssuedTicket.exists({ paymentId, status: { $ne: 'cancelled' } }).session(session)) standing.push(payment)
   }
-  return false
+  return standing
+}
+
+/**
+ * A participant may pick workshops once they hold a paid ticket of a type the
+ * organisers marked as giving workshop access. Add-ons are sold against the
+ * same rule.
+ */
+export async function holdsWorkshopTicket(userId: string, session: Session = null) {
+  const granting = await Ticket.find({ workshopAccess: true }).session(session).select('_id').lean()
+  return (await standingPayments(userId, granting.map(ticket => String(ticket._id)), session)).length > 0
+}
+
+/**
+ * Extra workshop places bought as add-ons. They extend a workshop ticket, so
+ * they count only while the participant still holds one.
+ */
+async function extraWorkshopPlaces(userId: string, session: Session) {
+  const addOns = await Ticket.find({ extraWorkshops: { $gt: 0 } }).session(session).select('_id extraWorkshops').lean()
+  if (addOns.length === 0) return 0
+  const places = new Map(addOns.map(ticket => [String(ticket._id), ticket.extraWorkshops ?? 0]))
+  const payments = await standingPayments(userId, [...places.keys()], session)
+  if (payments.length === 0 || !(await holdsWorkshopTicket(userId, session))) return 0
+  return payments.reduce((sum, payment) => sum + (places.get(String(payment.ticketId)) ?? 0) * (payment.quantity || 1), 0)
 }
 
 /** Serialize each user's registrations and commit seat/count changes together. */
@@ -160,7 +183,17 @@ export async function registerUserForWorkshop(opts: {
           : await Workshop.countDocuments({ _id: { $in: otherIds }, wsType: 'workshop' }).session(session)
 
         if (userWorkshopCount >= MAX_WORKSHOPS_PER_USER) {
-          throw new RegistrationRejected({ ok: false, code: 'user_limit', message: 'Poți fi înregistrat la maxim 2 workshop-uri simultan' })
+          const limit = MAX_WORKSHOPS_PER_USER + await extraWorkshopPlaces(userId, session)
+          if (userWorkshopCount >= limit) {
+            const addOnForSale = limit === MAX_WORKSHOPS_PER_USER
+              && await Ticket.exists({ extraWorkshops: { $gt: 0 }, enabled: true }).session(session)
+            throw new RegistrationRejected({
+              ok: false,
+              code: 'user_limit',
+              message: `Poți fi înregistrat la maxim ${limit} workshop-uri simultan`
+                + (addOnForSale ? '. Poți adăuga un workshop suplimentar din pagina „Cumpără bilet”.' : ''),
+            })
+          }
         }
 
       }

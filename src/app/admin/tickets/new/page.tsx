@@ -31,6 +31,8 @@ export default function NewTicketPage() {
 		const workshopAccess = formData.get('workshopAccess') === 'on'
 		const maxQuantityValue = formData.get('maxQuantity') as string
 		const maxQuantity = maxQuantityValue ? Number(maxQuantityValue) : null
+		const extraWorkshopsValue = formData.get('extraWorkshops') as string
+		const extraWorkshops = extraWorkshopsValue ? Number(extraWorkshopsValue) : 0
 
 		const data = {
 			title,
@@ -42,6 +44,7 @@ export default function NewTicketPage() {
 			category: category || 'workshop',
 			maxQuantity,
 			workshopAccess,
+			extraWorkshops,
 		}
 
 		startTransition(async () => {
@@ -160,6 +163,15 @@ export default function NewTicketPage() {
 			  </span>
 			</label>
 			<p className="mt-2 text-xs leading-5 text-muted-foreground">Doar participanții cu un bilet plătit de acest fel își pot alege workshopuri. Conferințele nu cer bilet.</p>
+			<div className="mt-5">
+				<label htmlFor="extraWorkshops" className="mb-2 block text-sm font-semibold text-foreground">
+					Workshopuri suplimentare
+				</label>
+				<input id="extraWorkshops" type="number" name="extraWorkshops" disabled={isPending} min="0" max="5" step="1" defaultValue={0} className="mimesiss-input min-h-12 md:max-w-xs" />
+				<p className="mt-2 text-xs leading-5 text-muted-foreground">
+					Lasă 0 pentru un bilet obișnuit. Peste 0, biletul devine un supliment: se poate cumpăra doar după un bilet cu înscriere la workshopuri și ridică limita de 2 workshopuri cu acest număr.
+				</p>
+			</div>
 			<label className="mt-5 flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
 			  <input
 				  type="checkbox"
