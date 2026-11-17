@@ -109,6 +109,18 @@ export const pathWorkshops: PathWorkshop[] = [
     image: '/projects/path/workshops/aida-mihaela-manole.webp',
     imageAlt: 'Lt. dr. Manole Aida Mihaela, medic specialist în neurologie.',
   },
+  {
+    title: 'Inside Bariatric Surgery: A Hands-On Experience',
+    doctor: 'Dr. Ruxandra Marian',
+    doctorRole: 'Medic specialist în chirurgie generală',
+    description: [
+      'Dr. Ruxandra Marian este medic specialist în chirurgie generală, cu supraspecializare în chirurgia bariatrică și o experiență profesională de peste 12 ani. În prezent, își desfășoară activitatea în cadrul Spitalului Nord Pipera, unde contribuie la îmbunătățirea stării de sănătate a pacienților, oferindu-le șansa unui nou început.',
+      'Parcursul său profesional a început în cadrul Spitalului Clinic de Urgență Floreasca, continuând în echipa de transplant de la Institutul Clinic Fundeni, experiențe care au contribuit la formarea sa chirurgicală.',
+      'În cadrul acestui workshop, veți avea ocazia să pătrundeți în universul chirurgiei bariatrice și să descoperiți principiile și particularitățile acestei specialități. Printr-o abordare practică, de tip hands-on, veți putea explora tehnici și manevre chirurgicale specifice, înțelegând mai bine etapele unei intervenții și provocările întâlnite în practica operatorie. Va fi o oportunitate de a îmbina cunoștințele teoretice cu experiența practică și de a descoperi perspectiva chirurgului asupra managementului pacientului cu obezitate.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/ruxandra-marian.webp',
+    imageAlt: 'Dr. Ruxandra Marian, medic specialist în chirurgie generală.',
+  },
 ]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
