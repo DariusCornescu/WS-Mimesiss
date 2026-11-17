@@ -11,6 +11,7 @@ import type { UpcomingEvent } from '@/lib/events'
 
 export const PATH_SLUG = 'path'
 export const PATH_HREF = '/proiecte/path'
+export const PATH_WORKSHOPS_HREF = `${PATH_HREF}/workshops`
 export const PATH_COVER = '/projects/path/cover.webp'
 
 export const pathProject = {
