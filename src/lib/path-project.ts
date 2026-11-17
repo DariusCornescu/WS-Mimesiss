@@ -61,6 +61,8 @@ export type PathWorkshop = {
   doctor: string
   /** Specialitatea sau funcția, ex. „Medic primar chirurgie generală”. */
   doctorRole?: string
+  /** Al doilea medic, când workshopul este susținut de doi. */
+  secondDoctor?: { name: string; role?: string }
   description: string
   /** Cale locală din /public, ex. „/projects/path/workshops/sutura.webp”. */
   image?: string
@@ -133,6 +135,21 @@ export const pathWorkshops: PathWorkshop[] = [
     ].join('\n\n'),
     image: '/projects/path/workshops/stefania-nemes.webp',
     imageAlt: 'Dr. Ștefania Nemeș, medic rezident în Diabet Zaharat, Nutriție și Boli Metabolice.',
+  },
+  {
+    title: 'O privire în viața intrauterină – arta ecografiei obstetricale',
+    doctor: 'Drd. dr. Eliza Maria Cloțea',
+    doctorRole: 'Medic specialist Obstetrică-Ginecologie',
+    secondDoctor: { name: 'Prof. univ. dr. Claudia Mehedințu', role: 'Medic primar Obstetrică-Ginecologie' },
+    description: [
+      'Te-ai întrebat vreodată care este primul moment în care pot fi decelate bătăile inimii în sarcină? Cum se estimează greutatea fătului? Sau la ce alte aspecte este atent medicul ginecolog pe parcursul sarcinii, pentru a se asigura că aceasta evoluează corespunzător?',
+      'În cadrul workshopului, la Art Clinic, doamnele Drd. dr. Eliza Maria Cloțea și Prof. univ. dr. Claudia Mehedințu te vor introduce în tainele ecografiei obstetricale și te vor ghida prin etapele esențiale ale evaluării ecografice în sarcină.',
+      'Vei descoperi cum ecografia obstetricală ne permite să privim direct în lumea copilului nenăscut, să-i urmărim creșterea, mișcările și bătăile inimii. Totodată, ne ajută să evaluăm starea de sănătate a mamei și felul în care organismul ei susține sarcina. Ecografia este astfel un instrument care îi are în grijă pe amândoi pacienții: mama și copilul.',
+      'După o introducere teoretică în principiile ecografiei obstetricale, vom trece direct la practică în sesiunile hands-on, unde vei exersa pas cu pas sub îndrumarea coordonatorilor.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/eliza-maria-clotea.webp',
+    imageAlt: 'Drd. dr. Eliza Maria Cloțea, medic specialist Obstetrică-Ginecologie.',
+    location: 'Art Clinic',
   },
 ]
 
