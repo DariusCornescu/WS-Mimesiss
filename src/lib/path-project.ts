@@ -97,6 +97,18 @@ export const pathWorkshops: PathWorkshop[] = [
     image: '/projects/path/workshops/carmen-ioana-blaj.webp',
     imageAlt: 'Dr. Blaj Carmen Ioana, medic specialist în psihiatrie.',
   },
+  {
+    title: 'Epilepsia dincolo de convulsii: recunoaște criza, descoperă focarul',
+    doctor: 'Lt. dr. Manole Aida Mihaela',
+    doctorRole: 'Medic specialist în neurologie',
+    description: [
+      'Cum recunoaștem o criză epileptică? Poate o simplă privire fixă să reprezinte o criză? Ce ne pot spune mișcările unui pacient despre regiunea cerebrală implicată?',
+      'Acest workshop interactiv îi invită pe studenți să descopere diversitatea manifestărilor epileptice și să înțeleagă modul în care observația clinică și electroencefalografia contribuie la stabilirea diagnosticului.',
+      'Prin vizionarea unor înregistrări video, analiza traseelor EEG și rezolvarea unor cazuri clinice, participanții vor avea ocazia să recunoască principalele tipuri de crize epileptice, să identifice semne clinice sugestive pentru localizarea focarului epileptogen și să formuleze ipoteze diagnostice. Astfel, vor putea aborda cazurile clinice din perspectiva unui medic neurolog, dezvoltându-și abilitățile de observație și raționament clinic.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/aida-mihaela-manole.webp',
+    imageAlt: 'Lt. dr. Manole Aida Mihaela, medic specialist în neurologie.',
+  },
 ]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
