@@ -198,7 +198,10 @@
 .nextEventWhen { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 20px; font-size: 16px; font-weight: 650; }
 .nextEventWhen span { font-weight: 500; color: var(--ne-muted); }
 .nextEventWhen span::before { content: '·'; margin-right: 14px; color: var(--ne-accent); }
-.nextEventLink { display: inline-flex; align-items: center; gap: 14px; margin-top: 26px; padding: 13px 24px; border-radius: 999px; background: var(--ne-fg); color: hsl(var(--brand-deep)); font-size: 15px; font-weight: 650; transition: transform .2s, box-shadow .2s; }
+.nextEventActions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+/* Acțiunea principală (ex. „Cumpără bilet”): în accentul cardului, înaintea lui „Vezi detalii”. */
+.nextEvent .nextEventCta { background: var(--ne-accent); }
+.nextEventLink { display: inline-flex; align-items: center; gap: 14px; padding: 13px 24px; border-radius: 999px; background: var(--ne-fg); color: hsl(var(--brand-deep)); font-size: 15px; font-weight: 650; transition: transform .2s, box-shadow .2s; }
 .nextEvent[data-theme="path"] .nextEventLink { color: hsl(var(--path-night)); }
 .nextEventLink svg { width: 14px; transition: transform .25s; }
 .nextEventLink:hover { transform: translateY(-3px); box-shadow: 0 12px 26px rgba(0, 0, 0, .28); }

@@ -19,6 +19,8 @@ export type UpcomingEvent = {
   note?: string
   /** Paleta cardului evidențiat; fără valoare se folosește cea a asociației. */
   theme?: 'path'
+  /** Buton principal pe cardul evidențiat, ex. „Cumpără bilet” cât timp înscrierile sunt deschise. */
+  action?: { href: string; label: string }
 }
 
 type EditionDoc = {

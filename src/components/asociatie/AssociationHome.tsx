@@ -57,7 +57,10 @@ export default function AssociationHome({ projects, partners = [], events = [] }
             <h3>{featured.title}</h3>
             <p className={styles.nextEventProject}>{featured.projectTitle}</p>
             <p className={styles.nextEventWhen}>{eventDates(featured)}{featured.note && <span>{featured.note}</span>}</p>
-            <Link href={featured.href} className={styles.nextEventLink}>Vezi detalii <FaArrowRight aria-hidden="true" /></Link>
+            <div className={styles.nextEventActions}>
+              {featured.action && <Link href={featured.action.href} className={`${styles.nextEventLink} ${styles.nextEventCta}`}>{featured.action.label} <FaArrowRight aria-hidden="true" /></Link>}
+              <Link href={featured.href} className={styles.nextEventLink}>Vezi detalii <FaArrowRight aria-hidden="true" /></Link>
+            </div>
           </div>
           <div className={styles.nextEventTimer}>
             {featured.status === 'active' ? <p className={styles.nextEventLive}>Se desfășoară acum</p> : <Countdown

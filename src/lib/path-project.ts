@@ -208,6 +208,7 @@ export function withPathEvent(events: UpcomingEvent[], now: number = Date.now(),
   if (now >= Date.parse(pathProject.endsAt)) return events
   if (events.some(event => event.href === PATH_HREF)) return events
   const started = now >= Date.parse(pathProject.startsAt)
+  const registrationOpen = !started && pathProject.registrationHref !== null && now >= Date.parse(pathProject.registrationOpensAt)
   const pathEvent: UpcomingEvent = {
     id: 'path-2026',
     title: 'PATH 2026',
@@ -221,8 +222,9 @@ export function withPathEvent(events: UpcomingEvent[], now: number = Date.now(),
     // Ultima zi, nu miezul nopții de după: altfel intervalul afișat ar include 6 decembrie.
     endDate: new Date(Date.parse(pathProject.endsAt) - 1).toISOString(),
     status: started ? 'active' : 'upcoming',
-    note: started ? undefined : `Înscrieri pe site din ${pathProject.registrationOpensLabel}`,
+    note: started ? undefined : registrationOpen ? 'Înscrierile sunt deschise' : `Înscrieri pe site din ${pathProject.registrationOpensLabel}`,
     theme: 'path',
+    action: registrationOpen ? { href: PATH_REGISTRATION_HREF, label: 'Cumpără bilet' } : undefined,
   }
   return [...events, pathEvent]
     .sort((a, b) => (a.startDate ?? '9999').localeCompare(b.startDate ?? '9999'))
