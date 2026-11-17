@@ -109,6 +109,11 @@
 .registration p { margin-top: 16px; font-size: 17px; line-height: 1.8; color: var(--ink-soft); }
 .registrationTimer { display: grid; gap: 12px; width: min(100%, 420px); }
 .registrationSection .timerLabel { color: var(--teal); }
+/* Cui se adresează PATH: sub înscrieri, cu accentul cyan al proiectului. */
+.audience { display: grid; gap: 12px; max-width: 760px; margin-top: 44px; padding: 28px 30px; border-left: 4px solid var(--cyan); border-radius: 0 18px 18px 0; background: #fff; box-shadow: 0 1px 0 hsl(var(--path-navy) / .08); }
+.audience h3 { font-size: clamp(20px, 2vw, 24px); font-weight: 800; line-height: 1.3; }
+.audience p { font-size: 16px; line-height: 1.75; color: var(--ink-soft); }
+.audience .audienceNote { margin-top: 4px; font-weight: 650; color: var(--ink); }
 
 /* Contact: banda asociației, ca pe homepage. */
 .contact { display: flex; align-items: center; justify-content: space-between; gap: 32px; padding: 55px max(24px, calc((100% - 1232px) / 2)); background: radial-gradient(ellipse at 80% 140%, #96373b, #351016 65%); color: #fff; }
@@ -139,6 +144,7 @@
   .highlights li, .workshopBody { padding: 22px; }
   .workshopsSoon { flex-direction: column; align-items: start; padding: 26px 22px; gap: 20px; }
   .contact { flex-direction: column; align-items: start; padding: 42px 22px; }
+  .audience { margin-top: 32px; padding: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .heroArt, .heroInner > * { animation: none; }
