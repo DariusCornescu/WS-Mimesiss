@@ -13,6 +13,11 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   userType: UserType;
+  phone?: string;
+  institution?: string;
+  studyUnit?: string;
+  studyYear?: number;
+  city?: string;
 }
 
 // For Clerk user type, we'll use the imported type from @clerk/nextjs/server

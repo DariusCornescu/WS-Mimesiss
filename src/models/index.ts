@@ -10,6 +10,11 @@ export interface IUser extends Document {
   lastName?: string
   role: UserRole
   userType: UserType
+  phone?: string
+  institution?: string // university, school or hospital
+  studyUnit?: string // faculty, school profile or specialty
+  studyYear?: number // year of study or school class
+  city?: string
   paymentRevision?: number
   registrationRevision?: number
 }
@@ -91,6 +96,11 @@ const UserSchema = new Schema<IUser>({
   registrationRevision: { type: Number, default: 0 },
   role: { type: String, enum: ['user', 'admin', 'moderator'], default: 'user' },
   userType: { type: String, enum: ['student', 'elev', 'rezident'], default: 'student' },
+  phone: { type: String, maxlength: 16 },
+  institution: { type: String, maxlength: 150 },
+  studyUnit: { type: String, maxlength: 150 },
+  studyYear: { type: Number, min: 1, max: 12 },
+  city: { type: String, maxlength: 100 },
 }, {
   timestamps: true
 })
