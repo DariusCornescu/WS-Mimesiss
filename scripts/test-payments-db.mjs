@@ -33,6 +33,7 @@ before(async () => {
     mongoose, '@/lib/mongodb': connection, '@/models': models, '@/models/PaymentAttempt': attempts,
     '@/lib/stripe': { stripe }, '@/lib/settings': { getUncachedAppSettings: async () => settings },
     '@/lib/registration-profile': load('src/lib/registration-profile.ts'), '@/lib/payment-policy': policy, '@/lib/request-security': security,
+    '@/lib/ticket-stock': load('src/lib/ticket-stock.ts', { '@/models': models, '@/models/PaymentAttempt': attempts }),
   })
   fulfillment = load('src/lib/payment-fulfillment.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models, '@/models/PaymentAttempt': attempts })
   await Promise.all(Object.values(mongoose.models).map(model => model.init()))
@@ -205,4 +206,65 @@ test('duplicate registration at full capacity keeps duplicate result and counter
   assert((await registration.registerUserForWorkshop(input)).ok)
   assert.equal((await registration.registerUserForWorkshop(input)).code, 'duplicate')
   assert.equal((await models.Workshop.findById(workshop._id)).currentParticipants, 1)
+})
+
+async function buyers(count) {
+  await models.User.create(Array.from({ length: count }, (_, i) => ({ clerkId: 'buyer' + i, email: 'buyer' + i + '@example.com', firstName: 'Ana', lastName: 'Popescu', userType: 'student', role: 'user' })))
+  return Array.from({ length: count }, (_, i) => 'buyer' + i)
+}
+test('concurrent buyers cannot reserve more than the ticket stock', async () => {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const ticket = await product({ category: 'workshop', type: 'activ', maxQuantity: 5 })
+  const results = await Promise.allSettled((await buyers(30)).map(id => purchase.reservePayment(id, String(ticket._id), 1)))
+  assert.equal(results.filter(r => r.status === 'fulfilled').length, 5)
+  assert.ok(results.filter(r => r.status === 'rejected').every(r => r.reason.code === 'sold_out'))
+  assert.equal(await attempts.PaymentAttempt.countDocuments({ status: 'pending' }), 5)
+})
+test('paid tickets keep their stock and a cancelled checkout returns it', async () => {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const ticket = await product({ category: 'workshop', type: 'activ', maxQuantity: 2 })
+  const [first, second, third] = await buyers(3)
+  const attempt = await purchase.reservePayment(first, String(ticket._id), 1)
+  const intent = await purchase.intentForAttempt(attempt)
+  intent.status = 'succeeded'; intent.amount_received = intent.amount
+  await fulfillment.fulfillPayment(intent)
+  await purchase.intentForAttempt(await purchase.reservePayment(second, String(ticket._id), 1))
+  await assert.rejects(purchase.reservePayment(third, String(ticket._id), 1), e => e.code === 'sold_out')
+  await purchase.cancelPendingPayment(second)
+  await purchase.reservePayment(third, String(ticket._id), 1)
+  await assert.rejects(purchase.reservePayment(second, String(ticket._id), 1), e => e.code === 'sold_out')
+})
+test('an abandoned checkout is released for the next buyer, a recent or paid one is not', async () => {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const ticket = await product({ category: 'workshop', type: 'activ', maxQuantity: 1 })
+  const [first, second, third] = await buyers(3)
+  const attempt = await purchase.reservePayment(first, String(ticket._id), 1)
+  const intent = await purchase.intentForAttempt(attempt)
+  await assert.rejects(purchase.reservePayment(second, String(ticket._id), 1), e => e.code === 'sold_out')
+  assert.equal(intent.status, 'requires_payment_method')
+  const old = new Date(Date.now() - 31 * 60 * 1000)
+  await attempts.PaymentAttempt.collection.updateOne({ _id: attempt._id }, { $set: { createdAt: old } })
+  const replacement = await purchase.reservePayment(second, String(ticket._id), 1)
+  assert.equal(intent.status, 'canceled')
+  assert.equal((await attempts.PaymentAttempt.findById(attempt._id)).status, 'cancelled')
+  // The replacement's payment is already going through: it must keep the unit.
+  const paying = await purchase.intentForAttempt(replacement)
+  paying.status = 'processing'
+  await attempts.PaymentAttempt.collection.updateOne({ _id: replacement._id }, { $set: { createdAt: old } })
+  await assert.rejects(purchase.reservePayment(third, String(ticket._id), 1), e => e.code === 'sold_out')
+  assert.equal((await attempts.PaymentAttempt.findById(replacement._id)).status, 'pending')
+})
+test('a ticket without a stock limit is not capped', async () => {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const ticket = await product({ category: 'workshop', type: 'activ' })
+  const results = await Promise.allSettled((await buyers(12)).map(id => purchase.reservePayment(id, String(ticket._id), 1)))
+  assert.equal(results.filter(r => r.status === 'fulfilled').length, 12)
+})
+test('congress tickets cannot be reserved before the sales start time', async () => {
+  const ticket = await product({ category: 'workshop', type: 'activ' })
+  settings = { paymentsEnabled: true, eventMode: 'workshops', ticketSalesStartTime: new Date(Date.now() + 60000).toISOString() }
+  await assert.rejects(purchase.reservePayment('buyer', String(ticket._id), 1), e => e.status === 403)
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
+  settings = { paymentsEnabled: true, eventMode: 'workshops', ticketSalesStartTime: new Date(Date.now() - 1000).toISOString() }
+  await purchase.reservePayment('buyer', String(ticket._id), 1)
 })

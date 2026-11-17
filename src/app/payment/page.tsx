@@ -8,6 +8,7 @@ import { getAppSettings } from '@/lib/settings';
 import connectDB from '@/lib/mongodb';
 import { Payment } from '@/models';
 import PaymentShell from '@/components/payments/PaymentShell';
+import { describeBucharestTime } from '@/lib/bucharest-time';
 
 export default async function PaymentPage() {
   const clerkUser = await currentUser();
@@ -20,6 +21,9 @@ export default async function PaymentPage() {
   const appSettings = await getAppSettings();
   const paymentsEnabled = appSettings?.paymentsEnabled ?? true;
   const eventMode = appSettings?.eventMode || 'workshops';
+  // The server enforces this again when a payment is created.
+  const salesStart = eventMode === 'workshops' ? appSettings?.ticketSalesStartTime ?? null : null;
+  const salesNotOpen = salesStart !== null && Date.now() < Date.parse(salesStart);
 
   // For ball mode: calculate how many ball tickets this user already owns
   let alreadyPurchasedBallTickets = 0;
@@ -49,6 +53,18 @@ export default async function PaymentPage() {
           <h2 className="mt-2 text-xl font-semibold text-foreground">Vânzarea biletelor este momentan închisă</h2>
           <p className="mt-2 leading-relaxed text-muted-foreground">
             Revino mai târziu pentru a verifica disponibilitatea biletelor.
+          </p>
+        </div>
+      ) : salesNotOpen && salesStart ? (
+        <div role="status" className="rounded-lg border border-accent/30 bg-accent/10 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+            Vânzarea nu a început
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-foreground">
+            Biletele se pun în vânzare pe {describeBucharestTime(salesStart)}
+          </h2>
+          <p className="mt-2 leading-relaxed text-muted-foreground">
+            Reîncarcă pagina la ora deschiderii pentru a alege biletul.
           </p>
         </div>
       ) : eventMode === 'ball' ? (

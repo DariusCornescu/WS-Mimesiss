@@ -72,6 +72,11 @@ export function TicketCard({ ticket }: TicketCardProps) {
             </span>
           </div>
           <p className="mt-3 text-2xl font-bold text-accent">{ticket.price} RON</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {typeof ticket.maxQuantity === 'number'
+              ? `${ticket.sold ?? 0} din ${ticket.maxQuantity} vândute sau în curs de plată`
+              : `${ticket.sold ?? 0} vândute sau în curs de plată · stoc nelimitat`}
+          </p>
         </div>
         <span className="grid h-11 w-11 flex-none place-items-center rounded-full border border-accent/20 bg-accent/10 text-accent">
           <FaTicketSimple aria-hidden="true" className="h-5 w-5" />

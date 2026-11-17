@@ -27,4 +27,6 @@ const schema = new Schema<PaymentAttemptRecord>({
   stripePaymentIntentId: String,
 }, { timestamps: true })
 schema.index({ clerkId: 1, status: 1 })
+// Stock count and stale-hold lookup per ticket
+schema.index({ ticketId: 1, status: 1, createdAt: 1 })
 export const PaymentAttempt = mongoose.models.PaymentAttempt || mongoose.model<PaymentAttemptRecord>('PaymentAttempt', schema)

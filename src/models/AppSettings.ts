@@ -12,6 +12,7 @@ export interface IAppSettings extends Document {
   allowCancelRegistration: boolean
   registrationStartTime?: Date // When registrations will open
   registrationDeadline?: Date // When registrations will close
+  ticketSalesStartTime?: Date // When congress ticket sales open
   
   // Workshop defaults
   defaultMaxParticipants: number
@@ -52,6 +53,10 @@ const AppSettingsSchema = new Schema<IAppSettings>({
     required: false
   },
   registrationDeadline: {
+    type: Date,
+    required: false
+  },
+  ticketSalesStartTime: {
     type: Date,
     required: false
   },

@@ -34,6 +34,8 @@ const ticketFields = {
   type: z.string({ message: 'Tipul este obligatoriu' }).trim().min(1, 'Tipul este obligatoriu').max(50, 'Tipul este prea lung'),
   enabled: z.boolean().optional(),
   category: z.enum(['workshop', 'ball'], { message: 'Categorie invalidă' }).optional(),
+  // null = unlimited stock
+  maxQuantity: z.number({ message: 'Numărul de bilete trebuie să fie un număr întreg' }).int('Numărul de bilete trebuie să fie un număr întreg').min(1, 'Minim 1 bilet').max(100000, 'Maxim 100.000 de bilete').nullable().optional(),
 }
 
 export const ticketCreateInput = z.object(ticketFields)
@@ -67,13 +69,14 @@ export const settingsInput = z.object({
   paymentsEnabled: z.boolean(),
   workshopVisibleToPublic: z.boolean(),
   allowCancelRegistration: z.boolean(),
-  registrationStartTime: z.date().optional(),
-  registrationDeadline: z.date().optional(),
+  registrationStartTime: z.date().nullable().optional(),
+  registrationDeadline: z.date().nullable().optional(),
+  ticketSalesStartTime: z.date().nullable().optional(),
   defaultMaxParticipants: z.number({ message: 'Număr invalid de participanți' }).int('Număr invalid de participanți').min(1, 'Minim 1 participant').max(1000, 'Maxim 1000 de participanți'),
   eventMode: z.enum(['workshops', 'ball'], { message: 'Mod de eveniment invalid' }),
   ballMaxTicketsPerUser: z.number().int().min(1, 'Minim 1 bilet').max(50, 'Maxim 50 de bilete'),
-  ballTicketAvailableFrom: z.date().optional(),
-  ballTicketAvailableTo: z.date().optional(),
+  ballTicketAvailableFrom: z.date().nullable().optional(),
+  ballTicketAvailableTo: z.date().nullable().optional(),
 })
 
 export const workshopInput = z.object({

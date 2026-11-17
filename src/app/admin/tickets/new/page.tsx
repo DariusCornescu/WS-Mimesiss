@@ -28,6 +28,8 @@ export default function NewTicketPage() {
 		const type = formData.get('type') as string
 		const enabled = formData.get('enabled') === 'on'
 		const category = formData.get('category') as 'workshop' | 'ball'
+		const maxQuantityValue = formData.get('maxQuantity') as string
+		const maxQuantity = maxQuantityValue ? Number(maxQuantityValue) : null
 
 		const data = {
 			title,
@@ -37,6 +39,7 @@ export default function NewTicketPage() {
 			type,
 			enabled,
 			category: category || 'workshop',
+			maxQuantity,
 		}
 
 		startTransition(async () => {
@@ -129,6 +132,15 @@ export default function NewTicketPage() {
 				</fieldset>
 			</div>
 
+			<div className="mt-5">
+				<label htmlFor="maxQuantity" className="mb-2 block text-sm font-semibold text-foreground">
+					Număr total de bilete
+				</label>
+				<input id="maxQuantity" type="number" name="maxQuantity" disabled={isPending} min="1" max="100000" step="1" placeholder="Nelimitat" className="mimesiss-input min-h-12 md:max-w-xs" />
+				<p className="mt-2 text-xs leading-5 text-muted-foreground">
+					Câte bilete de acest tip se pot vinde în total. Lasă gol pentru un număr nelimitat.
+				</p>
+			</div>
 			<div className="mt-5">
 			  <label htmlFor="features" className="mb-2 block text-sm font-semibold text-foreground">
 				  Caracteristici <span className="text-destructive">*</span>

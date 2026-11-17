@@ -5,6 +5,7 @@ import { Ticket as TicketType } from "@/types/models";
 import { Ticket } from "@/models";
 import { requireRole } from "@/lib/auth";
 import { parseWith, ticketCreateInput, ticketUpdateInput } from "@/lib/validation";
+import { ticketsTaken } from "@/lib/ticket-stock";
 
 // Get all tickets
 export async function getAllTickets(): Promise<TicketType[]> {
@@ -16,7 +17,9 @@ export async function getAllTickets(): Promise<TicketType[]> {
 	}
 
 	// Convert to plain objects to ensure serializability
-	return JSON.parse(JSON.stringify(tickets)) as TicketType[];
+	const plain = JSON.parse(JSON.stringify(tickets)) as TicketType[];
+	const taken = await ticketsTaken(plain.map(ticket => String(ticket._id)));
+	return plain.map(ticket => ({ ...ticket, sold: taken.get(String(ticket._id)) ?? 0 }));
 }
 
 export async function createTicket(data: {
@@ -27,6 +30,7 @@ export async function createTicket(data: {
 	type: string;
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
+	maxQuantity?: number | null;
 }): Promise<void> {
 	await requireRole('admin');
 
@@ -39,6 +43,7 @@ export async function createTicket(data: {
 		...parsed.data,
 		enabled: parsed.data.enabled ?? true,
 		category: parsed.data.category ?? 'workshop',
+		maxQuantity: parsed.data.maxQuantity ?? null,
 	});
 	await ticket.save();
 	revalidatePath('/admin/tickets');
@@ -52,6 +57,7 @@ export async function updateTicket(ticketId: string, data: {
 	type?: string;
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
+	maxQuantity?: number | null;
 }): Promise<void> {
 	await requireRole('admin');
 
@@ -72,6 +78,8 @@ export async function updateTicket(ticketId: string, data: {
 	ticket.type = parsed.data.type ?? ticket.type;
 	ticket.enabled = parsed.data.enabled ?? ticket.enabled;
 	if (parsed.data.category) ticket.category = parsed.data.category;
+	// null clears the limit; undefined leaves it as it is.
+	if (parsed.data.maxQuantity !== undefined) ticket.maxQuantity = parsed.data.maxQuantity;
 	await ticket.save();
 
 	revalidatePath('/admin/tickets');

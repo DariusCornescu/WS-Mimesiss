@@ -32,6 +32,8 @@ export default function EditTicketForm({ ticket }: EditTicketFormProps) {
 		const type = formData.get('type') as string
 		const enabled = formData.get('enabled') === 'on'
 		const category = (formData.get('category') as 'workshop' | 'ball') || 'workshop'
+		const maxQuantityValue = formData.get('maxQuantity') as string
+		const maxQuantity = maxQuantityValue ? Number(maxQuantityValue) : null
 
 		// Get the ticket ID - use id property (not _id)
 		const ticketId = ticket.id || ticket._id
@@ -51,6 +53,7 @@ export default function EditTicketForm({ ticket }: EditTicketFormProps) {
 					type,
 					enabled,
 					category,
+					maxQuantity,
 				})
 				router.push('/admin/tickets')
 			} catch (err) {
@@ -140,6 +143,15 @@ export default function EditTicketForm({ ticket }: EditTicketFormProps) {
 						</fieldset>
 					</div>
 
+					<div className="mt-5">
+						<label htmlFor="maxQuantity" className="mb-2 block text-sm font-semibold text-foreground">
+							Număr total de bilete
+						</label>
+						<input id="maxQuantity" type="number" name="maxQuantity" disabled={isPending} min="1" max="100000" step="1" defaultValue={ticket.maxQuantity ?? ''} placeholder="Nelimitat" className="mimesiss-input min-h-12 md:max-w-xs" />
+						<p className="mt-2 text-xs leading-5 text-muted-foreground">
+							Câte bilete de acest tip se pot vinde în total. Lasă gol pentru un număr nelimitat.
+						</p>
+					</div>
 					<div className="mt-5">
 						<label htmlFor="features" className="mb-2 block text-sm font-semibold text-foreground">
 							Caracteristici <span className="text-destructive">*</span>
