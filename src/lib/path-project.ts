@@ -71,8 +71,21 @@ export type PathWorkshop = {
   seats?: number
 }
 
-/** Gol până când asociația trimite lista; pagina afișează atunci un anunț. */
-export const pathWorkshops: PathWorkshop[] = []
+/** Cât timp lista e goală, pagina afișează un anunț în locul ei. */
+export const pathWorkshops: PathWorkshop[] = [
+  {
+    title: 'Dincolo de consum: mecanisme psihologice și implicații psihiatrice ale adicțiilor la tineri',
+    doctor: 'Drd. dr. Gabriel Zanfir',
+    doctorRole: 'Medic rezident în psihiatrie',
+    description: [
+      'Drd. dr. Gabriel Zanfir este medic rezident în psihiatrie, doctorand în științe medicale la Universitatea de Medicină și Farmacie „Carol Davila”, psiholog clinician și psihoterapeut cu formare în terapia cognitiv-comportamentală.',
+      'În activitatea sa, pune accent pe acuratețea diagnosticului clinic, evaluarea atentă a simptomatologiei și diagnosticul diferențial, integrând perspectiva psihiatrică și cea psihologică pentru a înțelege dificultățile în contextul de viață personal și a orienta intervențiile către nevoile individuale, pe baza dovezilor științifice.',
+      'În cadrul acestui workshop, participanții vor explora alături de el factorii de vulnerabilitate și dinamicile emoționale care stau la baza comportamentelor adictive, dobândind repere clinice concrete pentru recunoașterea timpurie și intervenția eficientă.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/gabriel-zanfir.webp',
+    imageAlt: 'Drd. dr. Gabriel Zanfir, medic rezident în psihiatrie.',
+  },
+]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
 export function currentEpochSeconds(): number {
