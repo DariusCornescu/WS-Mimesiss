@@ -1,47 +1,45 @@
 import { currentUser } from '@clerk/nextjs/server'
-import { FaCalendarAlt, FaUsers, FaCog, FaCalendarCheck, FaTicketAlt, FaShoppingCart } from 'react-icons/fa'
+import { FaCalendarAlt, FaUsers, FaCog, FaCalendarCheck, FaQrcode, FaTicketAlt } from 'react-icons/fa'
 import Link from 'next/link'
 import { syncUserWithDatabase } from '@/lib/auth'
 import SimpleUserQRCode from '@/components/SimpleUserQRCode'
 import { getAppSettings } from '@/lib/settings'
 import connectDB from '@/lib/mongodb'
-import { Payment } from '@/models'
+import { IssuedTicket, Payment, Registration } from '@/models'
 import PageIntro from '@/components/ui/PageIntro'
+
+/**
+ * The attendance QR identifies a person, so it is only generated once there is
+ * something for them to attend: a ticket that has not been cancelled, a manual
+ * payment recorded by the organisers (those have no issued tickets), or a
+ * registration such as a free conference.
+ */
+async function hasSomethingToAttend(clerkId: string) {
+  const [liveTicket, registration] = await Promise.all([
+    IssuedTicket.exists({ clerkId, status: { $ne: 'cancelled' } }),
+    Registration.exists({ userId: clerkId }),
+  ])
+  if (liveTicket || registration) return true
+
+  const payments = await Payment.find({ clerkId, status: 'completed' }).select('_id').lean()
+  for (const payment of payments) {
+    if (!(await IssuedTicket.exists({ paymentId: String(payment._id) }))) return true
+  }
+  return false
+}
 
 export default async function DashboardPage() {
   const clerkUser = await currentUser()
 
   if (!clerkUser) return null
 
-
   // Sync user with database
   const user = await syncUserWithDatabase(clerkUser)
   const appSettings = await getAppSettings()
   const isBallMode = appSettings?.eventMode === 'ball'
 
-  // Ticket purchase status
   await connectDB()
-  let ticketsOwned = 0
-  let ticketsRemaining: number | null = null
-
-  if (isBallMode) {
-    const ballPayments = await Payment.find({
-      clerkId: user.clerkId,
-      ticketCategory: 'ball',
-      status: 'completed',
-    }).lean()
-    ticketsOwned = ballPayments.reduce((sum, p) => sum + ((p as { quantity?: number }).quantity || 1), 0)
-    const max = appSettings?.ballMaxTicketsPerUser ?? 2
-    ticketsRemaining = Math.max(0, max - ticketsOwned)
-  } else {
-    const workshopPayment = await Payment.findOne({
-      clerkId: user.clerkId,
-      status: 'completed',
-      $or: [{ ticketCategory: 'workshop' }, { ticketCategory: { $exists: false } }],
-    }).lean()
-    ticketsOwned = workshopPayment ? 1 : 0
-    ticketsRemaining = workshopPayment ? 0 : 1
-  }
+  const showQr = await hasSomethingToAttend(user.clerkId)
 
   return (
     <div className="space-y-6">
@@ -51,69 +49,40 @@ export default async function DashboardPage() {
         description="De aici îți gestionezi profilul, înscrierile și biletele pentru evenimentele ASMM."
       />
 
-      {/* Quick Stats */}
-      <div className="mimesiss-card p-6">
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <FaTicketAlt className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">
-                {isBallMode ? 'Bilete Bal' : 'Bilet eveniment'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {ticketsOwned > 0
-                  ? isBallMode
-                    ? `${ticketsOwned} bilet${ticketsOwned > 1 ? 'e' : ''} cumpărat${ticketsOwned > 1 ? 'e' : ''}`
-                    : 'Bilet achiziționat'
-                  : 'Niciun bilet achiziționat'}
-              </p>
-            </div>
-          </div>
-
-          {ticketsRemaining !== null && ticketsRemaining > 0 ? (
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
-              <span className="text-sm text-muted-foreground">
-                {isBallMode
-                  ? `Mai poți cumpăra ${ticketsRemaining} bilet${ticketsRemaining > 1 ? 'e' : ''}`
-                  : 'Disponibil pentru cumpărare'}
-              </span>
-              <Link
-                href="/payment"
-                className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
-              >
-                <FaShoppingCart className="h-3 w-3" />
-                Cumpără
-              </Link>
-            </div>
-          ) : (
-            <span className="text-sm font-medium text-secondary">
-              {isBallMode ? 'Limită atinsă' : 'Complet'}
-            </span>
-          )}
-        </div>
-        <Link href="/dashboard/tickets" className="text-xs text-accent hover:underline">
-          Vezi toate biletele mele →
-        </Link>
-      </div>
-
-
       {/* User QR Code Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <SimpleUserQRCode
-            userId={clerkUser.id}
-            userName={clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : undefined}
-          />
+          {showQr ? (
+            <SimpleUserQRCode
+              userId={clerkUser.id}
+              userName={clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : undefined}
+            />
+          ) : (
+            <div className="mimesiss-card flex flex-col items-center gap-3 p-8 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <FaQrcode className="h-5 w-5 text-accent" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground">Încă nu ai un cod QR</h3>
+              <p className="max-w-md text-sm text-muted-foreground">
+                Codul tău QR de prezență apare aici după ce cumperi un bilet sau te înscrii la un eveniment.
+                Până atunci nu generăm niciun cod pentru contul tău.
+              </p>
+              {appSettings?.paymentsEnabled && (
+                <Link href="/payment" className="mimesiss-btn-primary mt-2 inline-flex items-center gap-2">
+                  <FaTicketAlt className="h-4 w-4" />
+                  Cumpără bilet
+                </Link>
+              )}
+            </div>
+          )}
         </div>
         <div className="space-y-4">
           <div className="mimesiss-card p-4">
             <h4 className="font-semibold text-foreground mb-2">Cum funcționează?</h4>
             <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• Administratorii scanează codul tău QR</li>
+              <li>• Codul apare după ce ai un bilet sau o înscriere</li>
+              <li>• Organizatorii îl scanează la intrare</li>
               <li>• Prezența ta este confirmată automat</li>
-              <li>• Poți descărca codul pentru uz personal</li>
             </ul>
           </div>
           <div className="mimesiss-card p-4">
