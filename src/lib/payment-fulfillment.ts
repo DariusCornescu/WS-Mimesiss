@@ -12,11 +12,17 @@ export async function fulfillPayment(intent: Stripe.PaymentIntent) {
   const quantity = Number(meta.quantity || '1')
   if (!meta.clerkId || !meta.ticketId || !meta.ticketType || !Number.isInteger(quantity) || quantity < 1 || quantity > 50) throw new Error('Invalid payment metadata')
   if (meta.attemptId && !mongoose.isValidObjectId(meta.attemptId)) throw new Error('Invalid payment attempt')
+  // An add-on bought in the same payment gets its own payment record, so the
+  // ticket keeps its own price and the add-on rules see a separate purchase.
+  const addOnAmount = meta.addOnTicketId ? Number(meta.addOnAmount) : 0
+  if (meta.addOnTicketId && (!mongoose.isValidObjectId(meta.addOnTicketId) || !meta.addOnTicketType || !meta.attemptId
+    || !Number.isSafeInteger(addOnAmount) || addOnAmount < 1 || addOnAmount >= intent.amount)) throw new Error('Invalid payment metadata')
+  const baseAmount = intent.amount - addOnAmount
   await connectDB()
   // Read-only replay fast path. The transaction below still rechecks concurrent
   // first deliveries; all purchase attributes must match this completed record.
   if (await Payment.exists({
-    stripeSessionId: intent.id, clerkId: meta.clerkId, amount: intent.amount,
+    stripeSessionId: intent.id, clerkId: meta.clerkId, amount: baseAmount,
     quantity, ticketId: meta.ticketId, ticketType: meta.ticketType,
     ticketCategory: meta.ticketCategory === 'ball' ? 'ball' : 'workshop',
     $or: [{ fulfillmentComplete: true }, { status: 'refunded' }],
@@ -42,18 +48,19 @@ export async function fulfillPayment(intent: Stripe.PaymentIntent) {
       const attempt = meta.attemptId
         ? await PaymentAttempt.findById(meta.attemptId).session(session).lean() as PaymentAttemptRecord | null
         : null
-      if (meta.attemptId && (!attempt || attempt.clerkId !== meta.clerkId || attempt.ticketId !== meta.ticketId || attempt.ticketType !== meta.ticketType || attempt.quantity !== quantity || attempt.amount !== intent.amount || attempt.category !== meta.ticketCategory || (attempt.stripePaymentIntentId && attempt.stripePaymentIntentId !== intent.id) || attempt.status === 'cancelled')) {
+      if (meta.attemptId && (!attempt || attempt.clerkId !== meta.clerkId || attempt.ticketId !== meta.ticketId || attempt.ticketType !== meta.ticketType || attempt.quantity !== quantity || attempt.amount !== intent.amount || attempt.category !== meta.ticketCategory || (attempt.stripePaymentIntentId && attempt.stripePaymentIntentId !== intent.id) || attempt.status === 'cancelled'
+        || (attempt.addOnTicketId ?? '') !== (meta.addOnTicketId ?? '') || (attempt.addOnAmount ?? 0) !== addOnAmount)) {
         throw new Error('Payment does not match its reservation')
       }
       let payment = await Payment.findOne({ stripeSessionId: intent.id }).session(session)
       if (payment?.fulfillmentComplete || payment?.status === 'refunded') throw new FulfillmentAlreadyComplete()
-      if (payment && (payment.clerkId !== meta.clerkId || payment.amount !== intent.amount)) throw new Error('Conflicting payment record')
+      if (payment && (payment.clerkId !== meta.clerkId || payment.amount !== baseAmount)) throw new Error('Conflicting payment record')
       if (!payment) {
         const records = await Payment.create([{
           clerkId: meta.clerkId, stripeSessionId: intent.id, stripePaymentIntentId: intent.id,
           ticketId: meta.ticketId, ticketType: meta.ticketType,
           ticketCategory: meta.ticketCategory === 'ball' ? 'ball' : 'workshop', quantity,
-          amount: intent.amount, currency: 'RON', status: 'completed',
+          amount: baseAmount, currency: 'RON', status: 'completed',
           metadata: { ticketTitle: meta.ticketTitle || meta.ticketType },
         }], { session })
         payment = records[0]
@@ -69,8 +76,21 @@ export async function fulfillPayment(intent: Stripe.PaymentIntent) {
           ticketNumber: firstNumber + i - issued, clerkId: meta.clerkId, paymentId,
           ticketTypeId: meta.ticketId, ticketTitle: meta.ticketTitle || meta.ticketType,
           ticketType: meta.ticketType, category: meta.ticketCategory === 'ball' ? 'ball' : 'workshop',
-          pricePerTicket: Math.floor(intent.amount / quantity) + (i < intent.amount % quantity ? 1 : 0), currency: 'RON',
+          pricePerTicket: Math.floor(baseAmount / quantity) + (i < baseAmount % quantity ? 1 : 0), currency: 'RON',
         }], { session })
+      }
+      if (meta.addOnTicketId) {
+        // No ticket number: the add-on is not an entry ticket, it only adds
+        // workshop places while the ticket above stands.
+        const addOnSessionId = intent.id + ':addon'
+        if (!(await Payment.exists({ stripeSessionId: addOnSessionId }).session(session))) {
+          await Payment.create([{
+            clerkId: meta.clerkId, stripeSessionId: addOnSessionId, stripePaymentIntentId: intent.id,
+            ticketId: meta.addOnTicketId, ticketType: meta.addOnTicketType, ticketCategory: 'workshop', quantity: 1,
+            amount: addOnAmount, currency: 'RON', status: 'completed', fulfillmentComplete: true,
+            metadata: { ticketTitle: meta.addOnTicketTitle || meta.addOnTicketType, bundledWithPayment: paymentId },
+          }], { session })
+        }
       }
       payment.status = 'completed'
       payment.fulfillmentComplete = true

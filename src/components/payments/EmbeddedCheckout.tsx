@@ -17,6 +17,8 @@ const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? loadStrip
 interface EmbeddedCheckoutProps {
 	ticketId: string;
 	quantity?: number;
+	/** Add-on paid together with the ticket, in the same payment. */
+	addOnTicketId?: string;
 	onSuccess?: (paymentIntentId: string) => void;
 	onError?: (error: string) => void;
 }
@@ -105,10 +107,10 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess?: (paymentIntentId: st
 }
 
 export default function EmbeddedCheckout(props: EmbeddedCheckoutProps) {
-  return <PaymentCheckout key={props.ticketId + ':' + (props.quantity || 1)} {...props} />;
+  return <PaymentCheckout key={props.ticketId + ':' + (props.quantity || 1) + ':' + (props.addOnTicketId || '')} {...props} />;
 }
 
-function PaymentCheckout({ ticketId, quantity = 1, onSuccess, onError }: EmbeddedCheckoutProps) {
+function PaymentCheckout({ ticketId, quantity = 1, addOnTicketId, onSuccess, onError }: EmbeddedCheckoutProps) {
 	const [clientSecret, setClientSecret] = useState('');
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
@@ -121,7 +123,7 @@ function PaymentCheckout({ ticketId, quantity = 1, onSuccess, onError }: Embedde
       try {
         const res = await fetch('/api/payments/create-payment-intent', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ticketId, quantity }), signal: controller.signal,
+          body: JSON.stringify(addOnTicketId ? { ticketId, quantity, addOnTicketId } : { ticketId, quantity }), signal: controller.signal,
         });
         const data = await res.json();
         if (controller.signal.aborted) return;
@@ -138,7 +140,7 @@ function PaymentCheckout({ ticketId, quantity = 1, onSuccess, onError }: Embedde
     }
     void initialize();
     return () => controller.abort();
-  }, [ticketId, quantity, retry]);
+  }, [ticketId, quantity, addOnTicketId, retry]);
 
   async function retryPayment() {
     setLoading(true);

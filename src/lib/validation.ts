@@ -61,6 +61,8 @@ export const manualPaymentInput = z.object({
 export const paymentIntentInput = z.object({
   ticketId: objectId,
   quantity: z.coerce.number({ message: 'Cantitate invalidă' }).int('Cantitate invalidă').min(1, 'Cantitate invalidă').max(50, 'Cantitate prea mare').default(1),
+  // Optional add-on bought in the same payment as a workshop ticket
+  addOnTicketId: objectId.optional(),
 })
 
 export const checkoutInput = z.object({

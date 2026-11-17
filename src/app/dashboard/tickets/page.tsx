@@ -8,6 +8,8 @@ import type { User as UserType } from '@/types/models';
 import Link from 'next/link';
 import TicketQRPopover from '@/components/TicketQRPopover';
 import PageIntro from '@/components/ui/PageIntro';
+import { getAppSettings } from '@/lib/settings';
+import { workshopChoiceOpen } from '@/lib/workshop-choice';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -33,6 +35,10 @@ export default async function MyTicketsPage() {
   const ticketIds = [...new Set(workshopPayments.map((p) => p.ticketId).filter((id): id is string => !!id && isValidObjectId(id)))];
   const ticketProducts = await Ticket.find({ _id: { $in: ticketIds } }).lean();
   const ticketMap = new Map(ticketProducts.map((t) => [(t._id as { toString(): string }).toString(), t]));
+  const choiceOpen = workshopPayments.length > 0 && workshopChoiceOpen(await getAppSettings());
+  // Add-ons follow the tickets they extend (stable sort keeps the date order).
+  const isAddOnPayment = (payment: (typeof workshopPayments)[number]) => (ticketMap.get(payment.ticketId || '')?.extraWorkshops ?? 0) > 0 ? 1 : 0;
+  workshopPayments.sort((a, b) => isAddOnPayment(a) - isAddOnPayment(b));
 
   const ballCount = issuedTickets.filter((t) => t.category === 'ball').length;
 
@@ -129,6 +135,13 @@ export default async function MyTicketsPage() {
       {workshopPayments.length > 0 && (
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Bilete Workshop</h2>
+          <p className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground" role="status">
+            {choiceOpen ? (
+              <>Alegerea workshopurilor este deschisă. <Link href="/congres/workshops" className="font-semibold text-accent underline-offset-4 hover:underline">Alege workshopurile</Link></>
+            ) : (
+              'Vei putea alege workshopurile în curând. Te anunțăm când se deschide alegerea.'
+            )}
+          </p>
           <div className="grid gap-4">
             {workshopPayments.map((payment) => {
               const ticketProduct = ticketMap.get(payment.ticketId || '');
@@ -195,6 +208,10 @@ export default async function MyTicketsPage() {
                           );
                         })}
                       </div>
+                    ) : (ticketProduct?.extraWorkshops ?? 0) > 0 ? (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Supliment: {ticketProduct?.extraWorkshops === 1 ? 'un workshop' : `${ticketProduct?.extraWorkshops} workshopuri`} în plus față de cele incluse în bilet. Nu are cod QR separat.
+                      </p>
                     ) : (
                       <p className="mt-3 text-xs text-muted-foreground">
                         Plată înregistrată de organizatori. La intrare folosești codul QR personal din prezentarea generală.

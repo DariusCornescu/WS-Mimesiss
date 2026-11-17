@@ -7,28 +7,37 @@ import { getPublicTickets } from '@/app/payment/actions';
 import type { Ticket as TicketType } from '@/types/models';
 import EmbeddedCheckout from './EmbeddedCheckout';
 
+const isAddOn = (ticket: TicketType) => (ticket.extraWorkshops ?? 0) > 0;
+
 export default function EnhancedTicketSelector() {
 	const router = useRouter();
 	const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
+	const [selectedAddOn, setSelectedAddOn] = useState<TicketType | null>(null);
+	const [addOnChosen, setAddOnChosen] = useState(false);
 	const [showCheckout, setShowCheckout] = useState(false);
 	const [tickets, setTickets] = useState<TicketType[]>([]);
 
-	
+
 	// Fetch tickets on component mount
 	useEffect(() => {
 		const fetchTickets = async () => {
 			const allTickets = await getPublicTickets();
 			// Filter only enabled tickets; add-ons follow the tickets they extend
 			const enabledTickets = allTickets.filter(ticket => ticket.enabled !== false);
-			const isAddOn = (ticket: TicketType) => (ticket.extraWorkshops ?? 0) > 0;
 			setTickets([...enabledTickets.filter(ticket => !isAddOn(ticket)), ...enabledTickets.filter(isAddOn)]);
 		};
 
 		fetchTickets();
 	}, []);
 
+	// Someone without a workshop ticket gets the add-on as an option on that
+	// ticket, paid together with it, instead of as a card of its own.
+	const addOnOffer = tickets.find(ticket => isAddOn(ticket) && !ticket.soldOut && ticket.requiresBaseTicket) ?? null;
+	const visibleTickets = tickets.filter(ticket => !(isAddOn(ticket) && ticket.requiresBaseTicket));
+
 	const handleSelectTicket = (ticket: TicketType) => {
 		setSelectedTicket(ticket);
+		setSelectedAddOn(addOnChosen && ticket.workshopAccess && addOnOffer ? addOnOffer : null);
 		setShowCheckout(true);
 	}
 
@@ -75,11 +84,32 @@ export default function EnhancedTicketSelector() {
 							</li>
 						))}
 						</ul>
+						{selectedAddOn && (
+							<>
+								<div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-border/60 pt-4">
+									<div>
+										<p className="font-semibold text-foreground">{selectedAddOn.title}</p>
+										<p className="mt-1 text-sm text-muted-foreground">Un workshop în plus</p>
+									</div>
+									<strong className="text-xl text-accent">+{selectedAddOn.price} RON</strong>
+								</div>
+								<div className="mt-4 flex items-center justify-between gap-3 border-t border-border/60 pt-4">
+									<p className="font-semibold text-foreground">Total</p>
+									<strong className="text-xl text-accent">{selectedTicket.price + selectedAddOn.price} RON</strong>
+								</div>
+							</>
+						)}
+						{selectedTicket.workshopAccess && (
+							<p className="mt-4 border-t border-border/60 pt-4 text-sm leading-relaxed text-muted-foreground">
+								Workshopurile le alegi ulterior, din contul tău. Te anunțăm când se deschide alegerea.
+							</p>
+						)}
 					</div>
 				</div>
 
 				<EmbeddedCheckout
 					ticketId={selectedTicket._id || selectedTicket.id || ''}
+					addOnTicketId={selectedAddOn ? selectedAddOn._id || selectedAddOn.id : undefined}
 					onSuccess={handlePaymentSuccess}
 					onError={handlePaymentError}
 				/>
@@ -100,10 +130,12 @@ export default function EnhancedTicketSelector() {
 			</div>
 
 			<div className="grid gap-5 xl:grid-cols-2">
-				{tickets.map((ticket) => {
+				{visibleTickets.map((ticket) => {
 					const purchased = ticket._id === selectedTicket?._id;
-					const addOn = (ticket.extraWorkshops ?? 0) > 0;
+					const addOn = isAddOn(ticket);
 					const unavailable = ticket.soldOut || ticket.requiresBaseTicket;
+					const offersAddOn = Boolean(ticket.workshopAccess && addOnOffer && !ticket.soldOut);
+					const total = ticket.price + (offersAddOn && addOnChosen && addOnOffer ? addOnOffer.price : 0);
 
 					return (
 						<article
@@ -145,10 +177,23 @@ export default function EnhancedTicketSelector() {
 								))}
 							</ul>
 
-							{ticket.requiresBaseTicket && !ticket.soldOut && (
-								<p className="mb-4 text-sm leading-relaxed text-muted-foreground">
-									Disponibil după ce cumperi un bilet cu acces la workshopuri.
-								</p>
+							{offersAddOn && addOnOffer && (
+								<label className="mb-4 flex min-h-12 cursor-pointer items-start gap-3 rounded-lg border border-accent/30 bg-accent/5 px-4 py-3">
+									<input
+										type="checkbox"
+										checked={addOnChosen}
+										onChange={(event) => setAddOnChosen(event.target.checked)}
+										className="mt-0.5 h-4 w-4 flex-none rounded border-input bg-background accent-primary"
+									/>
+									<span className="text-sm leading-relaxed">
+										<span className="block font-semibold text-foreground">
+											Adaugă un workshop în plus (+{addOnOffer.price} RON)
+										</span>
+										<span className="block text-muted-foreground">
+											Plătești o singură dată. Workshopurile le alegi ulterior, din contul tău.
+										</span>
+									</span>
+								</label>
 							)}
 
 							<button
@@ -162,7 +207,7 @@ export default function EnhancedTicketSelector() {
 									: 'border-accent/50 bg-primary text-primary-foreground hover:bg-primary/90'
 									}`}
 							>
-								{ticket.soldOut ? 'Epuizat' : ticket.requiresBaseTicket ? 'Necesită biletul de bază' : purchased ? 'Deja cumpărat' : 'Cumpără acum'}
+								{ticket.soldOut ? 'Epuizat' : ticket.requiresBaseTicket ? 'Necesită biletul de bază' : purchased ? 'Deja cumpărat' : offersAddOn && addOnChosen ? `Cumpără acum · ${total} RON` : 'Cumpără acum'}
 							</button>
 						</article>
 					);

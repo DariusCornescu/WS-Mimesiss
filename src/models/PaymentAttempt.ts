@@ -12,6 +12,11 @@ export interface PaymentAttemptRecord {
   email: string
   status: 'pending' | 'completed' | 'cancelled'
   stripePaymentIntentId?: string
+  /** Add-on bought in the same payment; `amount` above is the total. */
+  addOnTicketId?: string
+  addOnTicketType?: string
+  addOnTicketTitle?: string
+  addOnAmount?: number
   createdAt: Date
 }
 const schema = new Schema<PaymentAttemptRecord>({
@@ -25,8 +30,13 @@ const schema = new Schema<PaymentAttemptRecord>({
   email: { type: String, required: true },
   status: { type: String, enum: ['pending', 'completed', 'cancelled'], required: true },
   stripePaymentIntentId: String,
+  addOnTicketId: String,
+  addOnTicketType: String,
+  addOnTicketTitle: String,
+  addOnAmount: { type: Number, min: 1 },
 }, { timestamps: true })
 schema.index({ clerkId: 1, status: 1 })
 // Stock count and stale-hold lookup per ticket
 schema.index({ ticketId: 1, status: 1, createdAt: 1 })
+schema.index({ addOnTicketId: 1, status: 1, createdAt: 1 })
 export const PaymentAttempt = mongoose.models.PaymentAttempt || mongoose.model<PaymentAttemptRecord>('PaymentAttempt', schema)
