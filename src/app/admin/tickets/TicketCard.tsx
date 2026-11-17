@@ -77,6 +77,11 @@ export function TicketCard({ ticket }: TicketCardProps) {
               ? `${ticket.sold ?? 0} din ${ticket.maxQuantity} vândute sau în curs de plată`
               : `${ticket.sold ?? 0} vândute sau în curs de plată · stoc nelimitat`}
           </p>
+          {ticket.category !== 'ball' && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Înscriere la workshopuri: {ticket.workshopAccess ? 'da' : 'nu'}
+            </p>
+          )}
         </div>
         <span className="grid h-11 w-11 flex-none place-items-center rounded-full border border-accent/20 bg-accent/10 text-accent">
           <FaTicketSimple aria-hidden="true" className="h-5 w-5" />

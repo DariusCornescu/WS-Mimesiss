@@ -31,6 +31,7 @@ export async function createTicket(data: {
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
 	maxQuantity?: number | null;
+	workshopAccess?: boolean;
 }): Promise<void> {
 	await requireRole('admin');
 
@@ -44,6 +45,7 @@ export async function createTicket(data: {
 		enabled: parsed.data.enabled ?? true,
 		category: parsed.data.category ?? 'workshop',
 		maxQuantity: parsed.data.maxQuantity ?? null,
+		workshopAccess: parsed.data.workshopAccess ?? false,
 	});
 	await ticket.save();
 	revalidatePath('/admin/tickets');
@@ -58,6 +60,7 @@ export async function updateTicket(ticketId: string, data: {
 	enabled?: boolean;
 	category?: 'workshop' | 'ball';
 	maxQuantity?: number | null;
+	workshopAccess?: boolean;
 }): Promise<void> {
 	await requireRole('admin');
 
@@ -80,6 +83,7 @@ export async function updateTicket(ticketId: string, data: {
 	if (parsed.data.category) ticket.category = parsed.data.category;
 	// null clears the limit; undefined leaves it as it is.
 	if (parsed.data.maxQuantity !== undefined) ticket.maxQuantity = parsed.data.maxQuantity;
+	if (parsed.data.workshopAccess !== undefined) ticket.workshopAccess = parsed.data.workshopAccess;
 	await ticket.save();
 
 	revalidatePath('/admin/tickets');

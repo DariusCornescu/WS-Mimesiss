@@ -34,6 +34,7 @@ const ticketFields = {
   type: z.string({ message: 'Tipul este obligatoriu' }).trim().min(1, 'Tipul este obligatoriu').max(50, 'Tipul este prea lung'),
   enabled: z.boolean().optional(),
   category: z.enum(['workshop', 'ball'], { message: 'Categorie invalidă' }).optional(),
+  workshopAccess: z.boolean().optional(),
   // null = unlimited stock
   maxQuantity: z.number({ message: 'Numărul de bilete trebuie să fie un număr întreg' }).int('Numărul de bilete trebuie să fie un număr întreg').min(1, 'Minim 1 bilet').max(100000, 'Maxim 100.000 de bilete').nullable().optional(),
 }
