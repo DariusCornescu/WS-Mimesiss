@@ -7,6 +7,8 @@ import { getAppSettings } from '@/lib/settings'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, Payment, Registration } from '@/models'
 import PageIntro from '@/components/ui/PageIntro'
+import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder'
+import { missingPurchaseDetails } from '@/lib/registration-profile'
 
 /**
  * The attendance QR identifies a person, so it is only generated once there is
@@ -48,6 +50,8 @@ export default async function DashboardPage() {
         title={<>Bine ai venit, {clerkUser.firstName && clerkUser.lastName ? `${clerkUser.firstName} ${clerkUser.lastName}` : clerkUser.emailAddresses?.[0]?.emailAddress}!</>}
         description="De aici îți gestionezi profilul, înscrierile și biletele pentru evenimentele ASMM."
       />
+
+      {appSettings?.paymentsEnabled && <ProfilePurchaseReminder missing={missingPurchaseDetails(user)} />}
 
       {/* User QR Code Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

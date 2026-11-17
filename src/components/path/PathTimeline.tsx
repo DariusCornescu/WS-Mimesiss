@@ -85,6 +85,7 @@ export function PathRegistration({ renderedAt }: { renderedAt: number }) {
           <p>{pathProject.registrationHref
             ? 'Te înscrii cumpărând biletul PATH, care include două workshopuri. La cumpărare poți adăuga și un al treilea. Workshopurile le alegi ulterior, din contul tău.'
             : 'Revino pe această pagină: aici apare formularul de înscriere.'}</p>
+          {pathProject.registrationHref && <p className={styles.registrationNote}>Ai nevoie de un cont ASMM cu numărul de telefon și instituția completate în profil. Le poți completa înainte, din „Contul meu” → „Profilul meu”.</p>}
         </div>
         {pathProject.registrationHref && <Link href={pathProject.registrationHref} className={styles.primaryButton}>Cumpără biletul <FaArrowRight aria-hidden="true" /></Link>}
       </div>

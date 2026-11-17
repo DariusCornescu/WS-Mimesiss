@@ -70,6 +70,19 @@ export function profileDetails(value: unknown, userType: UserType): ProfileDetai
   return { phone, institution, studyUnit, studyYear, city }
 }
 
+/**
+ * What a stored user still has to fill in before buying a ticket, worded for
+ * the reminder shown to them. Empty once `purchaseProfile` accepts the user.
+ */
+export function missingPurchaseDetails(value: unknown): string[] {
+  if (!registrationProfile(value)) return ['numele și categoria']
+  const { phone, institution } = value as Record<string, unknown>
+  const missing: string[] = []
+  if (normalizePhone(phone) === null) missing.push('numărul de telefon')
+  if (!(typeof institution === 'string' && institution.trim().length >= 2)) missing.push('instituția la care studiezi')
+  return missing
+}
+
 /** A stored user may buy a ticket once the base profile, phone and institution are in place. */
 export function purchaseProfile(value: unknown): boolean {
   const base = registrationProfile(value)

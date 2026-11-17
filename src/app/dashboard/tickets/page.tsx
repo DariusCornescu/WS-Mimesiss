@@ -10,6 +10,8 @@ import TicketQRPopover from '@/components/TicketQRPopover';
 import PageIntro from '@/components/ui/PageIntro';
 import { getAppSettings } from '@/lib/settings';
 import { workshopChoiceOpen } from '@/lib/workshop-choice';
+import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder';
+import { missingPurchaseDetails } from '@/lib/registration-profile';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -35,7 +37,8 @@ export default async function MyTicketsPage() {
   const ticketIds = [...new Set(workshopPayments.map((p) => p.ticketId).filter((id): id is string => !!id && isValidObjectId(id)))];
   const ticketProducts = await Ticket.find({ _id: { $in: ticketIds } }).lean();
   const ticketMap = new Map(ticketProducts.map((t) => [(t._id as { toString(): string }).toString(), t]));
-  const choiceOpen = workshopPayments.length > 0 && workshopChoiceOpen(await getAppSettings());
+  const appSettings = await getAppSettings();
+  const choiceOpen = workshopPayments.length > 0 && workshopChoiceOpen(appSettings);
   // Add-ons follow the tickets they extend (stable sort keeps the date order).
   const isAddOnPayment = (payment: (typeof workshopPayments)[number]) => (ticketMap.get(payment.ticketId || '')?.extraWorkshops ?? 0) > 0 ? 1 : 0;
   workshopPayments.sort((a, b) => isAddOnPayment(a) - isAddOnPayment(b));
@@ -59,6 +62,8 @@ export default async function MyTicketsPage() {
         title="Biletele mele"
         description="Toate biletele achiziționate pentru evenimentele ASMM, într-un singur loc."
       />
+
+      {appSettings.paymentsEnabled && <ProfilePurchaseReminder missing={missingPurchaseDetails(user)} />}
 
       {issuedTickets.length === 0 && workshopPayments.length === 0 && (
         <div className="text-center py-16 mimesiss-section-card">
