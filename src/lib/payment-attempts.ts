@@ -61,7 +61,8 @@ async function reserve(clerkId: string, ticketId: string, quantity: number, addO
     }
     // This shared write serializes all purchases and fulfillment for one user.
     const user = await User.findOneAndUpdate({ clerkId }, { $inc: { paymentRevision: 1 } }, { new: true, session }).lean() as IUser | null
-    if (!user || !registrationProfile(user)) throw new RequestError(409, 'Completează profilul înainte de plată.', 'profile_incomplete')
+    const profile = user ? registrationProfile(user) : null
+    if (!user || !profile) throw new RequestError(409, 'Completează profilul înainte de plată.', 'profile_incomplete')
     if (!purchaseProfile(user)) throw new RequestError(409, 'Completează telefonul și instituția în profil înainte de plată.', 'profile_incomplete')
     const ticket = await Ticket.findById(ticketId).session(session).lean()
     if (!ticket) throw new RequestError(404, 'Bilet negăsit.')
@@ -102,6 +103,7 @@ async function reserve(clerkId: string, ticketId: string, quantity: number, addO
     const [attempt] = await PaymentAttempt.create([{
       clerkId, ticketId, ticketType: ticket.type, ticketTitle: ticket.title,
       category: ticket.category, quantity, amount, email: user.email, status: 'pending',
+      buyerName: `${profile.firstName} ${profile.lastName}`,
       ...(addOn ? {
         addOnTicketId, addOnTicketType: addOn.ticket.type, addOnTicketTitle: addOn.ticket.title, addOnAmount: addOn.amount,
       } : {}),
@@ -124,6 +126,7 @@ export async function intentForAttempt(attempt: PaymentAttemptRecord) {
       attemptId: String(attempt._id), clerkId: attempt.clerkId, ticketId: attempt.ticketId,
       ticketType: attempt.ticketType, ticketTitle: attempt.ticketTitle,
       ticketCategory: attempt.category, quantity: String(attempt.quantity),
+      ...(attempt.buyerName ? { buyerName: attempt.buyerName } : {}),
       ...(attempt.addOnTicketId ? {
         addOnTicketId: attempt.addOnTicketId, addOnTicketType: attempt.addOnTicketType ?? '',
         addOnTicketTitle: attempt.addOnTicketTitle ?? '', addOnAmount: String(attempt.addOnAmount ?? 0),

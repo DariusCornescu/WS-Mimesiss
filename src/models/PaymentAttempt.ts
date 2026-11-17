@@ -17,6 +17,8 @@ export interface PaymentAttemptRecord {
   addOnTicketType?: string
   addOnTicketTitle?: string
   addOnAmount?: number
+  /** Name from the profile, sent to Stripe as the billing name so every payment shows it. */
+  buyerName?: string
   createdAt: Date
 }
 const schema = new Schema<PaymentAttemptRecord>({
@@ -34,6 +36,7 @@ const schema = new Schema<PaymentAttemptRecord>({
   addOnTicketType: String,
   addOnTicketTitle: String,
   addOnAmount: { type: Number, min: 1 },
+  buyerName: { type: String, maxlength: 201 },
 }, { timestamps: true })
 schema.index({ clerkId: 1, status: 1 })
 // Stock count and stale-hold lookup per ticket

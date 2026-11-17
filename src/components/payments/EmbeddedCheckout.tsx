@@ -23,7 +23,7 @@ interface EmbeddedCheckoutProps {
 	onError?: (error: string) => void;
 }
 
-function CheckoutForm({ onSuccess, onError }: { onSuccess?: (paymentIntentId: string) => void; onError?: (error: string) => void }) {
+function CheckoutForm({ buyerName, onSuccess, onError }: { buyerName?: string; onSuccess?: (paymentIntentId: string) => void; onError?: (error: string) => void }) {
 	const stripe = useStripe();
 	const elements = useElements();
 	const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +41,12 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess?: (paymentIntentId: st
 
 		const { error, paymentIntent } = await stripe.confirmPayment({
 			elements,
-			confirmParams: { return_url: `${window.location.origin}/payment/success` },
+			confirmParams: {
+				return_url: `${window.location.origin}/payment/success`,
+				// The profile name becomes the billing name, so Stripe shows who paid
+				// for every method, not only for wallets that send a name themselves.
+				...(buyerName ? { payment_method_data: { billing_details: { name: buyerName } } } : {}),
+			},
 			redirect: 'if_required',
 		});
 
@@ -79,6 +84,8 @@ function CheckoutForm({ onSuccess, onError }: { onSuccess?: (paymentIntentId: st
 						applePay: 'auto',
 						googlePay: 'auto'
 					},
+					// Sent on confirmation from the profile instead of being asked again.
+					...(buyerName ? { fields: { billingDetails: { name: 'never' as const } } } : {}),
 					defaultValues: {
 						billingDetails: {
 							email: '',
@@ -112,6 +119,7 @@ export default function EmbeddedCheckout(props: EmbeddedCheckoutProps) {
 
 function PaymentCheckout({ ticketId, quantity = 1, addOnTicketId, onSuccess, onError }: EmbeddedCheckoutProps) {
 	const [clientSecret, setClientSecret] = useState('');
+	const [buyerName, setBuyerName] = useState<string | undefined>();
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -132,6 +140,7 @@ function PaymentCheckout({ ticketId, quantity = 1, addOnTicketId, onSuccess, onE
           throw new Error(data.error || 'Nu am putut inițializa plata.');
         }
         setClientSecret(data.clientSecret);
+        setBuyerName(typeof data.buyerName === 'string' && data.buyerName.trim() ? data.buyerName : undefined);
       } catch (err) {
         if (!controller.signal.aborted) setError(err instanceof Error ? err.message : 'Nu am putut inițializa plata.');
       } finally {
@@ -234,7 +243,7 @@ function PaymentCheckout({ ticketId, quantity = 1, addOnTicketId, onSuccess, onE
 			{clientSecret && (
 				<>
 					<Elements options={options} stripe={stripePromise}>
-						<CheckoutForm onSuccess={onSuccess} onError={onError} />
+						<CheckoutForm buyerName={buyerName} onSuccess={onSuccess} onError={onError} />
 					</Elements>
 				</>
 			)}
