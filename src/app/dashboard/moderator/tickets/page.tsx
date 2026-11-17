@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
 import { FaTicketAlt, FaCalendar } from 'react-icons/fa'
 import TicketStatusToggle from '@/components/moderator/TicketStatusToggle'
+import { entriesForTickets } from '@/lib/ticket-entitlements'
+import { workshopsLabel } from '@/lib/ticket-entries'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,9 +21,13 @@ export default async function ModeratorTicketsPage() {
   const users = await User.find({ clerkId: { $in: clerkIds } }).lean()
   const userMap = new Map(users.map((u) => [u.clerkId, u]))
 
+  const entriesByTicket = await entriesForTickets(tickets)
+  const entriesOf = (ticket: (typeof tickets)[number]) => entriesByTicket.get(String(ticket._id))
+
   const total = tickets.length
-  const used = tickets.filter((t) => t.status === 'used').length
-  const active = tickets.filter((t) => t.status === 'active').length
+  const used = tickets.filter((t) => t.status !== 'cancelled' && entriesOf(t)?.remaining === 0).length
+  const active = tickets.filter((t) => (entriesOf(t)?.remaining ?? 0) > 0).length
+  const withAddOn = tickets.filter((t) => t.status !== 'cancelled' && (entriesOf(t)?.extraWorkshops ?? 0) > 0).length
 
   return (
     <div className="space-y-6">
@@ -47,6 +53,12 @@ export default async function ModeratorTicketsPage() {
           <div className="text-xs text-muted-foreground mt-1">Active</div>
         </div>
       </div>
+
+      {withAddOn > 0 && (
+        <p className="text-sm text-muted-foreground">
+          Bilete cu workshop suplimentar: <strong className="text-accent">{withAddOn}</strong>
+        </p>
+      )}
 
       {tickets.length === 0 ? (
         <div className="text-center py-16 mimesiss-section-card">
@@ -77,6 +89,8 @@ export default async function ModeratorTicketsPage() {
                         ? `${owner.firstName} ${owner.lastName}`
                         : owner.email)
                     : ticket.clerkId
+                  const entries = entriesOf(ticket)
+                  const workshops = entries ? workshopsLabel(entries) : null
 
                   return (
                     <tr key={(ticket._id as { toString(): string }).toString()} className="hover:bg-muted/20 transition-colors">
@@ -86,6 +100,11 @@ export default async function ModeratorTicketsPage() {
                       <td className="px-4 py-3">
                         <div className="font-medium text-foreground">{ticket.ticketTitle}</div>
                         <div className="text-xs text-muted-foreground capitalize">{ticket.category}</div>
+                        {workshops && (
+                          <div className={`mt-1 text-xs font-semibold ${(entries?.extraWorkshops ?? 0) > 0 ? 'text-accent' : 'text-muted-foreground'}`}>
+                            {(entries?.extraWorkshops ?? 0) > 0 ? `+${entries?.extraWorkshops} workshop · ${workshops}` : workshops}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-medium text-foreground">{displayName}</div>
@@ -105,6 +124,8 @@ export default async function ModeratorTicketsPage() {
                         <TicketStatusToggle canReactivate={staff.role === 'admin'}
                           ticketId={(ticket._id as { toString(): string }).toString()}
                           initialStatus={ticket.status as 'active' | 'used' | 'cancelled'}
+                          allowed={entries?.allowed}
+                          initialUsed={entries?.used}
                         />
                       </td>
                     </tr>

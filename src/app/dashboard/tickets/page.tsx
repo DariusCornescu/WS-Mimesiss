@@ -12,6 +12,8 @@ import { getAppSettings } from '@/lib/settings';
 import { workshopChoiceOpen } from '@/lib/workshop-choice';
 import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder';
 import { missingPurchaseDetails } from '@/lib/registration-profile';
+import { entriesForTickets } from '@/lib/ticket-entitlements';
+import { workshopsLabel } from '@/lib/ticket-entries';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -44,6 +46,8 @@ export default async function MyTicketsPage() {
   workshopPayments.sort((a, b) => isAddOnPayment(a) - isAddOnPayment(b));
 
   const ballCount = issuedTickets.filter((t) => t.category === 'ball').length;
+  // What each ticket covers (workshops, add-on) and the entries left on it.
+  const entriesByTicket = await entriesForTickets(issuedTickets);
 
   // The scanner validates IssuedTicket ids, so a workshop QR must carry the
   // issued ticket's id, never the payment's. Manual payments have none.
@@ -152,6 +156,9 @@ export default async function MyTicketsPage() {
               const ticketProduct = ticketMap.get(payment.ticketId || '');
               const label = ticketProduct?.title || payment.ticketType || 'Bilet';
               const issued = workshopTicketsByPayment.get((payment._id as { toString(): string }).toString()) ?? [];
+              const liveTicket = issued.find((ticket) => ticket.status !== 'cancelled');
+              const covered = liveTicket ? entriesByTicket.get(String(liveTicket._id)) : undefined;
+              const coveredLabel = covered ? workshopsLabel(covered) : null;
               return (
                 <div key={(payment._id as { toString(): string }).toString()} className="bg-card border border-border rounded-lg p-5 flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -174,6 +181,12 @@ export default async function MyTicketsPage() {
                     <p className="text-sm text-muted-foreground mt-1">
                       {(payment.amount / 100).toFixed(2)} {payment.currency}
                     </p>
+                    {covered && coveredLabel && (
+                      <p className={`mt-2 inline-flex flex-wrap items-center gap-x-2 rounded-md border px-2.5 py-1 text-xs font-semibold ${covered.extraWorkshops > 0 ? 'border-accent/40 bg-accent/10 text-accent' : 'border-border bg-muted/40 text-foreground'}`}>
+                        {covered.extraWorkshops > 0 ? `+${covered.extraWorkshops} workshop · ${covered.workshops} workshopuri în total` : coveredLabel}
+                        {covered.used > 0 && <span className="font-medium text-muted-foreground">· intrări rămase: {covered.remaining} din {covered.allowed}</span>}
+                      </p>
+                    )}
                     {ticketProduct?.features && (
                       <ul className="mt-2 space-y-1">
                         {ticketProduct.features.slice(0, 3).map((f) => (
@@ -203,6 +216,7 @@ export default async function MyTicketsPage() {
                                   <TicketQRPopover
                                     ticketId={(ticket._id as { toString(): string }).toString()}
                                     ticketLabel={`${label} #${number}`}
+                                    detail={workshopsLabel(entriesByTicket.get(String(ticket._id)) ?? { workshops: null, extraWorkshops: 0 }) ?? undefined}
                                   />
                                   <span className="text-xs font-mono text-muted-foreground">
                                     #{number}{ticket.status === 'used' ? ' · folosit' : ''}

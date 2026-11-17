@@ -8,9 +8,11 @@ import { BRAND } from '@/lib/brand'
 interface TicketQRPopoverProps {
   ticketId: string
   ticketLabel: string
+  /** Shown under the title, e.g. the workshops the ticket covers. */
+  detail?: string
 }
 
-export default function TicketQRPopover({ ticketId, ticketLabel }: TicketQRPopoverProps) {
+export default function TicketQRPopover({ ticketId, ticketLabel, detail }: TicketQRPopoverProps) {
   const [open, setOpen] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
   const [generated, setGenerated] = useState(false)
@@ -61,6 +63,7 @@ export default function TicketQRPopover({ ticketId, ticketLabel }: TicketQRPopov
                 <FaTimes className="h-4 w-4" />
               </button>
             </div>
+            {detail && <p className="text-xs font-semibold text-accent">{detail}</p>}
 
             <div className="flex justify-center">
               {qrDataUrl ? (

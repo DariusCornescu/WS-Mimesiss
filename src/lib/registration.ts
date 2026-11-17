@@ -10,7 +10,8 @@ export type RegisterResult =
       message: string
     }
 
-const MAX_WORKSHOPS_PER_USER = 2
+/** Workshops a ticket with workshop access covers before any add-on. */
+export const MAX_WORKSHOPS_PER_USER = 2
 
 class RegistrationRejected extends Error {
   constructor(readonly result: RegisterResult) { super('Registration rejected') }
@@ -29,23 +30,54 @@ interface WorkshopGate {
 
 type Session = mongoose.ClientSession | null
 
+export interface WorkshopEntitlement {
+  /** Holds a paid ticket with workshop access that still stands. */
+  holdsTicket: boolean
+  /** Extra workshop places from add-ons; 0 unless `holdsTicket`. */
+  extraPlaces: number
+}
+
 /**
- * The participant's paid purchases of these ticket types that still stand. A
- * refunded payment does not count, and neither does one whose issued tickets
- * were all cancelled. Manual payments have no issued tickets and count as
- * they are.
+ * What each participant's purchases entitle them to. A purchase stands while
+ * its payment is completed and not all of its issued tickets are cancelled;
+ * manual payments have no issued tickets and count as they are. Add-ons
+ * extend a workshop ticket, so their places count only next to one.
+ * Registration, the sale of add-ons and ticket validation all read this.
  */
-async function standingPayments(userId: string, ticketIds: string[], session: Session) {
-  if (ticketIds.length === 0) return []
-  const payments = await Payment.find({ clerkId: userId, status: 'completed', ticketId: { $in: ticketIds } })
-    .session(session).select('_id ticketId quantity').lean()
-  const standing: typeof payments = []
+export async function workshopEntitlements(userIds: string[], session: Session = null): Promise<Map<string, WorkshopEntitlement>> {
+  const result = new Map<string, WorkshopEntitlement>(userIds.map(id => [id, { holdsTicket: false, extraPlaces: 0 }]))
+  if (userIds.length === 0) return result
+  const products = await Ticket.find({ $or: [{ workshopAccess: true }, { extraWorkshops: { $gt: 0 } }] })
+    .session(session).select('_id workshopAccess extraWorkshops').lean()
+  if (products.length === 0) return result
+  const productById = new Map(products.map(product => [String(product._id), product]))
+  const payments = await Payment.find({ clerkId: { $in: userIds }, status: 'completed', ticketId: { $in: [...productById.keys()] } })
+    .session(session).select('_id clerkId ticketId quantity').lean()
+  if (payments.length === 0) return result
+  const issued = await IssuedTicket.find({ paymentId: { $in: payments.map(payment => String(payment._id)) } })
+    .session(session).select('paymentId status').lean()
+  const withTickets = new Set<string>()
+  const withLiveTicket = new Set<string>()
+  for (const ticket of issued) {
+    withTickets.add(ticket.paymentId)
+    if (ticket.status !== 'cancelled') withLiveTicket.add(ticket.paymentId)
+  }
+  const addOnPlaces = new Map<string, number>()
   for (const payment of payments) {
     const paymentId = String(payment._id)
-    const issued = await IssuedTicket.countDocuments({ paymentId }).session(session)
-    if (issued === 0 || await IssuedTicket.exists({ paymentId, status: { $ne: 'cancelled' } }).session(session)) standing.push(payment)
+    if (withTickets.has(paymentId) && !withLiveTicket.has(paymentId)) continue
+    const product = productById.get(String(payment.ticketId))
+    const entitlement = result.get(payment.clerkId)
+    if (!product || !entitlement) continue
+    if (product.workshopAccess) entitlement.holdsTicket = true
+    const places = product.extraWorkshops ?? 0
+    if (places > 0) addOnPlaces.set(payment.clerkId, (addOnPlaces.get(payment.clerkId) ?? 0) + places * (payment.quantity || 1))
   }
-  return standing
+  for (const [userId, places] of addOnPlaces) {
+    const entitlement = result.get(userId)
+    if (entitlement?.holdsTicket) entitlement.extraPlaces = places
+  }
+  return result
 }
 
 /**
@@ -54,21 +86,12 @@ async function standingPayments(userId: string, ticketIds: string[], session: Se
  * same rule.
  */
 export async function holdsWorkshopTicket(userId: string, session: Session = null) {
-  const granting = await Ticket.find({ workshopAccess: true }).session(session).select('_id').lean()
-  return (await standingPayments(userId, granting.map(ticket => String(ticket._id)), session)).length > 0
+  return (await workshopEntitlements([userId], session)).get(userId)?.holdsTicket ?? false
 }
 
-/**
- * Extra workshop places bought as add-ons. They extend a workshop ticket, so
- * they count only while the participant still holds one.
- */
+/** Extra workshop places bought as add-ons, counted only next to a workshop ticket. */
 async function extraWorkshopPlaces(userId: string, session: Session) {
-  const addOns = await Ticket.find({ extraWorkshops: { $gt: 0 } }).session(session).select('_id extraWorkshops').lean()
-  if (addOns.length === 0) return 0
-  const places = new Map(addOns.map(ticket => [String(ticket._id), ticket.extraWorkshops ?? 0]))
-  const payments = await standingPayments(userId, [...places.keys()], session)
-  if (payments.length === 0 || !(await holdsWorkshopTicket(userId, session))) return 0
-  return payments.reduce((sum, payment) => sum + (places.get(String(payment.ticketId)) ?? 0) * (payment.quantity || 1), 0)
+  return (await workshopEntitlements([userId], session)).get(userId)?.extraPlaces ?? 0
 }
 
 /** Serialize each user's registrations and commit seat/count changes together. */

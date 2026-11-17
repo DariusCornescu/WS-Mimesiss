@@ -3,6 +3,8 @@ import { requireRole, toAuthResponse } from '@/lib/auth'
 import connectDB from '@/lib/mongodb'
 import { IssuedTicket, User } from '@/models'
 import type { IUser } from '@/models'
+import { entriesForTickets } from '@/lib/ticket-entitlements'
+import { ticketEntries, workshopsLabel } from '@/lib/ticket-entries'
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +32,11 @@ export async function GET(req: NextRequest) {
       : owner.email
     : ticket.clerkId
 
+  const entries = (await entriesForTickets([ticket])).get(String(ticket._id)) ?? ticketEntries(ticket, null)
+
   return NextResponse.json({
+    workshops: workshopsLabel(entries),
+    entries: { allowed: entries.allowed, used: entries.used, remaining: entries.remaining, extraWorkshops: entries.extraWorkshops },
     ticketId: (ticket._id as { toString(): string }).toString(),
     ticketNumber: ticket.ticketNumber,
     ticketTitle: ticket.ticketTitle,

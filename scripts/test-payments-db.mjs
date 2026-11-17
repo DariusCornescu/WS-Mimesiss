@@ -5,6 +5,7 @@ import crypto from 'node:crypto'
 import { MongoMemoryReplSet } from 'mongodb-memory-server-core'
 import { load } from './helpers/load-ts.mjs'
 
+const zodModule = await import('zod')
 let database, models, attempts, security, fulfillment, purchase, settings
 const intents = new Map()
 const keys = new Map()
@@ -163,15 +164,75 @@ test('distributed rate limit accepts only configured request count under concurr
 test('simultaneous QR confirmations can consume an active ticket only once', async () => {
   const { intent } = await paid(1); await fulfillment.fulfillPayment(intent)
   const ticket = await models.IssuedTicket.findOne()
-  const validation = load('src/lib/validation.ts', { zod: await import('zod') })
-  const { PATCH } = load('src/app/api/admin/tickets/status/route.ts', {
-    'next/server': response, '@/models': models, '@/lib/validation': validation,
-    '@/lib/auth': { requireRole: async () => ({ role: 'moderator' }), toAuthResponse: () => null },
-  })
+  const { PATCH } = statusRoute('moderator')
   const responses = await Promise.all(Array.from({ length: 10 }, () => PATCH({ json: async () => ({ ticketId: String(ticket._id), status: 'used' }) })))
   assert.equal(responses.filter(r => r.status === 200).length, 1)
   assert.equal(responses.filter(r => r.status === 409).length, 9)
   assert.equal((await PATCH({ json: async () => ({ ticketId: String(ticket._id), status: 'active' }) })).status, 403)
+})
+function statusRoute(role) {
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  const entries = load('src/lib/ticket-entries.ts')
+  return load('src/app/api/admin/tickets/status/route.ts', {
+    'next/server': response, '@/models': models,
+    '@/lib/validation': load('src/lib/validation.ts', { zod: zodModule }),
+    '@/lib/auth': { requireRole: async () => ({ role }), toAuthResponse: () => null },
+    '@/lib/ticket-entries': entries,
+    '@/lib/ticket-entitlements': load('src/lib/ticket-entitlements.ts', { mongoose, '@/models': models, '@/lib/registration': registration, '@/lib/ticket-entries': entries }),
+  })
+}
+async function workshopTicket({ withAddOn }) {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const base = await product({ category: 'workshop', type: 'path', price: 50, workshopAccess: true })
+  const addOn = await product({ category: 'workshop', type: 'path-extra', price: 20, extraWorkshops: 1 })
+  const attempt = await purchase.reservePayment('buyer', String(base._id), 1, withAddOn ? String(addOn._id) : undefined)
+  const intent = await purchase.intentForAttempt(attempt)
+  intent.status = 'succeeded'; intent.amount_received = intent.amount
+  await fulfillment.fulfillPayment(intent)
+  return { ticket: await models.IssuedTicket.findOne(), base, addOn }
+}
+const scan = (PATCH, ticket, status = 'used') => PATCH({ json: async () => ({ ticketId: String(ticket._id), status }) })
+test('a workshop ticket admits its holder once per workshop it covers, however many scans arrive', async () => {
+  const { ticket } = await workshopTicket({ withAddOn: false })
+  const { PATCH } = statusRoute('moderator')
+  const responses = await Promise.all(Array.from({ length: 10 }, () => scan(PATCH, ticket)))
+  assert.equal(responses.filter(r => r.status === 200).length, 2)
+  assert.equal(responses.filter(r => r.status === 409).length, 8)
+  const stored = await models.IssuedTicket.findById(ticket._id)
+  assert.equal(stored.entriesUsed, 2)
+  assert.equal(stored.status, 'used')
+})
+test('the add-on gives a third entry, also when bought after the ticket was used up', async () => {
+  const { ticket } = await workshopTicket({ withAddOn: true })
+  const { PATCH } = statusRoute('moderator')
+  const first = await scan(PATCH, ticket)
+  assert.deepEqual([first.body.entries.allowed, first.body.entries.used, first.body.entries.remaining], [3, 1, 2])
+  assert.equal(first.body.ticket.status, 'active')
+  await scan(PATCH, ticket)
+  const third = await scan(PATCH, ticket)
+  assert.equal(third.body.entries.remaining, 0)
+  assert.equal(third.body.ticket.status, 'used')
+  assert.equal((await scan(PATCH, ticket)).status, 409)
+
+  await models.Payment.deleteMany({}); await models.IssuedTicket.deleteMany({}); await attempts.PaymentAttempt.deleteMany({}); await models.Ticket.deleteMany({})
+  const later = await workshopTicket({ withAddOn: false })
+  await scan(PATCH, later.ticket); await scan(PATCH, later.ticket)
+  assert.equal((await scan(PATCH, later.ticket)).status, 409)
+  await payFor(later.addOn)
+  const extra = await scan(PATCH, later.ticket)
+  assert.equal(extra.status, 200)
+  assert.equal(extra.body.entries.used, 3)
+  assert.equal((await scan(PATCH, later.ticket)).status, 409)
+})
+test('an admin can give the last entry back and a cancelled ticket admits nobody', async () => {
+  const { ticket } = await workshopTicket({ withAddOn: false })
+  const admin = statusRoute('admin').PATCH
+  await scan(admin, ticket); await scan(admin, ticket)
+  const undone = await scan(admin, ticket, 'active')
+  assert.deepEqual([undone.body.entries.used, undone.body.entries.remaining, undone.body.ticket.status], [1, 1, 'active'])
+  assert.equal((await scan(admin, ticket)).status, 200)
+  await scan(admin, ticket, 'cancelled')
+  assert.equal((await scan(admin, ticket)).status, 409)
 })
 
 test('parallel registrations cannot exceed two workshops per participant', async () => {
