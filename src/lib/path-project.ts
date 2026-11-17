@@ -85,6 +85,18 @@ export const pathWorkshops: PathWorkshop[] = [
     image: '/projects/path/workshops/gabriel-zanfir.webp',
     imageAlt: 'Drd. dr. Gabriel Zanfir, medic rezident în psihiatrie.',
   },
+  {
+    title: 'Evaluarea psihiatrică și decizia medicală în medii operaționale cu risc ridicat',
+    doctor: 'Dr. Blaj Carmen Ioana',
+    doctorRole: 'Medic specialist în psihiatrie',
+    description: [
+      'Dr. Blaj Carmen Ioana este medic specialist în psihiatrie, cu preocupări în evaluarea și înțelegerea complexității tulburărilor psihice. Activitatea sa presupune o abordare atentă a fiecărui caz clinic, de la identificarea manifestărilor simptomatice și stabilirea diagnosticului, până la alegerea conduitei medicale adecvate.',
+      'Prin perspectiva clinică asupra sănătății mintale, contribuie la aprofundarea înțelegerii proceselor de evaluare psihiatrică și a rolului acestora în fundamentarea deciziilor medicale.',
+      'În cadrul acestui workshop, veți avea ocazia să descoperiți particularitățile evaluării psihiatrice prin analiza unor cazuri clinice. Pornind de la datele prezentate, veți fi provocați să formulați ipoteze diagnostice, să evaluați aptitudinea pentru activitate și să argumentați deciziile medicale, ținând cont de factorul uman și de siguranța operațională.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/carmen-ioana-blaj.webp',
+    imageAlt: 'Dr. Blaj Carmen Ioana, medic specialist în psihiatrie.',
+  },
 ]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
