@@ -12,6 +12,9 @@ interface TicketLookup {
   status: 'active' | 'used' | 'cancelled'
   category: string
   owner: { name: string; email: string | null }
+  /** "3 workshopuri (include 1 suplimentar)"; null for a ticket without workshop access. */
+  workshops?: string | null
+  entries?: { allowed: number; used: number; remaining: number; extraWorkshops: number }
 }
 
 /**
@@ -235,6 +238,16 @@ export default function QRScanner() {
                 </span>
               </div>
               <p className="text-sm font-medium text-foreground">{found.ticketTitle}</p>
+              {found.workshops && (
+                <p className={`text-sm font-semibold ${(found.entries?.extraWorkshops ?? 0) > 0 ? 'text-accent' : 'text-foreground'}`}>
+                  {(found.entries?.extraWorkshops ?? 0) > 0 ? `Include workshop suplimentar: ${found.workshops}` : found.workshops}
+                </p>
+              )}
+              {found.entries && found.entries.allowed > 1 && found.status !== 'cancelled' && (
+                <p className="text-sm text-muted-foreground">
+                  Intrări rămase: <strong className="text-foreground">{found.entries.remaining}</strong> din {found.entries.allowed}
+                </p>
+              )}
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <FaUser className="h-3.5 w-3.5 shrink-0" />
                 <span>{found.owner.name}</span>

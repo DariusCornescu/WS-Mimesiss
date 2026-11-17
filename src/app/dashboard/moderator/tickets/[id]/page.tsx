@@ -7,6 +7,8 @@ import { FaArrowLeft, FaTicketAlt, FaCalendar, FaUser, FaEnvelope } from 'react-
 import Link from 'next/link'
 import mongoose from 'mongoose'
 import TicketStatusToggle from '@/components/moderator/TicketStatusToggle'
+import { entriesForTickets } from '@/lib/ticket-entitlements'
+import { ticketEntries, workshopsLabel } from '@/lib/ticket-entries'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,15 +35,19 @@ export default async function ModeratorTicketDetailPage({
       : owner.email
     : ticket.clerkId
 
+  const entries = (await entriesForTickets([ticket])).get(String(ticket._id)) ?? ticketEntries(ticket, null)
+  const workshops = workshopsLabel(entries)
+  const full = ticket.status !== 'cancelled' && entries.remaining === 0
+
   const statusColor =
-    ticket.status === 'used'
+    full
       ? 'text-secondary bg-secondary/10 border-secondary/30'
       : ticket.status === 'cancelled'
       ? 'text-destructive bg-destructive/10 border-destructive/30'
       : 'text-accent bg-primary/10 border-primary/30'
 
   const statusLabel =
-    ticket.status === 'used' ? 'Folosit' : ticket.status === 'cancelled' ? 'Anulat' : 'Activ'
+    full ? 'Folosit' : ticket.status === 'cancelled' ? 'Anulat' : 'Activ'
 
   return (
     <div className="max-w-md mx-auto space-y-6">
@@ -79,6 +85,11 @@ export default async function ModeratorTicketDetailPage({
           <p className="text-xs text-muted-foreground uppercase tracking-wide mb-0.5">Bilet</p>
           <p className="text-base font-semibold text-foreground">{ticket.ticketTitle}</p>
           <p className="text-xs text-muted-foreground capitalize mt-0.5">{ticket.category}</p>
+          {workshops && (
+            <p className={`mt-3 rounded-md border px-3 py-2 text-sm font-semibold ${entries.extraWorkshops > 0 ? 'border-accent/40 bg-accent/10 text-accent' : 'border-border bg-muted/40 text-foreground'}`}>
+              {entries.extraWorkshops > 0 ? `Include workshop suplimentar: ${workshops}` : workshops}
+            </p>
+          )}
         </div>
 
         <hr className="border-border" />
@@ -118,13 +129,19 @@ export default async function ModeratorTicketDetailPage({
       {ticket.status !== 'cancelled' && (
         <div className="mimesiss-card p-4 space-y-3">
           <p className="text-sm text-muted-foreground">
-            {ticket.status === 'active'
-              ? 'Marchați biletul ca folosit la intrarea participantului.'
-              : 'Biletul a fost deja marcat ca folosit. Puteți reactiva dacă a fost o greșeală.'}
+            {entries.allowed > 1
+              ? full
+                ? 'Toate intrările acestui bilet au fost folosite. Un administrator poate anula ultima intrare dacă a fost o greșeală.'
+                : 'Confirmați câte o intrare la fiecare workshop. Biletul nu mai poate fi folosit după ultima intrare.'
+              : full
+              ? 'Biletul a fost deja marcat ca folosit. Puteți reactiva dacă a fost o greșeală.'
+              : 'Marchați biletul ca folosit la intrarea participantului.'}
           </p>
           <TicketStatusToggle canReactivate={staff.role === 'admin'}
             ticketId={(ticket._id as { toString(): string }).toString()}
             initialStatus={ticket.status as 'active' | 'used' | 'cancelled'}
+            allowed={entries.allowed}
+            initialUsed={entries.used}
             large
           />
         </div>

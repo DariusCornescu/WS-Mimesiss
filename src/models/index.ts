@@ -277,6 +277,8 @@ export interface IIssuedTicket extends Document {
   ticketType: string          // e.g. "bal"
   category: 'workshop' | 'ball'
   status: 'active' | 'used' | 'cancelled'
+  /** Entries confirmed at the door. Tickets issued before this field have none. */
+  entriesUsed?: number
   pricePerTicket: number      // amount paid per ticket in smallest currency unit
   currency: string
   createdAt: Date
@@ -291,6 +293,7 @@ const IssuedTicketSchema = new Schema<IIssuedTicket>({
   ticketType: { type: String, required: true },
   category: { type: String, enum: ['workshop', 'ball'], required: true },
   status: { type: String, enum: ['active', 'used', 'cancelled'], default: 'active' },
+  entriesUsed: { type: Number, min: 0, default: 0 },
   pricePerTicket: { type: Number, required: true },
   currency: { type: String, required: true, default: 'RON' },
 }, { timestamps: true })
