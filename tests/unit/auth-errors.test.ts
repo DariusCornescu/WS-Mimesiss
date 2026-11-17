@@ -13,7 +13,7 @@ describe('authErrorMessage', () => {
   it("quotes the provider's own minimum password length", () => {
     const error = { errors: [{ code: 'form_password_length_too_short', message: 'Passwords must be 15 characters or more.' }] }
     expect(authErrorMessage(error, fallback)).toBe('Parola trebuie să aibă cel puțin 15 caractere.')
-    expect(authErrorMessage({ errors: [{ code: 'form_password_length_too_short' }] }, fallback)).toBe('Parola trebuie să aibă cel puțin 8 caractere.')
+    expect(authErrorMessage({ errors: [{ code: 'form_password_length_too_short' }] }, fallback)).toBe('Parola trebuie să aibă cel puțin 10 caractere.')
   })
 
   it('falls back for an unknown error and records its code', () => {

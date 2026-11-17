@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import AuthShell from '@/components/auth/AuthShell'
 import styles from '@/components/auth/auth.module.css'
+import { PASSWORD_MIN_LENGTH } from '@/lib/password-policy'
 
 function ResetPasswordForm() {
   const [code, setCode] = useState('')
@@ -56,8 +57,8 @@ function ResetPasswordForm() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Parola trebuie să aibă cel puțin 8 caractere')
+    if (password.length < PASSWORD_MIN_LENGTH) {
+      setError(`Parola trebuie să aibă cel puțin ${PASSWORD_MIN_LENGTH} caractere`)
       return
     }
 
@@ -96,7 +97,7 @@ function ResetPasswordForm() {
             setError('Codul de verificare este incorect sau a expirat')
             break
           case 'form_password_validation_failed':
-            setError('Parola nu îndeplinește cerințele de securitate (minim 8 caractere)')
+            setError(`Parola nu îndeplinește cerințele de securitate (minim ${PASSWORD_MIN_LENGTH} caractere)`)
             break
           case 'form_password_too_common':
             setError('Parola este prea comună. Alege o parolă mai sigură.')
@@ -171,10 +172,11 @@ function ResetPasswordForm() {
             type="password"
             autoComplete="new-password"
             required
+            minLength={PASSWORD_MIN_LENGTH}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={styles.input}
-            placeholder="Minim 8 caractere"
+            placeholder={`Minim ${PASSWORD_MIN_LENGTH} caractere`}
           />
         </div>
 

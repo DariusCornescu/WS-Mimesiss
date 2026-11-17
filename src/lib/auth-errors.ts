@@ -1,4 +1,6 @@
-type ProviderError = { code?: string; message?: string; longMessage?: string }
+import { PASSWORD_MIN_LENGTH } from '@/lib/password-policy'
+
+type ProviderError ={ code?: string; message?: string; longMessage?: string }
 
 export function authErrorMessage(error: unknown, fallback: string): string {
   const first: ProviderError | undefined = error && typeof error === 'object' && 'errors' in error
@@ -17,7 +19,7 @@ export function authErrorMessage(error: unknown, fallback: string): string {
   }
   if (code === 'form_password_length_too_short') {
     // The minimum is set in the sign-in provider, not here: quote its number.
-    const minimum = /\d+/.exec(first?.longMessage ?? first?.message ?? '')?.[0] ?? '8'
+    const minimum = /\d+/.exec(first?.longMessage ?? first?.message ?? '')?.[0] ?? String(PASSWORD_MIN_LENGTH)
     return `Parola trebuie să aibă cel puțin ${minimum} caractere.`
   }
   if (code && messages[code]) return messages[code]
