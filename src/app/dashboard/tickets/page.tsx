@@ -3,10 +3,9 @@ import { redirect } from 'next/navigation';
 import { syncUserWithDatabase } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
 import { IssuedTicket, Payment, Ticket } from '@/models';
-import { FaTicketAlt, FaCheck, FaTimes, FaCalendar, FaShoppingCart } from 'react-icons/fa';
+import { FaTicketAlt, FaCheck, FaTimes, FaCalendar } from 'react-icons/fa';
 import type { User as UserType } from '@/types/models';
 import Link from 'next/link';
-import { getAppSettings } from '@/lib/settings';
 import TicketQRPopover from '@/components/TicketQRPopover';
 import PageIntro from '@/components/ui/PageIntro';
 
@@ -16,10 +15,6 @@ export default async function MyTicketsPage() {
 
   const user: UserType = await syncUserWithDatabase(clerkUser);
   await connectDB();
-
-  const appSettings = await getAppSettings();
-  const isBallMode = appSettings?.eventMode === 'ball';
-  const ballMax = appSettings?.ballMaxTicketsPerUser ?? 2;
 
   // --- Ball tickets: fetched from IssuedTicket (one doc per physical ticket) ---
   const issuedTickets = await IssuedTicket.find({ clerkId: user.clerkId })
@@ -40,11 +35,16 @@ export default async function MyTicketsPage() {
   const ticketMap = new Map(ticketProducts.map((t) => [(t._id as { toString(): string }).toString(), t]));
 
   const ballCount = issuedTickets.filter((t) => t.category === 'ball').length;
-  const workshopOwned = workshopPayments.length > 0;
 
-  const ticketsRemaining = isBallMode
-    ? Math.max(0, ballMax - ballCount)
-    : workshopOwned ? 0 : 1;
+  // The scanner validates IssuedTicket ids, so a workshop QR must carry the
+  // issued ticket's id, never the payment's. Manual payments have none.
+  const workshopTicketsByPayment = new Map<string, typeof issuedTickets>();
+  for (const ticket of issuedTickets) {
+    if (ticket.category !== 'workshop') continue;
+    const list = workshopTicketsByPayment.get(ticket.paymentId) ?? [];
+    list.push(ticket);
+    workshopTicketsByPayment.set(ticket.paymentId, list);
+  }
 
   return (
     <div className="space-y-8">
@@ -53,33 +53,6 @@ export default async function MyTicketsPage() {
         title="Biletele mele"
         description="Toate biletele achiziționate pentru evenimentele ASMM, într-un singur loc."
       />
-
-      {/* Buy more / buy first banner */}
-      {ticketsRemaining > 0 && (
-        <div className="flex items-center justify-between bg-primary/5 border border-primary/20 rounded-lg px-5 py-4">
-          <div>
-            <p className="font-medium text-foreground">
-              {isBallMode
-                ? ballCount === 0
-                  ? 'Nu ai bilete de bal încă'
-                  : `Mai poți cumpăra ${ticketsRemaining} bilet${ticketsRemaining > 1 ? 'e' : ''} de bal`
-                : 'Nu ai niciun bilet de eveniment'}
-            </p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {isBallMode
-                ? `Limita ta este de ${ballMax} bilet${ballMax > 1 ? 'e' : ''}`
-                : 'Achiziționează un bilet pentru a participa'}
-            </p>
-          </div>
-          <Link
-            href="/payment"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors flex-shrink-0"
-          >
-            <FaShoppingCart className="h-3 w-3" />
-            Cumpără bilet
-          </Link>
-        </div>
-      )}
 
       {issuedTickets.length === 0 && workshopPayments.length === 0 && (
         <div className="text-center py-16 mimesiss-section-card">
@@ -159,6 +132,8 @@ export default async function MyTicketsPage() {
           <div className="grid gap-4">
             {workshopPayments.map((payment) => {
               const ticketProduct = ticketMap.get(payment.ticketId || '');
+              const label = ticketProduct?.title || payment.ticketType || 'Bilet';
+              const issued = workshopTicketsByPayment.get((payment._id as { toString(): string }).toString()) ?? [];
               return (
                 <div key={(payment._id as { toString(): string }).toString()} className="bg-card border border-border rounded-lg p-5 flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -197,12 +172,34 @@ export default async function MyTicketsPage() {
                         day: 'numeric', month: 'long', year: 'numeric',
                       })}
                     </p>
-                    <div className="mt-3">
-                      <TicketQRPopover
-                        ticketId={(payment._id as { toString(): string }).toString()}
-                        ticketLabel={ticketProduct?.title || payment.ticketType || 'Bilet'}
-                      />
-                    </div>
+                    {issued.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        {issued.map((ticket) => {
+                          const number = String(ticket.ticketNumber).padStart(4, '0');
+                          return (
+                            <div key={(ticket._id as { toString(): string }).toString()} className="flex items-center gap-1">
+                              {ticket.status === 'cancelled' ? (
+                                <span className="text-xs text-destructive">Bilet #{number} anulat</span>
+                              ) : (
+                                <>
+                                  <TicketQRPopover
+                                    ticketId={(ticket._id as { toString(): string }).toString()}
+                                    ticketLabel={`${label} #${number}`}
+                                  />
+                                  <span className="text-xs font-mono text-muted-foreground">
+                                    #{number}{ticket.status === 'used' ? ' · folosit' : ''}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Plată înregistrată de organizatori. La intrare folosești codul QR personal din prezentarea generală.
+                      </p>
+                    )}
                   </div>
                 </div>
               );
