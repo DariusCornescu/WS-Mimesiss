@@ -2,7 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaInstagram, FaMapMarkerAlt, FaUserMd } from 'react-icons/fa'
 import { PATH_HREF, pathProject, pathWorkshops } from '@/lib/path-project'
-import { PathRegistration } from './PathTimeline'
+import { PathAudience, PathRegistration } from './PathTimeline'
 import styles from './PathProject.module.css'
 
 export const INSTAGRAM_URL = 'https://www.instagram.com/asmm.bucuresti'
@@ -65,6 +65,7 @@ export default function PathWorkshopsPage({ renderedAt }: { renderedAt: number }
       <section id="inscrieri" className={styles.registrationSection} aria-labelledby="inscrieri-title">
         <p className={styles.eyebrow}>Înscrieri</p>
         <PathRegistration renderedAt={renderedAt} />
+        <PathAudience renderedAt={renderedAt} />
       </section>
 
       <section className={styles.contact} aria-labelledby="path-contact-title">

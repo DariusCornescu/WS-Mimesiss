@@ -41,6 +41,19 @@ export const pathStory = {
   invitation: 'PATH începe aici. Vă invităm să fiți parte dintr-un proiect în care învățarea capătă o nouă dimensiune.',
 }
 
+/** Cui se adresează PATH, afișat lângă înscrieri până începe ediția. */
+export const pathAudience = {
+  title: 'PATH este un proiect destinat tuturor studenților interesați!',
+  paragraphs: [
+    'Porțile noastre sunt deschise pentru toți studenții curioși și dornici să se implice, din orice oraș al țării!',
+    'Nu trebuie să fii la o academie militară — indiferent ce studiezi, locul tău poate fi aici.',
+  ],
+  /** Ora României. Până atunci se anunță data; după, rămâne doar îndemnul. */
+  workshopChoiceOpensAt: '2026-11-30T00:00:00+02:00',
+  workshopChoiceSoon: 'Din 30 noiembrie îți vei putea alege workshopurile preferate!',
+  capacityNote: 'Asigură-ți locul din timp — fiecare workshop are capacitate limitată!',
+} as const
+
 export const pathHighlights = [
   {
     title: 'Workshopuri medicale interactive',

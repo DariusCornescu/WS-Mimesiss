@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { FaArrowRight } from 'react-icons/fa'
 import Countdown, { useNow } from '@/components/ui/Countdown'
-import { pathProject } from '@/lib/path-project'
+import { pathAudience, pathProject } from '@/lib/path-project'
 import styles from './PathProject.module.css'
 
 type Phase = 'before-registration' | 'registration-open' | 'live' | 'ended'
@@ -40,6 +40,23 @@ export function PathHeroTimer({ renderedAt }: { renderedAt: number }) {
         caption={<p className={styles.timerLabel}>{opening ? 'Înscrierile se deschid în' : 'PATH începe în'}</p>}
       />
     </div>
+  )
+}
+
+/** Deschiderea către toți studenții; dispare odată ce ediția a început. */
+export function PathAudience({ renderedAt }: { renderedAt: number }) {
+  const now = useNow() ?? renderedAt
+  const phase = phaseAt(now)
+  if (phase === 'live' || phase === 'ended') return null
+  const choiceOpen = now >= seconds(pathAudience.workshopChoiceOpensAt)
+  return (
+    <aside className={styles.audience} aria-labelledby="path-audience-title">
+      <h3 id="path-audience-title">{pathAudience.title}</h3>
+      {pathAudience.paragraphs.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+      <p className={styles.audienceNote}>
+        {choiceOpen ? pathAudience.capacityNote : `${pathAudience.workshopChoiceSoon} ${pathAudience.capacityNote}`}
+      </p>
+    </aside>
   )
 }
 
