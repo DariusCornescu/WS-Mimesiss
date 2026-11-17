@@ -65,11 +65,13 @@ test('20 concurrent requests reserve only one purchase and one Stripe intent', a
   assert.equal(stripeCreates, 1)
   assert.equal(await attempts.PaymentAttempt.countDocuments(), 1)
 })
-test('different products cannot bypass per-user pending reservation', async () => {
+test('different products started at once never leave two open checkouts', async () => {
   const first = await product(); const second = await product({ type: 'bal2' })
   const results = await Promise.allSettled([purchase.reservePayment('buyer', String(first._id), 2), purchase.reservePayment('buyer', String(second._id), 2)])
-  assert.equal(results.filter(r => r.status === 'fulfilled').length, 1)
-  assert.equal(results.find(r => r.status === 'rejected').reason.code, 'payment_pending')
+  assert.ok(results.some(r => r.status === 'fulfilled'))
+  assert.equal(await attempts.PaymentAttempt.countDocuments({ clerkId: 'buyer', status: 'pending' }), 1)
+  // A checkout that never reached Stripe is released without creating an intent for it.
+  assert.equal(stripeCreates, 0)
 })
 test('20 replayed webhook events issue exactly the purchased quantity', async () => {
   const { intent } = await paid()
@@ -408,7 +410,7 @@ test('a workshop ticket and its add-on are paid together and fulfilled as two pu
   for (const w of workshops) results.push(await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id), requireTicket: true }))
   assert.deepEqual(results.map(r => r.ok), [true, true, true, false])
 })
-test('an add-on joins only a ticket with workshop access and a changed choice needs a new checkout', async () => {
+test('an add-on joins only a ticket with workshop access and a changed choice replaces the open checkout', async () => {
   const { base, addOn } = await bundle()
   const plain = await product({ category: 'workshop', type: 'pasiv', price: 30 })
   await assert.rejects(purchase.reservePayment('buyer', String(plain._id), 1, String(addOn._id)), e => e.code === 'base_ticket_required')
@@ -416,9 +418,30 @@ test('an add-on joins only a ticket with workshop access and a changed choice ne
   await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1, String(addOn._id)), e => e.status === 400)
   assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
   const first = await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id))
-  // The same choice resumes the open checkout; a different one does not replace it.
+  // The same choice resumes the open checkout.
   assert.equal(String((await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id)))._id), String(first._id))
-  await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1), e => e.code === 'payment_pending')
+  const firstIntent = await purchase.intentForAttempt(first)
+  // Dropping the add-on before paying cancels that checkout at Stripe and opens a new one.
+  const second = await purchase.reservePayment('buyer', String(base._id), 1)
+  assert.notEqual(String(second._id), String(first._id))
+  assert.equal(second.amount, 5000)
+  assert.equal(firstIntent.status, 'canceled')
+  assert.equal((await attempts.PaymentAttempt.findById(first._id)).status, 'cancelled')
+  // Adding it back works the same way.
+  const third = await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id))
+  assert.equal(third.amount, 7000)
+  assert.equal(await attempts.PaymentAttempt.countDocuments({ status: 'pending' }), 1)
+})
+test('a checkout that is paid or still processing is never replaced by a new choice', async () => {
+  const { base, addOn } = await bundle()
+  const first = await purchase.reservePayment('buyer', String(base._id), 1)
+  const intent = await purchase.intentForAttempt(first)
+  for (const status of ['processing', 'succeeded']) {
+    intent.status = status
+    await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id)), e => e.status === 409)
+    assert.equal((await attempts.PaymentAttempt.findById(first._id)).status, 'pending')
+  }
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 1)
 })
 test('an add-on held by an open checkout counts against its stock', async () => {
   const { base, addOn } = await bundle()

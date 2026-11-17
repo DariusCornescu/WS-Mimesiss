@@ -23,6 +23,20 @@ const MIN_CARD_AMOUNT_BANI = 200
  */
 export async function reservePayment(clerkId: string, ticketId: string, quantity: number, addOnTicketId?: string): Promise<PaymentAttemptRecord> {
   try {
+    return await reserveReleasingStale(clerkId, ticketId, quantity, addOnTicketId)
+  } catch (error) {
+    // A buyer who changes their mind before paying (another ticket, adding or
+    // dropping the add-on) gets a new checkout in place of the open one. The
+    // open one is cancelled at Stripe first, and never once it is paid or
+    // still processing: then cancelPendingPayment refuses and says so.
+    if (!(error instanceof RequestError) || error.code !== 'payment_pending') throw error
+    await cancelPendingPayment(clerkId)
+    return reserveReleasingStale(clerkId, ticketId, quantity, addOnTicketId)
+  }
+}
+
+async function reserveReleasingStale(clerkId: string, ticketId: string, quantity: number, addOnTicketId?: string): Promise<PaymentAttemptRecord> {
+  try {
     return await reserve(clerkId, ticketId, quantity, addOnTicketId)
   } catch (error) {
     // Sold out may only mean abandoned checkouts are sitting on the last units.
