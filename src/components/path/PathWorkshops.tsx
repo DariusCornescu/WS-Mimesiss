@@ -1,8 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaInstagram, FaMapMarkerAlt, FaUserMd } from 'react-icons/fa'
-import { PATH_HREF, pathProject, pathWorkshops } from '@/lib/path-project'
-import { PathAudience, PathRegistration } from './PathTimeline'
+import { PATH_HREF, PATH_REGISTRATION_HREF, pathProject, pathWorkshops } from '@/lib/path-project'
 import styles from './PathProject.module.css'
 
 export const INSTAGRAM_URL = 'https://www.instagram.com/asmm.bucuresti'
@@ -46,26 +45,23 @@ function PathWorkshopList() {
   )
 }
 
-/** Pagina /proiecte/path/workshops: programul complet, apoi înscrierea. */
-export default function PathWorkshopsPage({ renderedAt }: { renderedAt: number }) {
+/** Pagina /proiecte/path/workshops: programul complet; înscrierea are pagina ei. */
+export default function PathWorkshopsPage() {
   return (
     <div className={styles.page}>
       <section className={`${styles.workshops} ${styles.workshopsPage}`} aria-labelledby="path-workshops-title">
         <div className={styles.workshopsInner}>
           <Link href={PATH_HREF} className={styles.back}><FaArrowLeft aria-hidden="true" /> Înapoi la PATH</Link>
-          <div className={styles.sectionHeading}>
-            <p className={styles.eyebrow}>PATH · {pathProject.dateLabel}</p>
-            <h1 id="path-workshops-title">Workshopuri și medici</h1>
-            <p>Fiecare workshop este susținut de un medic și pune accent pe practică.</p>
+          <div className={styles.workshopsTeaser}>
+            <div className={styles.sectionHeading}>
+              <p className={styles.eyebrow}>PATH · {pathProject.dateLabel}</p>
+              <h1 id="path-workshops-title">Workshopuri și medici</h1>
+              <p>Fiecare workshop este susținut de un medic și pune accent pe practică.</p>
+            </div>
+            <Link href={PATH_REGISTRATION_HREF} className={styles.primaryButton}>Cum mă înscriu <FaArrowRight aria-hidden="true" /></Link>
           </div>
           <PathWorkshopList />
         </div>
-      </section>
-
-      <section id="inscrieri" className={styles.registrationSection} aria-labelledby="inscrieri-title">
-        <p className={styles.eyebrow}>Înscrieri</p>
-        <PathRegistration renderedAt={renderedAt} />
-        <PathAudience renderedAt={renderedAt} />
       </section>
 
       <section className={styles.contact} aria-labelledby="path-contact-title">

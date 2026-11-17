@@ -129,7 +129,8 @@ export default function EnhancedTicketSelector() {
 				</p>
 			</div>
 
-			<div className="grid gap-5 xl:grid-cols-2">
+			{/* One ticket per row: the column is already half the page wide. */}
+			<div className="grid gap-5">
 				{visibleTickets.map((ticket) => {
 					const purchased = ticket._id === selectedTicket?._id;
 					const addOn = isAddOn(ticket);
@@ -140,7 +141,7 @@ export default function EnhancedTicketSelector() {
 					return (
 						<article
 							key={ticket._id}
-							className={`relative flex h-full flex-col rounded-lg border p-6 transition-colors ${purchased
+							className={`relative flex h-full flex-col rounded-lg border p-6 transition-colors sm:p-8 ${purchased
 								? 'border-primary bg-primary/5'
 								: 'border-border bg-card hover:border-accent/50'
 								}`}
@@ -157,20 +158,22 @@ export default function EnhancedTicketSelector() {
 										Supliment
 									</p>
 								)}
-								<h3 className="text-xl font-bold text-foreground mb-2">
-									{ticket.title}
-								</h3>
-								<p className="text-muted-foreground text-sm mb-4">
+								<div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+									<h3 className="text-2xl font-bold text-foreground">
+										{ticket.title}
+									</h3>
+									<div className="text-4xl font-bold text-accent">
+										{ticket.price} RON
+									</div>
+								</div>
+								<p className="mt-3 max-w-prose leading-relaxed text-muted-foreground">
 									{ticket.description}
 								</p>
-								<div className="text-3xl font-bold text-accent">
-									{ticket.price} RON
-								</div>
 							</div>
 
 							<ul className="mb-6 space-y-2">
 								{ticket.features.map((feature) => (
-									<li key={feature} className="flex items-center text-sm text-muted-foreground">
+									<li key={feature} className="flex items-center text-muted-foreground">
 										<FaCheck className="mr-3 h-4 w-4 flex-shrink-0 text-accent" aria-hidden="true" />
 										<span>{feature}</span>
 									</li>

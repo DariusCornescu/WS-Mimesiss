@@ -82,9 +82,11 @@ export function PathRegistration({ renderedAt }: { renderedAt: number }) {
       <div className={styles.registration}>
         <div>
           <h2 id="inscrieri-title">{pathProject.registrationHref ? 'Înscrierile sunt deschise.' : 'Înscrierile se deschid în scurt timp.'}</h2>
-          <p>{pathProject.registrationHref ? 'Alege workshopurile la care vrei să participi și rezervă-ți locul.' : 'Revino pe această pagină: aici apare formularul de înscriere.'}</p>
+          <p>{pathProject.registrationHref
+            ? 'Te înscrii cumpărând biletul PATH, care include două workshopuri. La cumpărare poți adăuga și un al treilea. Workshopurile le alegi ulterior, din contul tău.'
+            : 'Revino pe această pagină: aici apare formularul de înscriere.'}</p>
         </div>
-        {pathProject.registrationHref && <Link href={pathProject.registrationHref} className={styles.primaryButton}>Înscrie-te <FaArrowRight aria-hidden="true" /></Link>}
+        {pathProject.registrationHref && <Link href={pathProject.registrationHref} className={styles.primaryButton}>Cumpără biletul <FaArrowRight aria-hidden="true" /></Link>}
       </div>
     )
   }
