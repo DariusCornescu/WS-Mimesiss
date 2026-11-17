@@ -107,6 +107,7 @@
 .registration { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px 56px; }
 .registration > div:first-child { flex: 1 1 420px; max-width: 640px; }
 .registration p { margin-top: 16px; font-size: 17px; line-height: 1.8; color: var(--ink-soft); }
+.registration p.registrationNote { margin-top: 12px; padding-left: 14px; border-left: 3px solid var(--cyan); font-size: 15px; line-height: 1.7; }
 .registrationTimer { display: grid; gap: 12px; width: min(100%, 420px); }
 .registrationSection .timerLabel { color: var(--teal); }
 /* Cui se adresează PATH: sub înscrieri, cu accentul cyan al proiectului. */

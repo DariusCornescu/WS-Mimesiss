@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isUserType, normalizePhone, profileDetails, purchaseProfile, registrationProfile, studyYears } from '@/lib/registration-profile'
+import { isUserType, missingPurchaseDetails, normalizePhone, profileDetails, purchaseProfile, registrationProfile, studyYears } from '@/lib/registration-profile'
 
 const valid = { firstName: ' Ana ', lastName: ' Popescu ', userType: 'student' }
 
@@ -107,5 +107,23 @@ describe('purchaseProfile', () => {
     expect(purchaseProfile({ ...stored, institution: ' ' })).toBe(false)
     expect(purchaseProfile({ ...stored, firstName: '' })).toBe(false)
     expect(purchaseProfile(null)).toBe(false)
+  })
+})
+
+describe('missingPurchaseDetails', () => {
+  const stored = { firstName: 'Ana', lastName: 'Popescu', userType: 'student', phone: '0722123456', institution: 'UMF' }
+
+  it('names exactly what stands between the user and a purchase', () => {
+    expect(missingPurchaseDetails(stored)).toEqual([])
+    expect(missingPurchaseDetails({ ...stored, phone: undefined })).toEqual(['numărul de telefon'])
+    expect(missingPurchaseDetails({ ...stored, institution: ' ' })).toEqual(['instituția la care studiezi'])
+    expect(missingPurchaseDetails({ ...stored, phone: '12', institution: undefined })).toEqual(['numărul de telefon', 'instituția la care studiezi'])
+    expect(missingPurchaseDetails({ ...stored, firstName: '' })).toEqual(['numele și categoria'])
+  })
+
+  it('agrees with purchaseProfile', () => {
+    for (const user of [stored, { ...stored, phone: '' }, { ...stored, institution: 'U' }, { ...stored, userType: 'admin' }, null]) {
+      expect(missingPurchaseDetails(user).length === 0).toBe(purchaseProfile(user))
+    }
   })
 })

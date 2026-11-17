@@ -9,8 +9,8 @@ import connectDB from '@/lib/mongodb';
 import { Payment } from '@/models';
 import PaymentShell from '@/components/payments/PaymentShell';
 import { describeBucharestTime } from '@/lib/bucharest-time';
-import { purchaseProfile } from '@/lib/registration-profile';
-import Link from 'next/link';
+import { missingPurchaseDetails, purchaseProfile } from '@/lib/registration-profile';
+import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder';
 
 export default async function PaymentPage() {
   const clerkUser = await currentUser();
@@ -58,18 +58,7 @@ export default async function PaymentPage() {
           </p>
         </div>
       ) : !purchaseProfile(user) ? (
-        <div role="status" className="rounded-lg border border-accent/30 bg-accent/10 p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Profil incomplet
-          </p>
-          <h2 className="mt-2 text-xl font-semibold text-foreground">Completează-ți profilul înainte de a cumpăra bilet</h2>
-          <p className="mt-2 leading-relaxed text-muted-foreground">
-            Avem nevoie de numărul tău de telefon și de instituția la care studiezi.
-          </p>
-          <Link href="/dashboard/profile" className="mt-4 inline-flex min-h-11 items-center justify-center rounded-md border border-accent/50 bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">
-            Completează profilul
-          </Link>
-        </div>
+        <ProfilePurchaseReminder missing={missingPurchaseDetails(user)} />
       ) : salesNotOpen && salesStart ? (
         <div role="status" className="rounded-lg border border-accent/30 bg-accent/10 p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
