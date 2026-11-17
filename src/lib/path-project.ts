@@ -121,6 +121,19 @@ export const pathWorkshops: PathWorkshop[] = [
     image: '/projects/path/workshops/ruxandra-marian.webp',
     imageAlt: 'Dr. Ruxandra Marian, medic specialist în chirurgie generală.',
   },
+  {
+    title: 'GLP-1 Receptor Agonists: The Game Changer – O nouă eră în managementul obezității',
+    doctor: 'Dr. Ștefania Nemeș',
+    doctorRole: 'Medic rezident în Diabet Zaharat, Nutriție și Boli Metabolice',
+    description: [
+      'Workshopul aduce în prim-plan rolul agoniștilor receptorilor GLP-1 în abordarea modernă a obezității.',
+      'Participanții vor avea ocazia să descopere mecanismele fiziopatologice care stau la baza acțiunii acestor terapii, să înțeleagă rolul lor în reglarea apetitului și a metabolismului și să exploreze impactul pe care îl au asupra abordării moderne a pacientului cu obezitate.',
+      'Sub coordonarea doamnei dr. Ștefania Nemeș, medic rezident în Diabet Zaharat, Nutriție și Boli Metabolice în cadrul Institutului Național de Diabet, Nutriție și Boli Metabolice „Prof. Dr. N. C. Paulescu”, workshopul va îmbina fundamentele fiziopatologice cu aplicațiile clinice și beneficiile metabolice și cardiovasculare ale acestor terapii.',
+      'Sesiunea se adresează studenților la medicină interesați de inovațiile terapeutice și de noile perspective în managementul obezității.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/stefania-nemes.webp',
+    imageAlt: 'Dr. Ștefania Nemeș, medic rezident în Diabet Zaharat, Nutriție și Boli Metabolice.',
+  },
 ]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
