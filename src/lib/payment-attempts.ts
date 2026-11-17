@@ -14,18 +14,26 @@ import { holdsWorkshopTicket } from '@/lib/registration'
 // for another buyer, after Stripe confirms the payment can no longer succeed.
 const STALE_HOLD_MS = 30 * 60 * 1000
 
-export async function reservePayment(clerkId: string, ticketId: string, quantity: number): Promise<PaymentAttemptRecord> {
+/**
+ * Holds a purchase for one buyer. `addOnTicketId` adds an add-on (extra
+ * workshop places) to a workshop ticket in the same payment; both are checked
+ * as if bought on their own, and the attempt amount is their total.
+ */
+export async function reservePayment(clerkId: string, ticketId: string, quantity: number, addOnTicketId?: string): Promise<PaymentAttemptRecord> {
   try {
-    return await reserve(clerkId, ticketId, quantity)
+    return await reserve(clerkId, ticketId, quantity, addOnTicketId)
   } catch (error) {
     // Sold out may only mean abandoned checkouts are sitting on the last units.
     if (!(error instanceof RequestError) || error.code !== 'sold_out') throw error
-    if (!(await releaseStaleHolds(ticketId))) throw error
-    return reserve(clerkId, ticketId, quantity)
+    let released = await releaseStaleHolds(ticketId)
+    if (addOnTicketId) released += await releaseStaleHolds(addOnTicketId)
+    if (!released) throw error
+    return reserve(clerkId, ticketId, quantity, addOnTicketId)
   }
 }
 
-async function reserve(clerkId: string, ticketId: string, quantity: number): Promise<PaymentAttemptRecord> {
+async function reserve(clerkId: string, ticketId: string, quantity: number, addOnTicketId?: string): Promise<PaymentAttemptRecord> {
+  if (addOnTicketId === ticketId) throw new RequestError(400, 'Suplimentul trebuie să fie diferit de bilet.')
   await connectDB()
   const settings = await getUncachedAppSettings()
   let transactionAttempt = 0
@@ -46,22 +54,38 @@ async function reserve(clerkId: string, ticketId: string, quantity: number): Pro
     }
     const payments = await Payment.find({ clerkId, status: 'completed', ...(ticket.category === 'ball' ? { ticketCategory: 'ball' } : { ticketType: ticket.type }) }).session(session).lean()
     const purchased = payments.reduce((sum, payment) => sum + (payment.quantity || 1), 0)
-    const amount = purchasePolicy(ticket, quantity, settings, purchased)
+    const baseAmount = purchasePolicy(ticket, quantity, settings, purchased)
+    let addOn: { ticket: NonNullable<typeof ticket>; amount: number } | null = null
+    if (addOnTicketId) {
+      const extra = await Ticket.findById(addOnTicketId).session(session).lean()
+      if (!extra || !((extra.extraWorkshops ?? 0) > 0)) throw new RequestError(404, 'Suplimentul nu a fost găsit.')
+      if (!ticket.workshopAccess) throw new RequestError(409, 'Suplimentul se poate adăuga doar la un bilet cu acces la workshopuri.', 'base_ticket_required')
+      const extraPaid = await Payment.find({ clerkId, status: 'completed', ticketType: extra.type }).session(session).lean()
+      addOn = { ticket: extra, amount: purchasePolicy(extra, 1, settings, extraPaid.reduce((sum, payment) => sum + (payment.quantity || 1), 0)) }
+    }
+    const amount = baseAmount + (addOn?.amount ?? 0)
     const pending = await PaymentAttempt.findOne({ clerkId, status: 'pending' }).session(session).lean() as PaymentAttemptRecord | null
     if (pending) {
-      if (pending.ticketId === ticketId && pending.quantity === quantity && pending.amount === amount) return pending
+      if (pending.ticketId === ticketId && pending.quantity === quantity && pending.amount === amount && (pending.addOnTicketId ?? '') === (addOnTicketId ?? '')) return pending
       throw new RequestError(409, 'Ai o plată începută. Anuleaz-o înainte de a schimba biletele.', 'payment_pending')
     }
-    if (typeof ticket.maxQuantity === 'number') {
-      // This shared write serializes every purchase of the ticket, so two
-      // buyers cannot both count the last unit as free.
-      await Ticket.updateOne({ _id: ticket._id }, { $inc: { stockRevision: 1 } }, { session })
-      const taken = (await ticketsTaken([ticketId], session)).get(ticketId) ?? 0
-      if (taken + quantity > ticket.maxQuantity) throw new RequestError(409, 'Biletele de acest tip s-au epuizat.', 'sold_out')
+    // These shared writes serialize every purchase of a limited ticket, so two
+    // buyers cannot both count the last unit as free.
+    const limits = [{ item: ticket, units: quantity, message: 'Biletele de acest tip s-au epuizat.' }]
+    if (addOn) limits.push({ item: addOn.ticket, units: 1, message: 'Locurile pentru workshopul suplimentar s-au epuizat.' })
+    for (const { item, units, message } of limits) {
+      if (typeof item.maxQuantity !== 'number') continue
+      await Ticket.updateOne({ _id: item._id }, { $inc: { stockRevision: 1 } }, { session })
+      const id = String(item._id)
+      const taken = (await ticketsTaken([id], session)).get(id) ?? 0
+      if (taken + units > item.maxQuantity) throw new RequestError(409, message, 'sold_out')
     }
     const [attempt] = await PaymentAttempt.create([{
       clerkId, ticketId, ticketType: ticket.type, ticketTitle: ticket.title,
       category: ticket.category, quantity, amount, email: user.email, status: 'pending',
+      ...(addOn ? {
+        addOnTicketId, addOnTicketType: addOn.ticket.type, addOnTicketTitle: addOn.ticket.title, addOnAmount: addOn.amount,
+      } : {}),
     }], { session })
     return attempt.toObject() as PaymentAttemptRecord
   })
@@ -76,11 +100,15 @@ export async function intentForAttempt(attempt: PaymentAttemptRecord) {
   }
   const intent = await stripe.paymentIntents.create({
     amount: attempt.amount, currency: 'ron', receipt_email: attempt.email,
-    description: attempt.ticketTitle + ' ×' + attempt.quantity,
+    description: attempt.ticketTitle + ' ×' + attempt.quantity + (attempt.addOnTicketTitle ? ' + ' + attempt.addOnTicketTitle : ''),
     metadata: {
       attemptId: String(attempt._id), clerkId: attempt.clerkId, ticketId: attempt.ticketId,
       ticketType: attempt.ticketType, ticketTitle: attempt.ticketTitle,
       ticketCategory: attempt.category, quantity: String(attempt.quantity),
+      ...(attempt.addOnTicketId ? {
+        addOnTicketId: attempt.addOnTicketId, addOnTicketType: attempt.addOnTicketType ?? '',
+        addOnTicketTitle: attempt.addOnTicketTitle ?? '', addOnAmount: String(attempt.addOnAmount ?? 0),
+      } : {}),
     },
     automatic_payment_methods: { enabled: true },
   }, { idempotencyKey: 'purchase-' + String(attempt._id) })
@@ -108,7 +136,7 @@ export async function cancelPendingPayment(clerkId: string) {
 /** Frees units held by checkouts abandoned long ago. Returns how many attempts were released. */
 async function releaseStaleHolds(ticketId: string) {
   const stale = await PaymentAttempt.find({
-    ticketId, status: 'pending', createdAt: { $lt: new Date(Date.now() - STALE_HOLD_MS) },
+    $or: [{ ticketId }, { addOnTicketId: ticketId }], status: 'pending', createdAt: { $lt: new Date(Date.now() - STALE_HOLD_MS) },
   }).sort({ createdAt: 1 }).limit(20).lean<PaymentAttemptRecord[]>()
   let released = 0
   for (const attempt of stale) {

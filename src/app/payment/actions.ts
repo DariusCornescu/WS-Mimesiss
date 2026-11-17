@@ -16,7 +16,7 @@ export async function getPublicTickets(): Promise<TicketType[]> {
   await connectDB()
 
   const tickets = await Ticket.find({ enabled: true })
-    .select('title description price features type enabled category maxQuantity extraWorkshops')
+    .select('title description price features type enabled category maxQuantity workshopAccess extraWorkshops')
     .lean()
 
   // Convert to plain objects to ensure serializability. The stock figures

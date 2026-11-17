@@ -15,9 +15,14 @@ export async function ticketsTaken(ticketIds: string[], session?: ClientSession)
   const sum = [{ $group: { _id: '$ticketId', units: { $sum: { $ifNull: ['$quantity', 1] } } } }]
   const paid = Payment.aggregate<{ _id: string; units: number }>([{ $match: { ticketId: { $in: ticketIds }, status: 'completed' } }, ...sum])
   const held = PaymentAttempt.aggregate<{ _id: string; units: number }>([{ $match: { ticketId: { $in: ticketIds }, status: 'pending' } }, ...sum])
-  if (session) { paid.session(session); held.session(session) }
+  // An add-on bought together with a ticket is one held unit of the add-on.
+  const heldAddOns = PaymentAttempt.aggregate<{ _id: string; units: number }>([
+    { $match: { addOnTicketId: { $in: ticketIds }, status: 'pending' } },
+    { $group: { _id: '$addOnTicketId', units: { $sum: 1 } } },
+  ])
+  if (session) { paid.session(session); held.session(session); heldAddOns.session(session) }
   // Sequential: one session cannot run two operations at once.
-  for (const row of [...await paid, ...await held]) taken.set(row._id, (taken.get(row._id) ?? 0) + row.units)
+  for (const row of [...await paid, ...await held, ...await heldAddOns]) taken.set(row._id, (taken.get(row._id) ?? 0) + row.units)
   return taken
 }
 

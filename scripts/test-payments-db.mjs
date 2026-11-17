@@ -355,6 +355,69 @@ test('a paid add-on raises the workshop limit from two to three while the base t
   assert.equal((await register(workshops[2], { adminOverride: true })).code, 'user_limit')
 })
 
+async function bundle() {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const base = await product({ category: 'workshop', type: 'path', price: 50, workshopAccess: true })
+  const addOn = await product({ category: 'workshop', type: 'path-extra', price: 20, extraWorkshops: 1 })
+  return { base, addOn }
+}
+test('a workshop ticket and its add-on are paid together and fulfilled as two purchases', async () => {
+  const { base, addOn } = await bundle()
+  const attempt = await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id))
+  assert.equal(attempt.amount, 7000)
+  assert.equal(attempt.addOnAmount, 2000)
+  const intent = await purchase.intentForAttempt(attempt)
+  assert.equal(intent.amount, 7000)
+  assert.equal(intent.metadata.addOnTicketId, String(addOn._id))
+  intent.status = 'succeeded'; intent.amount_received = intent.amount
+  await Promise.all(Array.from({ length: 10 }, () => fulfillment.fulfillPayment(intent)))
+  const payments = await models.Payment.find().sort({ amount: -1 }).lean()
+  assert.deepEqual(payments.map(p => [p.ticketType, p.amount, p.stripePaymentIntentId]), [['path', 5000, intent.id], ['path-extra', 2000, intent.id]])
+  // Only the ticket is an entry ticket; the add-on gets no number.
+  const issued = await models.IssuedTicket.find().lean()
+  assert.equal(issued.length, 1)
+  assert.equal(issued[0].pricePerTicket, 5000)
+  assert.equal((await attempts.PaymentAttempt.findById(attempt._id)).status, 'completed')
+  // The add-on cannot be bought a second time on its own.
+  await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1), e => e.status === 409)
+  // Three workshops are now open to the buyer.
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  const workshops = await models.Workshop.create(Array.from({ length: 4 }, (_, i) => ({ title: 'Atelier ' + i, description: 'Test', wsType: 'workshop', maxParticipants: 20 })))
+  const results = []
+  for (const w of workshops) results.push(await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id), requireTicket: true }))
+  assert.deepEqual(results.map(r => r.ok), [true, true, true, false])
+})
+test('an add-on joins only a ticket with workshop access and a changed choice needs a new checkout', async () => {
+  const { base, addOn } = await bundle()
+  const plain = await product({ category: 'workshop', type: 'pasiv', price: 30 })
+  await assert.rejects(purchase.reservePayment('buyer', String(plain._id), 1, String(addOn._id)), e => e.code === 'base_ticket_required')
+  await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1, String(plain._id)), e => e.status === 404)
+  await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1, String(addOn._id)), e => e.status === 400)
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
+  const first = await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id))
+  // The same choice resumes the open checkout; a different one does not replace it.
+  assert.equal(String((await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id)))._id), String(first._id))
+  await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1), e => e.code === 'payment_pending')
+})
+test('an add-on held by an open checkout counts against its stock', async () => {
+  const { base, addOn } = await bundle()
+  await models.Ticket.updateOne({ _id: addOn._id }, { $set: { maxQuantity: 1 } })
+  await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id))
+  await models.User.create({ clerkId: 'second', email: 'second@example.com', firstName: 'Ion', lastName: 'Pop', userType: 'student', role: 'user', phone: '0722123457', institution: 'UMF' })
+  await assert.rejects(purchase.reservePayment('second', String(base._id), 1, String(addOn._id)), e => e.code === 'sold_out')
+  // The ticket alone is still for sale.
+  await purchase.reservePayment('second', String(base._id), 1)
+})
+test('forged add-on metadata cannot create an add-on purchase', async () => {
+  const { base, addOn } = await bundle()
+  const attempt = await purchase.reservePayment('buyer', String(base._id), 1)
+  const intent = await purchase.intentForAttempt(attempt)
+  intent.status = 'succeeded'; intent.amount_received = intent.amount
+  const forged = { ...intent, amount: 7000, amount_received: 7000, metadata: { ...intent.metadata, addOnTicketId: String(addOn._id), addOnTicketType: 'path-extra', addOnAmount: '2000' } }
+  await assert.rejects(fulfillment.fulfillPayment(forged))
+  assert.equal(await models.Payment.countDocuments(), 0)
+})
+
 test('a ticket cannot be reserved until the profile has a phone and an institution', async () => {
   const ticket = await product()
   await models.User.updateOne({ clerkId: 'buyer' }, { $unset: { phone: '' } })
