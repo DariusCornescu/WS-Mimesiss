@@ -83,7 +83,7 @@ export async function updateUserRole(formData: FormData) {
 
     // Build success message
     const updates = []
-    updates.push(`rol: ${newRole === 'admin' ? 'Administrator' : 'Utilizator'}`)
+    updates.push(`rol: ${newRole === 'admin' ? 'Administrator' : newRole === 'moderator' ? 'Moderator' : 'Utilizator'}`)
 
     if (userType !== undefined) {
       updates.push(`tip: ${userType || 'nespecificat'}`)
