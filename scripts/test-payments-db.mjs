@@ -118,6 +118,27 @@ test('cancellation is owner-scoped and releases reservation only after Stripe ca
   const replacement = await purchase.reservePayment('buyer', String(ticket._id), 1)
   assert.notEqual(String(replacement._id), String(attempt._id))
 })
+test('a checkout Stripe never created is cancelled without asking Stripe to create it', async () => {
+  const ticket = await product()
+  const attempt = await purchase.reservePayment('buyer', String(ticket._id), 1)
+  await purchase.cancelPendingPayment('buyer')
+  assert.equal(stripeCreates, 0)
+  assert.equal((await attempts.PaymentAttempt.findById(attempt._id)).status, 'cancelled')
+  await purchase.reservePayment('buyer', String(ticket._id), 2)
+})
+test('an intent created after its checkout was cancelled is closed at Stripe and never returned', async () => {
+  const ticket = await product()
+  const attempt = await purchase.reservePayment('buyer', String(ticket._id), 1)
+  await purchase.cancelPendingPayment('buyer')
+  await assert.rejects(purchase.intentForAttempt(attempt), e => e.code === 'payment_cancelled')
+  assert.equal(stripeCreates, 1)
+  assert.equal([...intents.values()][0].status, 'canceled')
+})
+test('a total under the 2 RON card minimum is refused before reaching Stripe', async () => {
+  const ticket = await product({ price: 1 })
+  await assert.rejects(purchase.reservePayment('buyer', String(ticket._id), 1), e => e.code === 'amount_too_small')
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
+})
 test('successful or processing payments cannot release a purchase slot early', async () => {
   const { intent } = await paid()
   await assert.rejects(purchase.cancelPendingPayment('buyer'), e => e.status === 409)

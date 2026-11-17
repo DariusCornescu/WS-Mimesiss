@@ -13,6 +13,8 @@ import { holdsWorkshopTicket } from '@/lib/registration'
 // An open checkout holds its tickets. Past this age the hold may be released
 // for another buyer, after Stripe confirms the payment can no longer succeed.
 const STALE_HOLD_MS = 30 * 60 * 1000
+// Stripe refuses RON charges under 2.00 RON (amounts are in bani).
+const MIN_CARD_AMOUNT_BANI = 200
 
 /**
  * Holds a purchase for one buyer. `addOnTicketId` adds an add-on (extra
@@ -64,6 +66,9 @@ async function reserve(clerkId: string, ticketId: string, quantity: number, addO
       addOn = { ticket: extra, amount: purchasePolicy(extra, 1, settings, extraPaid.reduce((sum, payment) => sum + (payment.quantity || 1), 0)) }
     }
     const amount = baseAmount + (addOn?.amount ?? 0)
+    if (amount < MIN_CARD_AMOUNT_BANI) {
+      throw new RequestError(400, 'Prețul este sub minimul de 2 RON acceptat la plata cu cardul. Contactează organizatorii.', 'amount_too_small')
+    }
     const pending = await PaymentAttempt.findOne({ clerkId, status: 'pending' }).session(session).lean() as PaymentAttemptRecord | null
     if (pending) {
       if (pending.ticketId === ticketId && pending.quantity === quantity && pending.amount === amount && (pending.addOnTicketId ?? '') === (addOnTicketId ?? '')) return pending
@@ -112,12 +117,32 @@ export async function intentForAttempt(attempt: PaymentAttemptRecord) {
     },
     automatic_payment_methods: { enabled: true },
   }, { idempotencyKey: 'purchase-' + String(attempt._id) })
-  await PaymentAttempt.updateOne({ _id: attempt._id }, { $set: { stripePaymentIntentId: intent.id } })
+  const stored = await PaymentAttempt.updateOne({ _id: attempt._id, status: 'pending' }, { $set: { stripePaymentIntentId: intent.id } })
+  if (stored.matchedCount === 0) {
+    // The checkout was cancelled while Stripe was creating this intent. Its
+    // client secret must never reach a browser, so close it at Stripe too.
+    try { await stripe.paymentIntents.cancel(intent.id) } catch { console.error('Orphaned payment intent could not be cancelled', { intentId: intent.id }) }
+    throw new RequestError(409, 'Plata a fost anulată. Reîncarcă pagina și încearcă din nou.', 'payment_cancelled')
+  }
   return intent
 }
 
 /** Cancels at Stripe first; false when the payment went through or still may. */
 async function releaseAttempt(attempt: PaymentAttemptRecord) {
+  if (!attempt.stripePaymentIntentId) {
+    // A client secret is only returned after its intent id is stored, so an
+    // attempt without one was never payable. Release it here: asking Stripe to
+    // create the intent first fails forever when Stripe rejected it (for
+    // example an amount under its minimum), which would lock the buyer out.
+    const released = await PaymentAttempt.updateOne(
+      { _id: attempt._id, status: 'pending', stripePaymentIntentId: null },
+      { $set: { status: 'cancelled' } },
+    )
+    if (released.modifiedCount === 1) return true
+    const current = await PaymentAttempt.findById(attempt._id).lean() as PaymentAttemptRecord | null
+    if (!current || current.status !== 'pending') return true
+    attempt = current
+  }
   const intent = await intentForAttempt(attempt)
   if (intent.status === 'succeeded' || intent.status === 'processing') return false
   if (intent.status !== 'canceled') await stripe.paymentIntents.cancel(intent.id)

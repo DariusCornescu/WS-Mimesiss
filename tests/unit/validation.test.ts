@@ -90,6 +90,12 @@ describe('ticketCreateInput', () => {
     expect(parseWith(ticketCreateInput, { ...ticket, title: '   ' })).toEqual({ ok: false, error: 'Titlul este obligatoriu' })
   })
 
+  it('keeps paid prices at or above the 2 RON card minimum', () => {
+    expect(parseWith(ticketCreateInput, { ...ticket, price: 1 })).toEqual({ ok: false, error: 'Prețul minim pentru plata cu cardul este 2 RON' })
+    expect(ticketCreateInput.safeParse({ ...ticket, price: 2 }).success).toBe(true)
+    expect(ticketCreateInput.safeParse({ ...ticket, price: 0 }).success).toBe(true)
+  })
+
   it('rejects non-finite prices and unknown categories', () => {
     expect(ticketCreateInput.safeParse({ ...ticket, price: Number.POSITIVE_INFINITY }).success).toBe(false)
     expect(ticketCreateInput.safeParse({ ...ticket, category: 'vip' }).success).toBe(false)

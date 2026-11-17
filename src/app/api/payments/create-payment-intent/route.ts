@@ -19,7 +19,9 @@ export async function POST(request: Request) {
   } catch (error) {
     const response = requestErrorResponse(error)
     if (response) return response
-    console.error('Payment initialization failed')
+    // Stripe's error code (e.g. amount_too_small) names the cause without exposing payment data.
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : undefined
+    console.error('Payment initialization failed', { code })
     return NextResponse.json({ error: 'Nu am putut inițializa plata. Încearcă din nou.' }, { status: 500 })
   }
 }
