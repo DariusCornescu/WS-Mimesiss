@@ -111,7 +111,8 @@ function signalMaterial(kind: 'neurite' | 'axon', density: number) {
       void main() {
         vAlong = uv.x;
         #ifdef AXON
-          vKey = segment < 0.5 ? travel.x : segment < 1.5 ? travel.y : travel.z;
+          // Segments 0-2 follow the camera; the wider network (3 and up) is passed on as a negative id.
+          vKey = segment < 0.5 ? travel.x : segment < 1.5 ? travel.y : segment < 2.5 ? travel.z : -segment;
         #else
           vKey = phase;
         #endif
@@ -126,14 +127,30 @@ function signalMaterial(kind: 'neurite' | 'axon', density: number) {
       // A soft leading edge and a long fading tail, so the signal reads as light, not as a band.
       float pulse(float head, float along) {
         float d = head - along;
-        return d >= 0.0 ? exp(-d * 3.5) : exp(d * 28.0);
+        return d >= 0.0 ? exp(-d * 4.5) : exp(d * 28.0);
       }
       void main() {
         float glow;
         #ifdef AXON
-          // Travel 0..1 is the camera's progress between two neurons; a faint train keeps the axon alive.
-          float lead = pulse(vKey * 1.15 - 0.05, vAlong) * smoothstep(0.0, 0.04, vKey) * (1.0 - smoothstep(0.96, 1.0, vKey));
-          glow = lead + 0.18 * pulse(fract(time * 0.09), vAlong);
+          if (vKey < -0.5) {
+            // The wider network fires on its own, each axon at its own pace and offset.
+            float id = -vKey;
+            float head = fract(time * (0.09 + 0.07 * fract(id * 0.37)) + fract(id * 0.618));
+            glow = vAlong < 1.0
+              ? 0.9 * pulse(head * 1.3, vAlong)
+              : 0.55 * exp(-pow((head - 0.82) / 0.07, 2.0));
+          } else if (vAlong < 1.0) {
+            // Travel 0..1 is the camera's progress between two neurons; a steady train keeps the axon alive.
+            float lead = pulse(vKey * 1.15 - 0.05, vAlong) * smoothstep(0.0, 0.04, vKey) * (1.0 - smoothstep(0.96, 1.0, vKey));
+            float train = pulse(fract(time * 0.13) * 1.25, vAlong) + pulse(fract(time * 0.13 + 0.5) * 1.25, vAlong);
+            glow = lead + 0.45 * train;
+          } else {
+            // Synapse: the terminals flare as the impulse lands, then keep a faint flicker.
+            float arrived = smoothstep(0.8, 0.95, vKey);
+            float burst = exp(-pow((vKey - 0.94) / 0.05, 2.0));
+            float idle = exp(-pow((fract(time * 0.13) - 0.84) / 0.06, 2.0)) + exp(-pow((fract(time * 0.13 + 0.5) - 0.84) / 0.06, 2.0));
+            glow = arrived * (0.2 + 0.07 * sin(time * 6.0 + vAlong * 80.0)) + 0.75 * burst + 0.4 * idle;
+          }
         #else
           float cycle = time * 0.22 + vKey;
           // Roughly half of the branches fire in any cycle, chosen anew each cycle.
@@ -142,10 +159,10 @@ function signalMaterial(kind: 'neurite' | 'axon', density: number) {
         #endif
         float fog = exp(-density * density * vDepth * vDepth);
         // Mostly edge light, so the branch looks lit from inside rather than painted.
-        float rim = 0.12 + 0.88 * pow(vFresnel, 2.2);
+        float rim = 0.3 + 0.7 * pow(vFresnel, 2.2);
         float intensity = glow * rim * fog;
         if (intensity < 0.004) discard;
-        gl_FragColor = vec4(mix(color, core, glow * glow * 0.45) * intensity * 1.7, 1.0);
+        gl_FragColor = vec4(mix(color, core, min(1.0, glow * glow * 0.45)) * intensity * 2.0, 1.0);
       }`,
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
   })
