@@ -140,7 +140,12 @@ export const pathWorkshops: PathWorkshop[] = [
     title: 'O privire în viața intrauterină – arta ecografiei obstetricale',
     doctor: 'Drd. dr. Eliza Maria Cloțea',
     doctorRole: 'Medic specialist Obstetrică-Ginecologie',
-    secondDoctor: { name: 'Prof. univ. dr. Claudia Mehedințu', role: 'Medic primar Obstetrică-Ginecologie' },
+    secondDoctor: {
+      name: 'Prof. univ. dr. Claudia Mehedințu',
+      role: 'Medic primar Obstetrică-Ginecologie',
+      image: '/projects/path/workshops/claudia-mehedintu.webp',
+      imageAlt: 'Prof. univ. dr. Claudia Mehedințu, medic primar Obstetrică-Ginecologie.',
+    },
     description: [
       'Te-ai întrebat vreodată care este primul moment în care pot fi decelate bătăile inimii în sarcină? Cum se estimează greutatea fătului? Sau la ce alte aspecte este atent medicul ginecolog pe parcursul sarcinii, pentru a se asigura că aceasta evoluează corespunzător?',
       'În cadrul workshopului, la Art Clinic, doamnele Drd. dr. Eliza Maria Cloțea și Prof. univ. dr. Claudia Mehedințu te vor introduce în tainele ecografiei obstetricale și te vor ghida prin etapele esențiale ale evaluării ecografice în sarcină.',
