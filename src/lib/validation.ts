@@ -29,7 +29,9 @@ export const registrationInput = z.object({
 const ticketFields = {
   title: z.string({ message: 'Titlul este obligatoriu' }).trim().min(1, 'Titlul este obligatoriu').max(200, 'Titlul este prea lung'),
   description: z.string({ message: 'Descrierea este obligatorie' }).trim().min(1, 'Descrierea este obligatorie').max(2000, 'Descrierea este prea lungă'),
-  price: z.number({ message: 'Prețul trebuie să fie un număr' }).finite('Prețul trebuie să fie un număr').min(0, 'Prețul nu poate fi negativ'),
+  // Card payments in RON start at 2 RON; 0 stays allowed for tickets not sold by card.
+  price: z.number({ message: 'Prețul trebuie să fie un număr' }).finite('Prețul trebuie să fie un număr').min(0, 'Prețul nu poate fi negativ')
+    .refine(price => price === 0 || price >= 2, 'Prețul minim pentru plata cu cardul este 2 RON'),
   features: z.array(z.string().trim().min(1).max(300), { message: 'Lista de beneficii este invalidă' }).max(30, 'Prea multe beneficii'),
   type: z.string({ message: 'Tipul este obligatoriu' }).trim().min(1, 'Tipul este obligatoriu').max(50, 'Tipul este prea lung'),
   enabled: z.boolean().optional(),

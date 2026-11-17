@@ -12,6 +12,10 @@ export async function POST(request: Request) {
     await cancelPendingPayment(user.id)
     return NextResponse.json({ success: true })
   } catch (error) {
-    return requestErrorResponse(error) || NextResponse.json({ error: 'Nu am putut anula plata. Încearcă din nou.' }, { status: 500 })
+    const response = requestErrorResponse(error)
+    if (response) return response
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String((error as { code?: unknown }).code) : undefined
+    console.error('Payment cancellation failed', { code })
+    return NextResponse.json({ error: 'Nu am putut anula plata. Încearcă din nou.' }, { status: 500 })
   }
 }
