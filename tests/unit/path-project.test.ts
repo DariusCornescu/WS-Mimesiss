@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { UpcomingEvent } from '@/lib/events'
 import type { ProjectCard } from '@/lib/projects'
-import { PATH_HREF, PATH_SLUG, pathProject, withPathEvent, withPathProject } from '@/lib/path-project'
+import { PATH_HREF, PATH_REGISTRATION_HREF, PATH_SLUG, pathProject, withPathEvent, withPathProject } from '@/lib/path-project'
 
 const card = (slug: string, kind: ProjectCard['kind'] = 'standard'): ProjectCard => ({
   slug, title: slug, summary: 'Rezumat', kind, span: '', href: `/proiecte/${slug}`,
@@ -37,6 +37,17 @@ describe('withPathEvent', () => {
     expect(path.note).toContain(pathProject.registrationOpensLabel)
   })
 
+  it('offers no purchase button before registration opens', () => {
+    const [path] = withPathEvent([], at('2026-11-10T12:00:00+02:00'))
+    expect(path.action).toBeUndefined()
+  })
+
+  it('offers "Cumpără bilet" to the registration page while registration is open', () => {
+    const [path] = withPathEvent([], at('2026-11-20T12:00:00+02:00'))
+    expect(path.note).toBe('Înscrierile sunt deschise')
+    expect(path.action).toEqual({ href: PATH_REGISTRATION_HREF, label: 'Cumpără bilet' })
+  })
+
   it('formats as 4–5 December in Romanian time, not spilling into the 6th', () => {
     const [path] = withPathEvent([], at('2026-11-10T12:00:00+02:00'))
     const format = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/Bucharest' })
@@ -47,6 +58,7 @@ describe('withPathEvent', () => {
     const [path] = withPathEvent([], at('2026-12-04T10:00:00+02:00'))
     expect(path.status).toBe('active')
     expect(path.note).toBeUndefined()
+    expect(path.action).toBeUndefined()
   })
 
   it('removes the edition once it has ended', () => {

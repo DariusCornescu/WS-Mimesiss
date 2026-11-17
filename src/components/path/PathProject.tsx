@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaInstagram, FaUserMd } from 'react-icons/fa'
-import { PATH_REGISTRATION_HREF, PATH_WORKSHOPS_HREF, pathHighlights, pathProject, pathStory, pathWorkshops } from '@/lib/path-project'
+import { PATH_WORKSHOPS_HREF, pathHighlights, pathProject, pathStory, pathWorkshops } from '@/lib/path-project'
 import { PathHeroTimer } from './PathTimeline'
 import { INSTAGRAM_URL } from './PathWorkshops'
 import styles from './PathProject.module.css'
@@ -26,7 +26,6 @@ export default function PathProject({ renderedAt }: { renderedAt: number }) {
             <PathHeroTimer renderedAt={renderedAt} />
             <div className={styles.heroActions}>
               <Link href={PATH_WORKSHOPS_HREF} className={styles.primaryButton}>Workshopuri și medici <FaArrowRight aria-hidden="true" /></Link>
-              <Link href={PATH_REGISTRATION_HREF} className={styles.ghostButton}>Cum mă înscriu</Link>
             </div>
           </div>
         </div>
