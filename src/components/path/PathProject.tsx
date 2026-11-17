@@ -1,8 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaInstagram, FaUserMd } from 'react-icons/fa'
-import { PATH_WORKSHOPS_HREF, pathHighlights, pathProject, pathStory, pathWorkshops } from '@/lib/path-project'
-import { PathAudience, PathHeroTimer, PathRegistration } from './PathTimeline'
+import { PATH_REGISTRATION_HREF, PATH_WORKSHOPS_HREF, pathHighlights, pathProject, pathStory, pathWorkshops } from '@/lib/path-project'
+import { PathHeroTimer } from './PathTimeline'
 import { INSTAGRAM_URL } from './PathWorkshops'
 import styles from './PathProject.module.css'
 
@@ -26,7 +26,7 @@ export default function PathProject({ renderedAt }: { renderedAt: number }) {
             <PathHeroTimer renderedAt={renderedAt} />
             <div className={styles.heroActions}>
               <Link href={PATH_WORKSHOPS_HREF} className={styles.primaryButton}>Workshopuri și medici <FaArrowRight aria-hidden="true" /></Link>
-              <a href="#inscrieri" className={styles.ghostButton}>Cum mă înscriu</a>
+              <Link href={PATH_REGISTRATION_HREF} className={styles.ghostButton}>Cum mă înscriu</Link>
             </div>
           </div>
         </div>
@@ -79,12 +79,6 @@ export default function PathProject({ renderedAt }: { renderedAt: number }) {
             </li>)}
           </ul>}
         </div>
-      </section>
-
-      <section id="inscrieri" className={styles.registrationSection} aria-labelledby="inscrieri-title">
-        <p className={styles.eyebrow}>Înscrieri</p>
-        <PathRegistration renderedAt={renderedAt} />
-        <PathAudience renderedAt={renderedAt} />
       </section>
 
       <section className={styles.contact} aria-labelledby="path-contact-title">

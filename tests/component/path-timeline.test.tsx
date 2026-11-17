@@ -20,8 +20,8 @@ beforeEach(() => { vi.useFakeTimers() })
 afterEach(() => { cleanup(); vi.useRealTimers() })
 
 describe('PATH timeline', () => {
-  it('counts down to the opening of registrations before 18 November', () => {
-    render(<PathHeroTimer renderedAt={at('2026-11-17T22:59:58+02:00')} />)
+  it('counts down to the opening of registrations before 17 November', () => {
+    render(<PathHeroTimer renderedAt={at('2026-11-16T22:59:58+02:00')} />)
     expect(screen.getByText('Înscrierile se deschid în')).toBeInTheDocument()
     const timer = screen.getByRole('timer', { name: 'Timp rămas până la deschiderea înscrierilor PATH' })
     expect(timer).toHaveTextContent('00zile01oră00minute02secunde')
@@ -48,13 +48,14 @@ describe('PATH timeline', () => {
     expect(screen.getByText('PATH începe în')).toBeInTheDocument()
   })
 
-  it('explains registration before it opens and does not offer a link until one is configured', () => {
+  it('explains registration before it opens, then sends buyers to the ticket purchase', () => {
     const { unmount } = render(<PathRegistration renderedAt={at('2026-11-10T10:00:00+02:00')} />)
-    expect(screen.getByRole('heading', { name: 'Înscrierile se deschid pe 18 noiembrie.' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Înscrierile se deschid pe 17 noiembrie.' })).toBeInTheDocument()
     expect(screen.getByRole('timer')).toBeInTheDocument()
+    expect(screen.queryByRole('link')).not.toBeInTheDocument()
     unmount()
     render(<PathRegistration renderedAt={at('2026-11-18T09:00:00+02:00')} />)
-    expect(screen.getByRole('heading', { name: 'Înscrierile se deschid în scurt timp.' })).toBeInTheDocument()
-    expect(screen.queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Înscrierile sunt deschise.' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Cumpără biletul' })).toHaveAttribute('href', '/payment')
   })
 })

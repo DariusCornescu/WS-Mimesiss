@@ -12,6 +12,7 @@ import type { UpcomingEvent } from '@/lib/events'
 export const PATH_SLUG = 'path'
 export const PATH_HREF = '/proiecte/path'
 export const PATH_WORKSHOPS_HREF = `${PATH_HREF}/workshops`
+export const PATH_REGISTRATION_HREF = `${PATH_HREF}/inscrieri`
 export const PATH_COVER = '/projects/path/cover.webp'
 
 export const pathProject = {
@@ -24,10 +25,10 @@ export const pathProject = {
   startsAt: '2026-12-04T00:00:00+02:00',
   endsAt: '2026-12-06T00:00:00+02:00',
   dateLabel: '4–5 decembrie 2026',
-  registrationOpensAt: '2026-11-18T00:00:00+02:00',
-  registrationOpensLabel: '18 noiembrie',
-  /** Se completează când fluxul de înscriere este gata; până atunci pagina anunță doar data. */
-  registrationHref: null as string | null,
+  registrationOpensAt: '2026-11-17T00:00:00+02:00',
+  registrationOpensLabel: '17 noiembrie',
+  /** Înscrierea înseamnă cumpărarea biletului; workshopurile se aleg ulterior, din cont. */
+  registrationHref: '/payment' as string | null,
 } as const
 
 export const pathStory = {
