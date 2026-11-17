@@ -100,6 +100,7 @@ try {
     '@/lib/registration-profile': load('src/lib/registration-profile.ts'),
     '@/lib/payment-policy': load('src/lib/payment-policy.ts', { '@/lib/request-security': security }), '@/lib/request-security': security,
     '@/lib/ticket-stock': load('src/lib/ticket-stock.ts', { '@/models': models, '@/models/PaymentAttempt': attempts }),
+    '@/lib/registration': registration,
   })
   const fulfillment = load('src/lib/payment-fulfillment.ts', { mongoose, '@/models': models, '@/models/PaymentAttempt': attempts, '@/lib/mongodb': connection })
   const editionId = new mongoose.Types.ObjectId()

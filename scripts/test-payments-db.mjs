@@ -34,6 +34,7 @@ before(async () => {
     '@/lib/stripe': { stripe }, '@/lib/settings': { getUncachedAppSettings: async () => settings },
     '@/lib/registration-profile': load('src/lib/registration-profile.ts'), '@/lib/payment-policy': policy, '@/lib/request-security': security,
     '@/lib/ticket-stock': load('src/lib/ticket-stock.ts', { '@/models': models, '@/models/PaymentAttempt': attempts }),
+    '@/lib/registration': load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models }),
   })
   fulfillment = load('src/lib/payment-fulfillment.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models, '@/models/PaymentAttempt': attempts })
   await Promise.all(Object.values(mongoose.models).map(model => model.init()))
@@ -313,6 +314,45 @@ test("another participant's ticket does not open registration", async () => {
   const ticket = await product({ category: 'workshop', type: 'activ', workshopAccess: true })
   await models.Payment.create({ clerkId: 'other', stripeSessionId: 'pi_other', amount: 2000, quantity: 1, status: 'completed', ticketId: String(ticket._id) })
   assert.equal((await register(workshop)).code, 'ticket_required')
+})
+
+test('a workshop add-on can be bought only while a workshop ticket stands', async () => {
+  settings = { paymentsEnabled: true, eventMode: 'workshops' }
+  const base = await product({ category: 'workshop', type: 'path', price: 50, workshopAccess: true })
+  const addOn = await product({ category: 'workshop', type: 'path-extra', price: 20, extraWorkshops: 1 })
+  await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1), e => e.code === 'base_ticket_required')
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
+  // Another participant's ticket does not unlock it.
+  await models.Payment.create({ clerkId: 'other', stripeSessionId: 'pi_other', amount: 5000, quantity: 1, status: 'completed', ticketId: String(base._id) })
+  await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1), e => e.code === 'base_ticket_required')
+  const payment = await payFor(base)
+  const attempt = await purchase.reservePayment('buyer', String(addOn._id), 1)
+  assert.equal(attempt.amount, 2000)
+  await attempts.PaymentAttempt.deleteMany({})
+  await models.Payment.updateOne({ _id: payment._id }, { $set: { status: 'refunded' } })
+  await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1), e => e.code === 'base_ticket_required')
+})
+test('a paid add-on raises the workshop limit from two to three while the base ticket stands', async () => {
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  const workshops = await models.Workshop.create(Array.from({ length: 4 }, (_, i) => ({ title: 'Atelier ' + i, description: 'Test', wsType: 'workshop', maxParticipants: 20 })))
+  const register = (w, extra = {}) => registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id), requireTicket: true, ...extra })
+  const base = await product({ category: 'workshop', type: 'path', price: 50, workshopAccess: true })
+  const addOn = await product({ category: 'workshop', type: 'path-extra', price: 20, extraWorkshops: 1 })
+  const basePayment = await payFor(base)
+  assert.equal((await register(workshops[0])).ok, true)
+  assert.equal((await register(workshops[1])).ok, true)
+  const limited = await register(workshops[2])
+  assert.equal(limited.code, 'user_limit')
+  assert.match(limited.message, /maxim 2 .*suplimentar/)
+  await payFor(addOn)
+  assert.equal((await register(workshops[2])).ok, true)
+  const full = await register(workshops[3])
+  assert.equal(full.code, 'user_limit')
+  assert.match(full.message, /maxim 3/)
+  // Without a standing base ticket the add-on adds nothing, even for admins.
+  await models.Registration.deleteMany({ workshopId: String(workshops[2]._id) })
+  await models.Payment.updateOne({ _id: basePayment._id }, { $set: { status: 'refunded' } })
+  assert.equal((await register(workshops[2], { adminOverride: true })).code, 'user_limit')
 })
 
 test('a ticket cannot be reserved until the profile has a phone and an institution', async () => {

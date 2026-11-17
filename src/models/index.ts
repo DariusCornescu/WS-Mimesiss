@@ -83,6 +83,11 @@ export interface ITicket extends Document {
   category: 'workshop' | 'ball' // Type of event this ticket belongs to
   maxQuantity?: number | null // Total units for sale; empty = unlimited
   workshopAccess?: boolean // Holders may register for workshops
+  /**
+   * Add-on: extra workshop places on top of the base limit. Only sold to, and
+   * only counted for, participants who also hold a ticket with workshop access.
+   */
+  extraWorkshops?: number
   stockRevision?: number // Bumped by each purchase of a limited ticket
 }
 
@@ -248,6 +253,7 @@ const TicketSchema = new Schema<ITicket>({
   category: { type: String, enum: ['workshop', 'ball'], default: 'workshop', required: true },
   maxQuantity: { type: Number, min: 1, default: null },
   workshopAccess: { type: Boolean, default: false },
+  extraWorkshops: { type: Number, min: 0, max: 5, default: 0 },
   stockRevision: { type: Number, default: 0 },
 }, {
   timestamps: true

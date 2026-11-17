@@ -94,6 +94,13 @@ describe('ticketCreateInput', () => {
     expect(ticketCreateInput.safeParse({ ...ticket, price: Number.POSITIVE_INFINITY }).success).toBe(false)
     expect(ticketCreateInput.safeParse({ ...ticket, category: 'vip' }).success).toBe(false)
   })
+
+  it('accepts a whole number of extra workshops from 0 to 5', () => {
+    expect(ticketCreateInput.parse({ ...ticket, extraWorkshops: 1 }).extraWorkshops).toBe(1)
+    for (const extraWorkshops of [-1, 1.5, 6]) {
+      expect(ticketCreateInput.safeParse({ ...ticket, extraWorkshops }).success).toBe(false)
+    }
+  })
 })
 
 describe('role and status inputs', () => {
