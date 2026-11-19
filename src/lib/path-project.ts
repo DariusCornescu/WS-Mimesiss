@@ -171,6 +171,18 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Drd. dr. Eliza Maria Cloțea, medic specialist Obstetrică-Ginecologie.',
     location: 'Art Clinic',
   },
+  {
+    title: 'Măsuri medicale de urgență într-un eveniment cu victime multiple',
+    doctor: 'Conf. univ. dr. Silvia Nica',
+    doctorRole: 'Disciplina Medicină de Urgență și Prim Ajutor, U.M.F. „Carol Davila” București',
+    description: [
+      'Conf. univ. dr. Silvia Nica, din cadrul Disciplinei Medicină de Urgență și Prim Ajutor, U.M.F. „Carol Davila” București, vă invită să descoperiți provocările medicinei de urgență în gestionarea situațiilor cu victime multiple și importanța coordonării echipelor de intervenție în astfel de momente critice.',
+      'În cadrul acestui workshop, veți avea ocazia să participați la simularea unui scenariu de accident rutier major, produs pe autostradă, în care sunt implicate mai multe autovehicule. Situația prezentată s-a soldat cu un număr mare de victime ce impune activarea Planului Roșu de Intervenție. Veți parcurge principalele etape ale gestionării unui astfel de eveniment: de la alertarea, mobilizarea resurselor și organizarea intervenției la locul accidentului, până la triajul medical al victimelor, acordarea primului ajutor și a asistenței medicale de urgență, stabilizarea și evacuarea acestora către unitățile sanitare. O experiență prin care veți putea înțelege cât de importante sunt rapiditatea deciziilor, prioritizarea și colaborarea într-o intervenție de amploare.',
+      'Prin intermediul workshopurilor organizate de PATH ne dorim să dobândiți abilități necesare în practica medicală. Așadar, pregătiți-vă să luați parte la o experiență în care fiecare decizie contează, iar fiecare secundă poate salva o viață!',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/silvia-nica.webp',
+    imageAlt: 'Conf. univ. dr. Silvia Nica, Disciplina Medicină de Urgență și Prim Ajutor, U.M.F. „Carol Davila” București.',
+  },
 ]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
