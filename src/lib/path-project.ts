@@ -183,6 +183,33 @@ export const pathWorkshops: PathWorkshop[] = [
     image: '/projects/path/workshops/silvia-nica.webp',
     imageAlt: 'Conf. univ. dr. Silvia Nica, Disciplina Medicină de Urgență și Prim Ajutor, U.M.F. „Carol Davila” București.',
   },
+  {
+    title: 'Noțiuni introductive de ECG',
+    doctor: 'Dr. Adrian Florescu',
+    doctorRole: 'Medic rezident în cardiologie, doctorand UMFCD',
+    description: [
+      'Sub îndrumarea Dr. Adrian Florescu, medic rezident în cardiologie și doctorand UMFCD, vom învăța cum să abordăm sistematic o electrocardiogramă, pas cu pas.',
+      'Vom descoperi împreună cum să recunoaștem undele și intervalele esențiale, cum să identificăm corect ritmul cardiac și cum să înțelegem principalele modificări ECG.',
+      'Totul va fi îmbinat cu exemple practice și exerciții interactive, astfel încât să transformăm teoria în abilități utile în practica medicală.',
+      'Fie că ești la primul contact cu ECG-ul sau vrei să îți consolidezi bazele, te așteptăm să descifrăm împreună fiecare linie, undă și bătaie a inimii.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/adrian-florescu.webp',
+    imageAlt: 'Dr. Adrian Florescu, medic rezident în cardiologie.',
+  },
+  {
+    title: 'Detectiv în reumatologie: Cazul articulației dureroase',
+    doctor: 'Drd. dr. Oana Georgiana Prioteasa',
+    doctorRole: 'Medic specialist reumatolog',
+    description: [
+      'Durerea articulară este unul dintre cele mai frecvente motive de prezentare la medic, dar și o veritabilă provocare clinică: mecanică sau inflamatorie? Degenerativă sau autoimună?',
+      'Pornind de la anamneză și examenul obiectiv specific, participanții vor învăța să construiască un raționament clinic corect și să orienteze diagnosticul diferențial fără a se pierde în zecile de investigații paraclinice disponibile.',
+      'Sub coordonarea drd. dr. Oana Georgiana Prioteasa, medic specialist reumatolog în cadrul Secției de Reumatologie a Spitalului Universitar de Urgență Militar Central „Dr. Carol Davila”, workshopul va îmbina noțiunile teoretice cu tehnicile practice de examinare și analiza unor cazuri clinice.',
+      'Sesiunea se adresează studenților la medicină interesați de reumatologie, în dezvoltarea abilităților clinice și de formarea unui raționament medical corect.',
+      'Vă invităm să descoperiți cum fiecare indiciu clinic poate contribui la identificarea diagnosticului corect.',
+    ].join('\n\n'),
+    image: '/projects/path/workshops/oana-georgiana-prioteasa.webp',
+    imageAlt: 'Drd. dr. Oana Georgiana Prioteasa, medic specialist reumatolog.',
+  },
 ]
 
 /** Ora serverului, în secunde; ținută aici ca randarea componentelor să rămână pură. */
