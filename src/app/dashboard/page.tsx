@@ -9,6 +9,7 @@ import { IssuedTicket, Payment, Registration } from '@/models'
 import PageIntro from '@/components/ui/PageIntro'
 import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder'
 import { missingPurchaseDetails } from '@/lib/registration-profile'
+import { PATH_HREF } from '@/lib/path-project'
 
 /**
  * The attendance QR identifies a person, so it is only generated once there is
@@ -115,7 +116,7 @@ export default async function DashboardPage() {
           </h3>
           <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {!isBallMode && (
-              <Link href="/congres/workshops"
+              <Link href={PATH_HREF}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90"
               >
                 <FaCalendarAlt className="mr-2 h-4 w-4" />
