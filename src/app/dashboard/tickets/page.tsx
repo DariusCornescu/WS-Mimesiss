@@ -14,6 +14,7 @@ import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder';
 import { missingPurchaseDetails } from '@/lib/registration-profile';
 import { entriesForTickets } from '@/lib/ticket-entitlements';
 import { workshopsLabel } from '@/lib/ticket-entries';
+import { PATH_HREF } from '@/lib/path-project';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -146,7 +147,7 @@ export default async function MyTicketsPage() {
           <h2 className="text-lg font-semibold text-foreground">Bilete Workshop</h2>
           <p className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground" role="status">
             {choiceOpen ? (
-              <>Alegerea workshopurilor este deschisă. <Link href="/congres/workshops" className="font-semibold text-accent underline-offset-4 hover:underline">Alege workshopurile</Link></>
+              <>Alegerea workshopurilor este deschisă. <Link href={PATH_HREF} className="font-semibold text-accent underline-offset-4 hover:underline">Alege workshopurile</Link></>
             ) : (
               'Vei putea alege workshopurile în curând. Te anunțăm când se deschide alegerea.'
             )}
