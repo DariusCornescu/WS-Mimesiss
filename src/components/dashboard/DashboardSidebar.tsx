@@ -21,7 +21,7 @@ import type { IconType } from 'react-icons'
 import type { User } from '@/types/models'
 import SignOutButton from '@/components/dashboard/signOutButton'
 import { useAppSettings } from '@/contexts/AppSettingsContext'
-import { PATH_HREF } from '@/lib/path-project'
+import { PATH_CHOICE_HREF } from '@/lib/path-project'
 import styles from './DashboardSidebar.module.css'
 
 interface DashboardSidebarProps {
@@ -61,7 +61,7 @@ export default function DashboardSidebar({ user }: DashboardSidebarProps) {
       : []),
     { href: '/dashboard/tickets', icon: FaTicketAlt, label: 'Biletele mele' },
     ...(eventMode !== 'ball'
-      ? [{ href: PATH_HREF, icon: FaCalendarAlt, label: 'Workshopuri' }]
+      ? [{ href: PATH_CHOICE_HREF, icon: FaCalendarAlt, label: 'Alege workshopurile' }]
       : []),
     { href: '/payment', icon: FaCreditCard, label: 'Cumpără bilet' },
   ]

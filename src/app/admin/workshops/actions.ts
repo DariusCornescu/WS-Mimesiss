@@ -9,6 +9,8 @@ import type { User as UserType, Workshop as WorkshopType, UserWithAttendance } f
 import { registerUserForWorkshop } from '@/lib/registration'
 import { getActiveEdition } from '@/lib/editions'
 import { parseWith, workshopInput } from '@/lib/validation'
+import { syncPathWorkshops } from '@/lib/path-choice'
+import { getUncachedAppSettings } from '@/lib/settings'
 
 export async function createWorkshop(formData: FormData) {
   await requireRole('admin')
@@ -458,5 +460,31 @@ export async function removeUserFromWorkshop(
       success: false, 
       error: error instanceof Error ? error.message : 'Failed to remove user from workshop' 
     }
+  }
+}
+
+/**
+ * Publish the PATH programme for choosing: creates the Workshop document of
+ * every PATH entry that has none, with the default number of seats. Existing
+ * ones keep their seats, date, time and room.
+ */
+export async function syncPathWorkshopsAction() {
+  const denied = await requireRoleAction('admin')
+  if (denied) return denied
+
+  try {
+    const settings = await getUncachedAppSettings()
+    const { created, total } = await syncPathWorkshops(settings.defaultMaxParticipants)
+    revalidatePath('/admin/workshops')
+    revalidatePath('/dashboard/workshops')
+    return {
+      success: true,
+      message: created === 0
+        ? `Toate cele ${total} workshopuri PATH erau deja publicate.`
+        : `${created} workshopuri PATH adăugate, cu ${settings.defaultMaxParticipants} locuri fiecare. Completează locurile, data, ora și sala.`,
+    }
+  } catch (error) {
+    console.error('Error syncing PATH workshops:', error)
+    return { success: false, error: 'Nu am putut sincroniza workshopurile PATH.' }
   }
 }

@@ -9,6 +9,7 @@ import { Workshop } from '@/models'
 import WorkshopAdminRow from '@/components/admin/WorkshopAdminRow'
 import { DownloadReportButton } from '@/components/admin/DownloadReportButton'
 import RecountParticipantsButton from '@/components/admin/RecountParticipantsButton'
+import SyncPathWorkshopsButton from '@/components/admin/SyncPathWorkshopsButton'
 import PageIntro from '@/components/ui/PageIntro'
 import { getRegistrations } from '@/app/admin/workshops/actions'
 
@@ -111,7 +112,8 @@ export default async function AdminWorkshopsPage() {
         )}
       </section>
 
-      <div className="flex justify-start sm:justify-end">
+      <div className="flex flex-wrap justify-start gap-3 sm:justify-end">
+        <SyncPathWorkshopsButton />
         <RecountParticipantsButton />
       </div>
     </div>

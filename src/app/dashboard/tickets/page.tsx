@@ -9,12 +9,12 @@ import Link from 'next/link';
 import TicketQRPopover from '@/components/TicketQRPopover';
 import PageIntro from '@/components/ui/PageIntro';
 import { getAppSettings } from '@/lib/settings';
-import { workshopChoiceOpen } from '@/lib/workshop-choice';
 import ProfilePurchaseReminder from '@/components/ProfilePurchaseReminder';
 import { missingPurchaseDetails } from '@/lib/registration-profile';
 import { entriesForTickets } from '@/lib/ticket-entitlements';
 import { workshopsLabel } from '@/lib/ticket-entries';
-import { PATH_HREF } from '@/lib/path-project';
+import { PATH_CHOICE_HREF } from '@/lib/path-project';
+import { getPathChoiceState, pathChoiceOpen } from '@/lib/path-choice';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -41,7 +41,12 @@ export default async function MyTicketsPage() {
   const ticketProducts = await Ticket.find({ _id: { $in: ticketIds } }).lean();
   const ticketMap = new Map(ticketProducts.map((t) => [(t._id as { toString(): string }).toString(), t]));
   const appSettings = await getAppSettings();
-  const choiceOpen = workshopPayments.length > 0 && workshopChoiceOpen(appSettings);
+  const choiceOpen = workshopPayments.length > 0 && pathChoiceOpen(appSettings);
+  // The participant's PATH choices, shown next to the ticket that covers them.
+  const choice = workshopPayments.length > 0 ? await getPathChoiceState(user.clerkId) : null;
+  const chosenWorkshops = choice?.items.filter((item) => item.chosen) ?? [];
+  const choicesLeft = choice ? Math.max(0, choice.limit - choice.chosenCount) : 0;
+  const formatDay = (day: string) => new Date(`${day}T00:00:00Z`).toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
   // Add-ons follow the tickets they extend (stable sort keeps the date order).
   const isAddOnPayment = (payment: (typeof workshopPayments)[number]) => (ticketMap.get(payment.ticketId || '')?.extraWorkshops ?? 0) > 0 ? 1 : 0;
   workshopPayments.sort((a, b) => isAddOnPayment(a) - isAddOnPayment(b));
@@ -147,11 +152,31 @@ export default async function MyTicketsPage() {
           <h2 className="text-lg font-semibold text-foreground">Bilete Workshop</h2>
           <p className="rounded-lg border border-accent/30 bg-accent/5 px-4 py-3 text-sm leading-relaxed text-muted-foreground" role="status">
             {choiceOpen ? (
-              <>Alegerea workshopurilor este deschisă. <Link href={PATH_HREF} className="font-semibold text-accent underline-offset-4 hover:underline">Alege workshopurile</Link></>
+              choicesLeft > 0
+                ? <>Alegerea workshopurilor este deschisă. Mai poți alege {choicesLeft === 1 ? 'un workshop' : `${choicesLeft} workshopuri`}. <Link href={PATH_CHOICE_HREF} className="font-semibold text-accent underline-offset-4 hover:underline">Alege workshopurile</Link></>
+                : <>Ți-ai ales toate workshopurile. <Link href={PATH_CHOICE_HREF} className="font-semibold text-accent underline-offset-4 hover:underline">Vezi sau schimbă alegerea</Link></>
             ) : (
-              'Vei putea alege workshopurile în curând. Te anunțăm când se deschide alegerea.'
+              <>Vei putea alege workshopurile în curând. <Link href={PATH_CHOICE_HREF} className="font-semibold text-accent underline-offset-4 hover:underline">Vezi programul și locurile</Link></>
             )}
           </p>
+          {chosenWorkshops.length > 0 && (
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-base font-semibold text-foreground">Workshopurile mele</h3>
+              <ul className="mt-3 divide-y divide-border/60">
+                {chosenWorkshops.map((item) => (
+                  <li key={item.slug} className="py-3 first:pt-0 last:pb-0">
+                    <p className="font-medium leading-snug text-foreground">{item.title}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{item.doctors.join(' · ')}</p>
+                    {(item.day || item.time || item.location) && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {[item.day ? formatDay(item.day) : null, item.time, item.location].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="grid gap-4">
             {workshopPayments.map((payment) => {
               const ticketProduct = ticketMap.get(payment.ticketId || '');

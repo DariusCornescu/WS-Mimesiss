@@ -7,7 +7,8 @@ import PaymentStatusRefresh from '@/components/payments/PaymentStatusRefresh'
 import PaymentResult from '@/components/payments/PaymentResult'
 import PaymentShell from '@/components/payments/PaymentShell'
 import { getAppSettings } from '@/lib/settings'
-import { workshopChoiceOpen } from '@/lib/workshop-choice'
+import { pathChoiceOpen } from '@/lib/path-choice'
+import { PATH_CHOICE_HREF } from '@/lib/path-project'
 
 type SearchParams = Promise<{ payment_intent?: string | string[] }>
 
@@ -46,7 +47,7 @@ export default async function PaymentSuccessPage({ searchParams }: { searchParam
     }
   }
 
-  const choiceOpen = workshopTicket && workshopChoiceOpen(await getAppSettings())
+  const choiceOpen = workshopTicket && pathChoiceOpen(await getAppSettings())
   const workshopNote = !workshopTicket
     ? 'Îl poți deschide oricând din secțiunea „Biletele mele”.'
     : (withAddOn ? 'Ai inclus și un workshop în plus, deci vei putea alege 3 workshopuri. ' : '')
@@ -67,7 +68,7 @@ export default async function PaymentSuccessPage({ searchParams }: { searchParam
           description="Plata a fost confirmată, iar biletul a fost emis în contul tău."
           detail={workshopNote}
           actions={choiceOpen
-            ? [{ href: '/congres/workshops', label: 'Alege workshopurile' }, { href: '/dashboard/tickets', label: 'Vezi biletele mele', variant: 'secondary' }]
+            ? [{ href: PATH_CHOICE_HREF, label: 'Alege workshopurile' }, { href: '/dashboard/tickets', label: 'Vezi biletele mele', variant: 'secondary' }]
             : [{ href: '/dashboard/tickets', label: 'Vezi biletele mele' }]}
         />
       ) : state === 'pending' ? (
