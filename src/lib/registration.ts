@@ -6,7 +6,7 @@ export type RegisterResult =
   | { ok: true }
   | {
       ok: false
-      code: 'not_found' | 'not_open' | 'full' | 'duplicate' | 'user_limit' | 'ticket_required' | 'unknown'
+      code: 'not_found' | 'not_open' | 'full' | 'duplicate' | 'user_limit' | 'time_clash' | 'ticket_required' | 'unknown'
       message: string
     }
 
@@ -26,6 +26,20 @@ interface WorkshopGate {
   status: 'active' | 'cancelled' | 'completed'
   editionId?: Types.ObjectId
   maxParticipants: number
+  pathSlug?: string | null
+  date?: Date | null
+  time?: string | null
+}
+
+/** PATH workshops are the ones carrying a slug; the rest belong to the congress. */
+function sameGroupFilter(workshop: Pick<WorkshopGate, 'pathSlug'>) {
+  return workshop.pathSlug ? { $type: 'string' } : { $not: { $type: 'string' } }
+}
+
+/** Same day and same start time; workshops without a schedule never clash. */
+export function sameTimeSlot(a: Pick<WorkshopGate, 'date' | 'time'>, b: Pick<WorkshopGate, 'date' | 'time'>): boolean {
+  if (!a.date || !b.date || !a.time || !b.time) return false
+  return a.time === b.time && new Date(a.date).toISOString().slice(0, 10) === new Date(b.date).toISOString().slice(0, 10)
 }
 
 type Session = mongoose.ClientSession | null
@@ -94,6 +108,24 @@ async function extraWorkshopPlaces(userId: string, session: Session) {
   return (await workshopEntitlements([userId], session)).get(userId)?.extraPlaces ?? 0
 }
 
+/**
+ * Give up a PATH choice and free its seat, in one transaction. Returns false
+ * when there was nothing to remove or the workshop is not a PATH one.
+ */
+export async function cancelPathChoice(userId: string, workshopId: string): Promise<boolean> {
+  await connectDB()
+  if (!Types.ObjectId.isValid(workshopId)) return false
+  return mongoose.connection.transaction(async session => {
+    await User.updateOne({ clerkId: userId }, { $inc: { registrationRevision: 1 } }, { session })
+    const workshop = await Workshop.exists({ _id: workshopId, pathSlug: { $type: 'string' } }).session(session)
+    if (!workshop) return false
+    const deleted = await Registration.findOneAndDelete({ userId, workshopId }, { session })
+    if (!deleted) return false
+    await Workshop.updateOne({ _id: workshopId, currentParticipants: { $gt: 0 } }, { $inc: { currentParticipants: -1 } }, { session })
+    return true
+  })
+}
+
 /** Serialize each user's registrations and commit seat/count changes together. */
 export async function registerUserForWorkshop(opts: {
   userId: string
@@ -117,8 +149,10 @@ export async function registerUserForWorkshop(opts: {
    * access. Conferences and admin assignment are not affected.
    */
   requireTicket?: boolean
+  /** PATH choice flow: only a workshop carrying a `pathSlug` is accepted. */
+  pathOnly?: boolean
 }): Promise<RegisterResult> {
-  const { userId, workshopId, activeEditionId, registrationDeadline, registrationStartTime, adminOverride, requireTicket } = opts
+  const { userId, workshopId, activeEditionId, registrationDeadline, registrationStartTime, adminOverride, requireTicket, pathOnly } = opts
 
   await connectDB()
 
@@ -138,10 +172,10 @@ export async function registerUserForWorkshop(opts: {
       const owner = await User.findOneAndUpdate({ clerkId: userId }, { $inc: { registrationRevision: 1 } }, { session })
       if (!owner) return { ok: false, code: 'not_found', message: 'Profilul participantului nu a fost găsit.' } as RegisterResult
       const workshop = await Workshop.findById(workshopId).session(session)
-        .select('wsType status editionId maxParticipants')
+        .select('wsType status editionId maxParticipants pathSlug date time')
         .lean() as WorkshopGate | null
 
-      if (!workshop) {
+      if (!workshop || (pathOnly && !workshop.pathSlug)) {
         return { ok: false, code: 'not_found', message: 'Workshop-ul nu a fost găsit' }
       }
 
@@ -201,9 +235,22 @@ export async function registerUserForWorkshop(opts: {
           .map(reg => reg.workshopId)
           .filter(id => Types.ObjectId.isValid(id))
           .map(id => new Types.ObjectId(id))
-        const userWorkshopCount = otherIds.length === 0
-          ? 0
-          : await Workshop.countDocuments({ _id: { $in: otherIds }, wsType: 'workshop' }).session(session)
+        // The limit is counted inside one group, so PATH choices and congress
+        // registrations never use up each other's places.
+        const sameGroup = otherIds.length === 0
+          ? []
+          : await Workshop.find({ _id: { $in: otherIds }, wsType: 'workshop', pathSlug: sameGroupFilter(workshop) })
+            .session(session).select('date time')
+            .lean() as Pick<WorkshopGate, 'date' | 'time'>[]
+        const userWorkshopCount = sameGroup.length
+
+        if (workshop.pathSlug && sameGroup.some(other => sameTimeSlot(other, workshop))) {
+          throw new RegistrationRejected({
+            ok: false,
+            code: 'time_clash',
+            message: 'Ai deja un workshop ales în același interval orar.',
+          })
+        }
 
         if (userWorkshopCount >= MAX_WORKSHOPS_PER_USER) {
           const limit = MAX_WORKSHOPS_PER_USER + await extraWorkshopPlaces(userId, session)

@@ -536,3 +536,102 @@ test('a ticket cannot be reserved until the profile has a phone and an instituti
   await models.User.updateOne({ clerkId: 'buyer' }, { $set: { institution: 'UMF' } })
   await purchase.reservePayment('buyer', String(ticket._id), 1)
 })
+
+async function pathSetup() {
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  await payFor(await product({ category: 'workshop', type: 'path', workshopAccess: true }))
+  const pathWorkshop = (slug, extra = {}) => models.Workshop.create({ title: 'PATH ' + slug, description: 'Test', wsType: 'workshop', maxParticipants: 5, pathSlug: slug, ...extra })
+  const choose = (w, extra = {}) => registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id), requireTicket: true, pathOnly: true, ...extra })
+  return { registration, pathWorkshop, choose }
+}
+test('PATH choices and congress registrations use separate limits', async () => {
+  const { registration, pathWorkshop, choose } = await pathSetup()
+  const congress = await models.Workshop.create(Array.from({ length: 2 }, (_, i) => ({ title: 'Congres ' + i, description: 'Test', wsType: 'workshop', maxParticipants: 5 })))
+  for (const w of congress) assert((await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id) })).ok)
+  const [a, b, c] = await Promise.all(['a', 'b', 'c'].map(slug => pathWorkshop(slug)))
+  assert((await choose(a)).ok)
+  assert((await choose(b)).ok)
+  assert.equal((await choose(c)).code, 'user_limit')
+  assert.equal((await models.Workshop.findById(c._id)).currentParticipants, 0)
+  // And the other way round: two PATH choices leave the congress limit alone.
+  const third = await models.Workshop.create({ title: 'Congres 2', description: 'Test', wsType: 'workshop', maxParticipants: 5 })
+  assert.equal((await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(third._id) })).code, 'user_limit')
+})
+test('the PATH flow refuses a workshop that is not a PATH one', async () => {
+  const { choose } = await pathSetup()
+  const congress = await models.Workshop.create({ title: 'Congres', description: 'Test', wsType: 'workshop', maxParticipants: 5 })
+  assert.equal((await choose(congress)).code, 'not_found')
+  assert.equal(await models.Registration.countDocuments(), 0)
+})
+test('two PATH workshops in the same time slot cannot both be chosen', async () => {
+  const { pathWorkshop, choose } = await pathSetup()
+  const day = new Date('2026-12-04T00:00:00Z')
+  const first = await pathWorkshop('a', { date: day, time: '10:00' })
+  const sameSlot = await pathWorkshop('b', { date: day, time: '10:00' })
+  const later = await pathWorkshop('c', { date: day, time: '13:00' })
+  assert((await choose(first)).ok)
+  assert.equal((await choose(sameSlot)).code, 'time_clash')
+  assert.equal((await models.Workshop.findById(sameSlot._id)).currentParticipants, 0)
+  assert((await choose(later)).ok)
+  assert.equal(await models.Registration.countDocuments({ userId: 'buyer' }), 2)
+})
+test('giving up a PATH choice frees the seat and the place', async () => {
+  const { registration, pathWorkshop, choose } = await pathSetup()
+  const [a, b, c] = await Promise.all(['a', 'b', 'c'].map(slug => pathWorkshop(slug)))
+  assert((await choose(a)).ok)
+  assert((await choose(b)).ok)
+  assert.equal(await registration.cancelPathChoice('buyer', String(a._id)), true)
+  assert.equal((await models.Workshop.findById(a._id)).currentParticipants, 0)
+  assert.equal(await registration.cancelPathChoice('buyer', String(a._id)), false)
+  assert((await choose(c)).ok)
+  // A congress registration is not a PATH choice and stays untouched.
+  const congress = await models.Workshop.create({ title: 'Congres', description: 'Test', wsType: 'workshop', maxParticipants: 5 })
+  assert((await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(congress._id) })).ok)
+  assert.equal(await registration.cancelPathChoice('buyer', String(congress._id)), false)
+  assert.equal((await models.Workshop.findById(congress._id)).currentParticipants, 1)
+})
+test('publishing the PATH programme is repeatable and feeds the choice page', async () => {
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  const project = load('src/lib/path-project.ts')
+  const choice = load('src/lib/path-choice.ts', {
+    '@/lib/mongodb': connection, '@/models': models, '@/lib/registration': registration,
+    '@/lib/path-project': project, '@/lib/workshop-choice': load('src/lib/workshop-choice.ts'),
+  })
+  const total = project.pathWorkshops.length
+  assert.equal(new Set(project.pathWorkshops.map(w => w.slug)).size, total)
+  assert.deepEqual({ ...(await choice.syncPathWorkshops(12)) }, { created: total, total })
+  const [first, second] = await models.Workshop.find({ pathSlug: { $type: 'string' } }).sort({ pathSlug: 1 })
+  await models.Workshop.updateOne({ _id: first._id }, { $set: { maxParticipants: 3, date: new Date('2026-12-04T00:00:00Z'), time: '10:00' } })
+  await models.Workshop.updateOne({ _id: second._id }, { $set: { date: new Date('2026-12-04T00:00:00Z'), time: '10:00' } })
+  // A second run adds nothing and keeps what the organisers edited.
+  assert.deepEqual({ ...(await choice.syncPathWorkshops(12)) }, { created: 0, total })
+  assert.equal((await models.Workshop.findById(first._id)).maxParticipants, 3)
+
+  let state = await choice.getPathChoiceState('buyer')
+  assert.deepEqual([state.holdsTicket, state.limit, state.chosenCount], [false, 0, 0])
+  await payFor(await product({ category: 'workshop', type: 'path', workshopAccess: true }))
+  await payFor(await product({ category: 'workshop', type: 'addon', extraWorkshops: 1 }))
+  assert((await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(first._id), requireTicket: true, pathOnly: true })).ok)
+  state = await choice.getPathChoiceState('buyer')
+  assert.deepEqual([state.holdsTicket, state.limit, state.chosenCount], [true, 3, 1])
+  const chosen = state.items.find(item => item.slug === first.pathSlug)
+  assert.deepEqual([chosen.chosen, chosen.seats, chosen.seatsLeft, chosen.day, chosen.time], [true, 3, 2, '2026-12-04', '10:00'])
+  assert.equal(state.items.find(item => item.slug === second.pathSlug).clashes, true)
+  assert.equal(state.items.filter(item => item.clashes).length, 1)
+})
+test('PATH choice opens with the settings and the announced date', async () => {
+  const project = load('src/lib/path-project.ts')
+  const choice = load('src/lib/path-choice.ts', {
+    '@/lib/mongodb': connection, '@/models': models, '@/lib/registration': {},
+    '@/lib/path-project': project, '@/lib/workshop-choice': load('src/lib/workshop-choice.ts'),
+  })
+  const opens = Date.parse(project.pathAudience.workshopChoiceOpensAt)
+  const enabled = { globalRegistrationEnabled: true, registrationStartTime: null, registrationDeadline: null }
+  assert.equal(choice.pathChoiceOpen(enabled, opens - 1, true), false)
+  assert.equal(choice.pathChoiceOpen(enabled, opens, true), true)
+  assert.equal(choice.pathChoiceOpen({ ...enabled, globalRegistrationEnabled: false }, opens, true), false)
+  assert.equal(choice.pathChoiceOpen({ ...enabled, registrationDeadline: new Date(opens - 1000).toISOString() }, opens, true), false)
+  // Only the local dev server may skip the date, never the settings.
+  assert.equal(choice.pathChoiceOpen(enabled, opens - 1, false), true)
+  assert.equal(choice.pathChoiceOpen({ ...enabled, globalRegistrationEnabled: false }, opens - 1, false), false)
+})

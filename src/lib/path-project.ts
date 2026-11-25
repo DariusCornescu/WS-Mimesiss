@@ -14,6 +14,8 @@ export const PATH_HREF = '/proiecte/path'
 export const PATH_WORKSHOPS_HREF = `${PATH_HREF}/workshops`
 export const PATH_REGISTRATION_HREF = `${PATH_HREF}/inscrieri`
 export const PATH_COVER = '/projects/path/cover.webp'
+/** Where a ticket holder picks their workshops, inside the account. */
+export const PATH_CHOICE_HREF = '/dashboard/workshops'
 
 export const pathProject = {
   title: 'PATH',
@@ -71,6 +73,11 @@ export const pathHighlights = [
 ]
 
 export type PathWorkshop = {
+  /**
+   * Stable key linking this entry to its Workshop document (`pathSlug`), which
+   * holds the seats, date, time and room. Never change one that is in use.
+   */
+  slug: string
   title: string
   /** Medicul care susține workshopul, cu titlul afișat întocmai. */
   doctor: string
@@ -91,6 +98,7 @@ export type PathWorkshop = {
 /** Cât timp lista e goală, pagina afișează un anunț în locul ei. */
 export const pathWorkshops: PathWorkshop[] = [
   {
+    slug: 'adictii-la-tineri',
     title: 'Dincolo de consum: mecanisme psihologice și implicații psihiatrice ale adicțiilor la tineri',
     doctor: 'Drd. dr. Gabriel Zanfir',
     doctorRole: 'Medic rezident în psihiatrie',
@@ -103,6 +111,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Drd. dr. Gabriel Zanfir, medic rezident în psihiatrie.',
   },
   {
+    slug: 'evaluarea-psihiatrica',
     title: 'Evaluarea psihiatrică și decizia medicală în medii operaționale cu risc ridicat',
     doctor: 'Dr. Blaj Carmen Ioana',
     doctorRole: 'Medic specialist în psihiatrie',
@@ -115,6 +124,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Dr. Blaj Carmen Ioana, medic specialist în psihiatrie.',
   },
   {
+    slug: 'epilepsia-dincolo-de-convulsii',
     title: 'Epilepsia dincolo de convulsii: recunoaște criza, descoperă focarul',
     doctor: 'Lt. dr. Manole Aida Mihaela',
     doctorRole: 'Medic specialist în neurologie',
@@ -127,6 +137,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Lt. dr. Manole Aida Mihaela, medic specialist în neurologie.',
   },
   {
+    slug: 'inside-bariatric-surgery',
     title: 'Inside Bariatric Surgery: A Hands-On Experience',
     doctor: 'Dr. Ruxandra Marian',
     doctorRole: 'Medic specialist în chirurgie generală',
@@ -139,6 +150,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Dr. Ruxandra Marian, medic specialist în chirurgie generală.',
   },
   {
+    slug: 'glp-1-receptor-agonists',
     title: 'GLP-1 Receptor Agonists: The Game Changer – O nouă eră în managementul obezității',
     doctor: 'Dr. Ștefania Nemeș',
     doctorRole: 'Medic rezident în Diabet Zaharat, Nutriție și Boli Metabolice',
@@ -152,6 +164,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Dr. Ștefania Nemeș, medic rezident în Diabet Zaharat, Nutriție și Boli Metabolice.',
   },
   {
+    slug: 'ecografia-obstetricala',
     title: 'O privire în viața intrauterină – arta ecografiei obstetricale',
     doctor: 'Drd. dr. Eliza Maria Cloțea',
     doctorRole: 'Medic specialist Obstetrică-Ginecologie',
@@ -172,6 +185,7 @@ export const pathWorkshops: PathWorkshop[] = [
     location: 'Art Clinic',
   },
   {
+    slug: 'victime-multiple',
     title: 'Măsuri medicale de urgență într-un eveniment cu victime multiple',
     doctor: 'Conf. univ. dr. Silvia Nica',
     doctorRole: 'Disciplina Medicină de Urgență și Prim Ajutor, U.M.F. „Carol Davila” București',
@@ -184,6 +198,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Conf. univ. dr. Silvia Nica, Disciplina Medicină de Urgență și Prim Ajutor, U.M.F. „Carol Davila” București.',
   },
   {
+    slug: 'notiuni-introductive-ecg',
     title: 'Noțiuni introductive de ECG',
     doctor: 'Dr. Adrian Florescu',
     doctorRole: 'Medic rezident în cardiologie, doctorand UMFCD',
@@ -197,6 +212,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Dr. Adrian Florescu, medic rezident în cardiologie.',
   },
   {
+    slug: 'detectiv-in-reumatologie',
     title: 'Detectiv în reumatologie: Cazul articulației dureroase',
     doctor: 'Drd. dr. Oana Georgiana Prioteasa',
     doctorRole: 'Medic specialist reumatolog',
@@ -211,6 +227,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Drd. dr. Oana Georgiana Prioteasa, medic specialist reumatolog.',
   },
   {
+    slug: 'managementul-fracturii',
     title: 'Managementul fracturii: principii, reducere și fixare',
     doctor: 'Lt. dr. Gabriel Baraboi',
     doctorRole: 'Medic rezident Ortopedie-Traumatologie',
@@ -224,6 +241,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Lt. dr. Gabriel Baraboi, medic rezident Ortopedie-Traumatologie.',
   },
   {
+    slug: 'detectiv-in-endocrine',
     title: 'Detectiv în endocrine: de la semne clinice subtile la tehnologia modernă în diabet',
     doctor: 'Dr. Popescu Eduard Mihail',
     doctorRole: 'Medic rezident Diabet Zaharat, Nutriție și Boli Metabolice',
@@ -239,6 +257,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Dr. Popescu Eduard Mihail, medic rezident Diabet Zaharat, Nutriție și Boli Metabolice.',
   },
   {
+    slug: 'medicina-legala',
     title: 'Dincolo de o deviză renascentistă: cum ajută moartea viața în practica medicală actuală',
     doctor: 'Asist. univ. drd. dr. Pîrvu Vlad-Andrei',
     description: [
@@ -251,6 +270,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Asist. univ. drd. dr. Pîrvu Vlad-Andrei.',
   },
   {
+    slug: 'patologie-hematologica',
     title: 'Explorarea microscopică a patologiei hematologice',
     doctor: 'Prof. univ. dr. Ana-Maria Vlădăreanu',
     doctorRole: 'Medic primar Hematologie, șefa Clinicii de Hematologie la SUUB',
@@ -270,6 +290,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Prof. univ. dr. Ana-Maria Vlădăreanu, medic primar Hematologie.',
   },
   {
+    slug: 'explorare-oculara',
     title: 'Diagnostic și explorare oculară',
     doctor: 'Prof. univ. dr. Alina Popa-Cherecheanu',
     doctorRole: 'Medic primar oftalmolog, Șeful Clinicii de Oftalmologie SUUB',
@@ -283,6 +304,7 @@ export const pathWorkshops: PathWorkshop[] = [
     imageAlt: 'Prof. univ. dr. Alina Popa-Cherecheanu, medic primar oftalmolog.',
   },
   {
+    slug: 'test-detect-protect',
     title: 'TEST. DETECT. PROTECT. – HIV, Hepatite și Sifilis',
     doctor: 'ARAS – Asociația Română Anti-SIDA',
     description: [

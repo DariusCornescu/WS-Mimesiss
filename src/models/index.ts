@@ -60,6 +60,12 @@ export interface IWorkshop extends Document {
   url?: string;
   /** Opțional: workshopurile dinainte de migrare nu au ediție. */
   editionId?: mongoose.Types.ObjectId
+  /**
+   * Set only on PATH workshops: the `slug` of the entry in `pathWorkshops`
+   * that carries the text and photos. PATH workshops form their own group for
+   * the per-participant limit.
+   */
+  pathSlug?: string
 }
 
 // Registration interface
@@ -163,6 +169,7 @@ const WorkshopSchema = new Schema<IWorkshop>({
   wsType: { type: String, enum: ['workshop', 'conferinta'], default: 'workshop' },
   url: { type: String, required: false },
   editionId: { type: Schema.Types.ObjectId, ref: 'Edition', required: false },
+  pathSlug: { type: String, required: false },
 }, {
   timestamps: true
 })
@@ -174,6 +181,8 @@ WorkshopSchema.index({ date: 1 })
 WorkshopSchema.index({ status: 1 })
 // Programul unei ediții
 WorkshopSchema.index({ editionId: 1, date: 1 })
+// One document per PATH workshop; every other workshop has no slug.
+WorkshopSchema.index({ pathSlug: 1 }, { unique: true, partialFilterExpression: { pathSlug: { $type: 'string' } } })
 
 // Registration schema
 const RegistrationSchema = new Schema<IRegistration>({
