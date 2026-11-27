@@ -13,6 +13,11 @@ export interface IAppSettings extends Document {
   registrationStartTime?: Date // When registrations will open
   registrationDeadline?: Date // When registrations will close
   ticketSalesStartTime?: Date // When congress ticket sales open
+  // Limited offer: only this ticket is sold between the two dates, and it is
+  // not sold outside them.
+  offerTicketId?: string | null
+  offerStartsAt?: Date
+  offerEndsAt?: Date
   
   // Workshop defaults
   defaultMaxParticipants: number
@@ -60,6 +65,9 @@ const AppSettingsSchema = new Schema<IAppSettings>({
     type: Date,
     required: false
   },
+  offerTicketId: { type: String, default: null },
+  offerStartsAt: { type: Date, required: false },
+  offerEndsAt: { type: Date, required: false },
   
   // Workshop defaults
   defaultMaxParticipants: {

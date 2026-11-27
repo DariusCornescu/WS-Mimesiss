@@ -35,11 +35,15 @@ export async function updateSettings(formData: FormData) {
       ballMaxTicketsPerUser: parseInt(formData.get('ballMaxTicketsPerUser') as string) || 2,
       ballTicketAvailableFrom: parseDateTime('ballTicketAvailableFrom'),
       ballTicketAvailableTo: parseDateTime('ballTicketAvailableTo'),
+      offerTicketId: (formData.get('offerTicketId') as string) || null,
+      offerStartsAt: parseDateTime('offerStartsAt'),
+      offerEndsAt: parseDateTime('offerEndsAt'),
     }
 
     const parsed = parseWith(settingsInput, updates)
     if (!parsed.ok) {
-      throw new Error(parsed.error)
+      // Returned, not thrown: production builds hide thrown action messages.
+      return { success: false, error: parsed.error }
     }
 
     // Update settings

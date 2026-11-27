@@ -6,7 +6,7 @@ import Stripe from 'stripe'
 import { load } from './helpers/load-ts.mjs'
 const response = { NextResponse: { json: (body, options) => ({ body, status: options?.status ?? 200, headers: options?.headers }) } }
 const security = load('src/lib/request-security.ts', { mongoose, 'node:crypto': crypto, 'next/server': response, '@/lib/mongodb': { default: async () => {}, __esModule: true } })
-const { purchasePolicy } = load('src/lib/payment-policy.ts', { '@/lib/request-security': security })
+const { purchasePolicy, limitedOffer, offerAllows } = load('src/lib/payment-policy.ts', { '@/lib/request-security': security })
 const settings = { paymentsEnabled: true, eventMode: 'ball', ballMaxTicketsPerUser: 2 }
 const ticket = { enabled: true, category: 'ball', price: 15.25 }
 function jsonRequest(body, headers = {}) { return new Request('https://asmm.ro/api/test', { method: 'POST', body, headers: { origin: 'https://asmm.ro', 'content-type': 'application/json', ...headers } }) }
@@ -23,6 +23,25 @@ test('bounded JSON rejects oversized bodies, wrong content type and malformed in
 test('payment policy rejects stopped sales, unavailable products and wrong event', () => {
   assert.equal(purchasePolicy(ticket, 2, settings, 0), 3050)
   for (const [t, s] of [[{ ...ticket, enabled: false }, settings], [ticket, { ...settings, paymentsEnabled: false }], [ticket, { ...settings, eventMode: 'workshops' }]]) assert.throws(() => purchasePolicy(t, 1, s, 0), e => e.status === 403)
+})
+test('a limited offer replaces the workshop tickets only inside its window', () => {
+  const offer = { offerTicketId: 'happy', offerStartsAt: '2026-11-28T20:00:00.000Z', offerEndsAt: '2026-11-28T21:00:00.000Z' }
+  const at = iso => Date.parse(iso)
+  // Inside: only the offer ticket. The end is exclusive.
+  assert.deepEqual([offerAllows('happy', offer, at('2026-11-28T20:00:00Z')), offerAllows('path', offer, at('2026-11-28T20:59:59Z'))], [true, false])
+  for (const outside of ['2026-11-28T19:59:59Z', '2026-11-28T21:00:00Z']) {
+    assert.deepEqual([offerAllows('happy', offer, at(outside)), offerAllows('path', offer, at(outside))], [false, true])
+  }
+  // An incomplete or inverted offer changes nothing.
+  for (const broken of [{ ...offer, offerEndsAt: null }, { ...offer, offerTicketId: null }, { ...offer, offerEndsAt: offer.offerStartsAt }]) {
+    assert.equal(limitedOffer(broken), null)
+    assert.equal(offerAllows('happy', broken, at('2026-11-28T20:30:00Z')), true)
+  }
+  const workshopSettings = { paymentsEnabled: true, eventMode: 'workshops', ...offer }
+  const workshopTicket = { enabled: true, category: 'workshop', price: 50 }
+  assert.equal(purchasePolicy({ ...workshopTicket, _id: 'happy' }, 1, workshopSettings, 0, at('2026-11-28T20:30:00Z')), 5000)
+  assert.throws(() => purchasePolicy({ ...workshopTicket, _id: 'path' }, 1, workshopSettings, 0, at('2026-11-28T20:30:00Z')), e => e.code === 'offer_window')
+  assert.throws(() => purchasePolicy({ ...workshopTicket, _id: 'happy' }, 1, workshopSettings, 0, at('2026-11-28T21:00:00Z')), e => e.code === 'offer_window')
 })
 test('purchase limits, sale dates and invalid amounts are checked on server', () => {
   for (const quantity of [0, -1, 1.5, 51, NaN]) assert.throws(() => purchasePolicy(ticket, quantity, settings, 0))

@@ -209,7 +209,7 @@ export async function registerUserForWorkshop(opts: {
           const limit = MAX_WORKSHOPS_PER_USER + await extraWorkshopPlaces(userId, session)
           if (userWorkshopCount >= limit) {
             const addOnForSale = limit === MAX_WORKSHOPS_PER_USER
-              && await Ticket.exists({ extraWorkshops: { $gt: 0 }, enabled: true }).session(session)
+              && await Ticket.exists({ extraWorkshops: { $gt: 0 }, workshopAccess: { $ne: true }, enabled: true }).session(session)
             throw new RegistrationRejected({
               ok: false,
               code: 'user_limit',

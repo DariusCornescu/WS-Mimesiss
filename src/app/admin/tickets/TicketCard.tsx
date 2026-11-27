@@ -80,7 +80,9 @@ export function TicketCard({ ticket }: TicketCardProps) {
           {ticket.category !== 'ball' && (
             <p className="mt-1 text-sm text-muted-foreground">
               {(ticket.extraWorkshops ?? 0) > 0
-                ? `Supliment: +${ticket.extraWorkshops} workshop${ticket.extraWorkshops === 1 ? '' : 'uri'}, doar după un bilet cu înscriere la workshopuri`
+                ? ticket.workshopAccess
+                  ? `Bilet complet: înscriere la workshopuri, cu +${ticket.extraWorkshops} workshop${ticket.extraWorkshops === 1 ? '' : 'uri'} inclus${ticket.extraWorkshops === 1 ? '' : 'e'}`
+                  : `Supliment: +${ticket.extraWorkshops} workshop${ticket.extraWorkshops === 1 ? '' : 'uri'}, doar după un bilet cu înscriere la workshopuri`
                 : `Înscriere la workshopuri: ${ticket.workshopAccess ? 'da' : 'nu'}`}
             </p>
           )}

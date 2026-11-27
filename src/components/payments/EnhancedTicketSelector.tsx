@@ -6,8 +6,8 @@ import { FaArrowLeft, FaCheck } from 'react-icons/fa';
 import { getPublicTickets } from '@/app/payment/actions';
 import type { Ticket as TicketType } from '@/types/models';
 import EmbeddedCheckout from './EmbeddedCheckout';
-
-const isAddOn = (ticket: TicketType) => (ticket.extraWorkshops ?? 0) > 0;
+import { isAddOnProduct as isAddOn, isBundleProduct } from '@/lib/ticket-products';
+import { describeBucharestClock } from '@/lib/bucharest-time';
 
 export default function EnhancedTicketSelector() {
 	const router = useRouter();
@@ -37,7 +37,7 @@ export default function EnhancedTicketSelector() {
 
 	const handleSelectTicket = (ticket: TicketType) => {
 		setSelectedTicket(ticket);
-		setSelectedAddOn(addOnChosen && ticket.workshopAccess && addOnOffer ? addOnOffer : null);
+		setSelectedAddOn(addOnChosen && ticket.workshopAccess && !isBundleProduct(ticket) && addOnOffer ? addOnOffer : null);
 		setShowCheckout(true);
 	}
 
@@ -141,7 +141,7 @@ export default function EnhancedTicketSelector() {
 					const purchased = ticket._id === selectedTicket?._id;
 					const addOn = isAddOn(ticket);
 					const unavailable = ticket.soldOut || ticket.requiresBaseTicket;
-					const offersAddOn = Boolean(ticket.workshopAccess && addOnOffer && !ticket.soldOut);
+					const offersAddOn = Boolean(ticket.workshopAccess && !isBundleProduct(ticket) && addOnOffer && !ticket.soldOut);
 					const total = ticket.price + (offersAddOn && addOnChosen && addOnOffer ? addOnOffer.price : 0);
 
 					return (
@@ -159,6 +159,11 @@ export default function EnhancedTicketSelector() {
 							)}
 
 							<div className="mb-4">
+								{ticket.offerEndsAt && (
+									<p className="mb-2 inline-flex rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-accent">
+										Ofertă limitată · până la {describeBucharestClock(ticket.offerEndsAt)}
+									</p>
+								)}
 								{addOn && (
 									<p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent">
 										Supliment

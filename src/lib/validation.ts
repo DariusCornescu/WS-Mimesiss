@@ -84,6 +84,13 @@ export const settingsInput = z.object({
   ballMaxTicketsPerUser: z.number().int().min(1, 'Minim 1 bilet').max(50, 'Maxim 50 de bilete'),
   ballTicketAvailableFrom: z.date().nullable().optional(),
   ballTicketAvailableTo: z.date().nullable().optional(),
+  offerTicketId: z.string().regex(/^[a-f0-9]{24}$/i, 'Bilet invalid pentru ofertă').nullable().optional(),
+  offerStartsAt: z.date().nullable().optional(),
+  offerEndsAt: z.date().nullable().optional(),
+}).refine(settings => !settings.offerTicketId || (settings.offerStartsAt && settings.offerEndsAt), {
+  message: 'Oferta limitată are nevoie de ora de început și de ora de sfârșit.', path: ['offerStartsAt'],
+}).refine(settings => !settings.offerStartsAt || !settings.offerEndsAt || settings.offerEndsAt > settings.offerStartsAt, {
+  message: 'Oferta limitată trebuie să se termine după ce începe.', path: ['offerEndsAt'],
 })
 
 export const workshopInput = z.object({

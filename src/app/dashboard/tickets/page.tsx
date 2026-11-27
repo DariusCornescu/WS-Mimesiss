@@ -15,6 +15,7 @@ import { missingPurchaseDetails } from '@/lib/registration-profile';
 import { entriesForTickets } from '@/lib/ticket-entitlements';
 import { workshopsLabel } from '@/lib/ticket-entries';
 import { PATH_HREF } from '@/lib/path-project';
+import { isAddOnProduct } from '@/lib/ticket-products';
 
 export default async function MyTicketsPage() {
   const clerkUser = await currentUser();
@@ -43,7 +44,7 @@ export default async function MyTicketsPage() {
   const appSettings = await getAppSettings();
   const choiceOpen = workshopPayments.length > 0 && workshopChoiceOpen(appSettings);
   // Add-ons follow the tickets they extend (stable sort keeps the date order).
-  const isAddOnPayment = (payment: (typeof workshopPayments)[number]) => (ticketMap.get(payment.ticketId || '')?.extraWorkshops ?? 0) > 0 ? 1 : 0;
+  const isAddOnPayment = (payment: (typeof workshopPayments)[number]) => isAddOnProduct(ticketMap.get(payment.ticketId || '') ?? {}) ? 1 : 0;
   workshopPayments.sort((a, b) => isAddOnPayment(a) - isAddOnPayment(b));
 
   const ballCount = issuedTickets.filter((t) => t.category === 'ball').length;
@@ -228,7 +229,7 @@ export default async function MyTicketsPage() {
                           );
                         })}
                       </div>
-                    ) : (ticketProduct?.extraWorkshops ?? 0) > 0 ? (
+                    ) : ticketProduct && isAddOnProduct(ticketProduct) ? (
                       <p className="mt-3 text-xs text-muted-foreground">
                         Supliment: {ticketProduct?.extraWorkshops === 1 ? 'un workshop' : `${ticketProduct?.extraWorkshops} workshopuri`} în plus față de cele incluse în bilet. Nu are cod QR separat.
                       </p>
