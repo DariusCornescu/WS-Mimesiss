@@ -18,6 +18,9 @@ export interface AppSettingsPlain {
   registrationStartTime: string | null
   registrationDeadline: string | null
   ticketSalesStartTime: string | null
+  offerTicketId: string | null
+  offerStartsAt: string | null
+  offerEndsAt: string | null
   defaultMaxParticipants: number
   ballTicketAvailableFrom: string | null
   ballTicketAvailableTo: string | null
@@ -45,6 +48,9 @@ const settingsWithoutDatabase = (): AppSettingsPlain => ({
   registrationStartTime: null,
   registrationDeadline: null,
   ticketSalesStartTime: null,
+  offerTicketId: null,
+  offerStartsAt: null,
+  offerEndsAt: null,
   defaultMaxParticipants: DEFAULT_SETTINGS.defaultMaxParticipants,
   ballTicketAvailableFrom: null,
   ballTicketAvailableTo: null,
@@ -73,6 +79,9 @@ async function readSettings(): Promise<AppSettingsPlain> {
     registrationStartTime: toIso(doc?.registrationStartTime),
     registrationDeadline: toIso(doc?.registrationDeadline),
     ticketSalesStartTime: toIso(doc?.ticketSalesStartTime),
+    offerTicketId: doc?.offerTicketId ? String(doc.offerTicketId) : null,
+    offerStartsAt: toIso(doc?.offerStartsAt),
+    offerEndsAt: toIso(doc?.offerEndsAt),
     defaultMaxParticipants: doc?.defaultMaxParticipants ?? DEFAULT_SETTINGS.defaultMaxParticipants,
     ballTicketAvailableFrom: toIso(doc?.ballTicketAvailableFrom),
     ballTicketAvailableTo: toIso(doc?.ballTicketAvailableTo),

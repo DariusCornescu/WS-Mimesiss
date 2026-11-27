@@ -36,6 +36,7 @@ before(async () => {
     '@/lib/registration-profile': load('src/lib/registration-profile.ts'), '@/lib/payment-policy': policy, '@/lib/request-security': security,
     '@/lib/ticket-stock': load('src/lib/ticket-stock.ts', { '@/models': models, '@/models/PaymentAttempt': attempts }),
     '@/lib/registration': load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models }),
+    '@/lib/ticket-products': load('src/lib/ticket-products.ts'),
   })
   fulfillment = load('src/lib/payment-fulfillment.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models, '@/models/PaymentAttempt': attempts })
   await Promise.all(Object.values(mongoose.models).map(model => model.init()))
@@ -437,6 +438,63 @@ test('a paid add-on raises the workshop limit from two to three while the base t
   await models.Registration.deleteMany({ workshopId: String(workshops[2]._id) })
   await models.Payment.updateOne({ _id: basePayment._id }, { $set: { status: 'refunded' } })
   assert.equal((await register(workshops[2], { adminOverride: true })).code, 'user_limit')
+})
+
+async function offerSetup() {
+  const { base, addOn } = await bundle()
+  const happy = await product({ category: 'workshop', type: 'path-happy-hour', price: 50, workshopAccess: true, extraWorkshops: 1 })
+  const now = Date.now()
+  const window = (start, end) => ({ offerTicketId: String(happy._id), offerStartsAt: new Date(now + start).toISOString(), offerEndsAt: new Date(now + end).toISOString() })
+  return { base, addOn, happy, window }
+}
+test('a limited offer sells only its ticket inside the window and never outside it', async () => {
+  const { base, addOn, happy, window } = await offerSetup()
+  settings = { ...settings, ...window(-60000, 60000) }
+  await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1), e => e.code === 'offer_window')
+  await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id)), e => e.code === 'offer_window')
+  assert.equal((await purchase.reservePayment('buyer', String(happy._id), 1)).amount, 5000)
+  await attempts.PaymentAttempt.deleteMany({})
+  // Before and after the window the offer ticket is off sale and the usual tickets are back.
+  for (const outside of [window(60000, 120000), window(-120000, -60000)]) {
+    settings = { paymentsEnabled: true, eventMode: 'workshops', ...outside }
+    await assert.rejects(purchase.reservePayment('buyer', String(happy._id), 1), e => e.code === 'offer_window')
+    assert.equal((await purchase.reservePayment('buyer', String(base._id), 1, String(addOn._id))).amount, 7000)
+    await attempts.PaymentAttempt.deleteMany({})
+  }
+})
+test('the offer ticket is one ticket with three workshops and three entries, and takes no add-on', async () => {
+  const { base, addOn, happy, window } = await offerSetup()
+  settings = { ...settings, ...window(-60000, 60000) }
+  await assert.rejects(purchase.reservePayment('buyer', String(happy._id), 1, String(addOn._id)), e => e.code === 'extra_place_owned')
+  const attempt = await purchase.reservePayment('buyer', String(happy._id), 1)
+  const intent = await purchase.intentForAttempt(attempt)
+  intent.status = 'succeeded'; intent.amount_received = intent.amount
+  await fulfillment.fulfillPayment(intent)
+  const issued = await models.IssuedTicket.find().lean()
+  assert.equal(issued.length, 1)
+  assert.equal(issued[0].pricePerTicket, 5000)
+  // After the window neither a second workshop ticket nor the add-on is sold to this buyer.
+  settings = { paymentsEnabled: true, eventMode: 'workshops', ...window(-120000, -60000) }
+  await assert.rejects(purchase.reservePayment('buyer', String(base._id), 1), e => e.code === 'workshop_ticket_owned')
+  await assert.rejects(purchase.reservePayment('buyer', String(addOn._id), 1), e => e.code === 'extra_place_owned')
+  assert.equal(await attempts.PaymentAttempt.countDocuments({ status: 'pending' }), 0)
+  // Three workshops to choose and three entries at the door.
+  const registration = load('src/lib/registration.ts', { mongoose, '@/lib/mongodb': connection, '@/models': models })
+  const workshops = await models.Workshop.create(Array.from({ length: 4 }, (_, i) => ({ title: 'Atelier ' + i, description: 'Test', wsType: 'workshop', maxParticipants: 20 })))
+  const results = []
+  for (const w of workshops) results.push(await registration.registerUserForWorkshop({ userId: 'buyer', workshopId: String(w._id), requireTicket: true }))
+  assert.deepEqual(results.map(r => r.ok), [true, true, true, false])
+  const { PATCH } = statusRoute('moderator')
+  const scans = []
+  for (let i = 0; i < 4; i++) scans.push((await scan(PATCH, issued[0])).status)
+  assert.deepEqual(scans, [200, 200, 200, 409])
+})
+test('someone who already holds a workshop ticket cannot buy the offer as a second one', async () => {
+  const { base, happy, window } = await offerSetup()
+  await payFor(base)
+  settings = { ...settings, ...window(-60000, 60000) }
+  await assert.rejects(purchase.reservePayment('buyer', String(happy._id), 1), e => e.code === 'workshop_ticket_owned')
+  assert.equal(await attempts.PaymentAttempt.countDocuments(), 0)
 })
 
 async function bundle() {

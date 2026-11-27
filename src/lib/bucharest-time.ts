@@ -43,6 +43,13 @@ const displayFormat = new Intl.DateTimeFormat('ro-RO', {
   timeZone: ZONE, day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
 })
 
+const clockFormat = new Intl.DateTimeFormat('ro-RO', { timeZone: ZONE, hour: '2-digit', minute: '2-digit' })
+
+/** An instant → "23:00", Romanian time, for same-day deadlines. */
+export function describeBucharestClock(value: Date | string): string {
+  return clockFormat.format(new Date(value))
+}
+
 /** An instant → "18 noiembrie 2026 la 20:00" for participants. */
 export function describeBucharestTime(value: Date | string): string {
   return displayFormat.format(new Date(value)).replace(', ', ' la ')

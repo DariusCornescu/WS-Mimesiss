@@ -47,8 +47,8 @@ export async function createTicket(data: {
 		enabled: parsed.data.enabled ?? true,
 		category: parsed.data.category ?? 'workshop',
 		maxQuantity: parsed.data.maxQuantity ?? null,
-		// An add-on extends a workshop ticket; it never opens registration alone.
-		workshopAccess: extraWorkshops > 0 ? false : parsed.data.workshopAccess ?? false,
+		// Extra places with workshop access make a bundle; without it, an add-on.
+		workshopAccess: parsed.data.workshopAccess ?? false,
 		extraWorkshops,
 	});
 	await ticket.save();
@@ -91,8 +91,6 @@ export async function updateTicket(ticketId: string, data: {
 	if (parsed.data.workshopAccess !== undefined) ticket.workshopAccess = parsed.data.workshopAccess;
 	if (parsed.data.extraWorkshops !== undefined) ticket.extraWorkshops = parsed.data.extraWorkshops;
 	if (ticket.category === 'ball') ticket.extraWorkshops = 0;
-	// An add-on extends a workshop ticket; it never opens registration alone.
-	if ((ticket.extraWorkshops ?? 0) > 0) ticket.workshopAccess = false;
 	await ticket.save();
 
 	revalidatePath('/admin/tickets');

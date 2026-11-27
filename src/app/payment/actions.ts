@@ -5,7 +5,10 @@ import { Ticket as TicketType } from '@/types/models'
 import { Ticket } from '@/models'
 import connectDB from '@/lib/mongodb'
 import { ticketsTaken, remainingStock } from '@/lib/ticket-stock'
-import { holdsWorkshopTicket } from '@/lib/registration'
+import { workshopEntitlements } from '@/lib/registration'
+import { getAppSettings } from '@/lib/settings'
+import { isAddOnProduct } from '@/lib/ticket-products'
+import { limitedOffer, offerAllows } from '@/lib/payment-policy'
 
 /**
  * Public read for the payment-page selectors: only enabled tickets, only the
@@ -19,22 +22,31 @@ export async function getPublicTickets(): Promise<TicketType[]> {
     .select('title description price features type enabled category maxQuantity workshopAccess extraWorkshops')
     .lean()
 
+  // A limited offer decides which workshop tickets are on sale right now.
+  // The server checks the same window again when the payment is reserved.
+  const settings = await getAppSettings()
+  const offer = limitedOffer(settings)
+  const onSale = tickets.filter(ticket => ticket.category !== 'workshop' || offerAllows(String(ticket._id), settings))
+
   // Convert to plain objects to ensure serializability. The stock figures
   // stay server-side; buyers only learn whether a ticket is sold out.
-  const plain = JSON.parse(JSON.stringify(tickets)) as TicketType[]
+  const plain = JSON.parse(JSON.stringify(onSale)) as TicketType[]
   const taken = await ticketsTaken(plain.map(ticket => String(ticket._id)))
 
-  // Add-ons are sold only next to a workshop ticket. The server enforces this
-  // again when the payment is reserved; here it only shapes the button.
+  // Add-ons are sold only next to a workshop ticket, and only to someone who
+  // has no extra place yet. The server enforces this again when the payment
+  // is reserved; here it only shapes the button.
   let canBuyAddOns = false
-  if (plain.some(ticket => (ticket.extraWorkshops ?? 0) > 0)) {
+  if (plain.some(isAddOnProduct)) {
     const { userId } = await auth()
-    canBuyAddOns = userId ? await holdsWorkshopTicket(userId) : false
+    const entitlement = userId ? (await workshopEntitlements([userId])).get(userId) : undefined
+    canBuyAddOns = Boolean(entitlement?.holdsTicket && entitlement.extraPlaces === 0)
   }
 
   return plain.map(({ maxQuantity, ...ticket }) => ({
     ...ticket,
     soldOut: remainingStock(maxQuantity, taken.get(String(ticket._id)) ?? 0) === 0,
-    requiresBaseTicket: (ticket.extraWorkshops ?? 0) > 0 && !canBuyAddOns,
+    requiresBaseTicket: isAddOnProduct(ticket) && !canBuyAddOns,
+    offerEndsAt: offer?.active && offer.ticketId === String(ticket._id) ? offer.endsAt : null,
   }))
 }

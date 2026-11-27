@@ -8,7 +8,8 @@ import { registrationProfile, purchaseProfile } from '@/lib/registration-profile
 import { purchasePolicy } from '@/lib/payment-policy'
 import { RequestError } from '@/lib/request-security'
 import { ticketsTaken } from '@/lib/ticket-stock'
-import { holdsWorkshopTicket } from '@/lib/registration'
+import { workshopEntitlements } from '@/lib/registration'
+import { isAddOnProduct, isBundleProduct } from '@/lib/ticket-products'
 
 // An open checkout holds its tickets. Past this age the hold may be released
 // for another buyer, after Stripe confirms the payment can no longer succeed.
@@ -66,8 +67,19 @@ async function reserve(clerkId: string, ticketId: string, quantity: number, addO
     if (!purchaseProfile(user)) throw new RequestError(409, 'Completează telefonul și instituția în profil înainte de plată.', 'profile_incomplete')
     const ticket = await Ticket.findById(ticketId).session(session).lean()
     if (!ticket) throw new RequestError(404, 'Bilet negăsit.')
-    if ((ticket.extraWorkshops ?? 0) > 0 && !(await holdsWorkshopTicket(clerkId, session))) {
-      throw new RequestError(409, 'Workshopul suplimentar se poate cumpăra doar după biletul cu acces la workshopuri.', 'base_ticket_required')
+    // One workshop ticket per person, and at most one extra place: a bundle
+    // already includes it, so neither a second ticket nor an add-on is sold.
+    const entitlement = ticket.workshopAccess || isAddOnProduct(ticket)
+      ? (await workshopEntitlements([clerkId], session)).get(clerkId)
+      : undefined
+    if (isAddOnProduct(ticket)) {
+      if (!entitlement?.holdsTicket) {
+        throw new RequestError(409, 'Workshopul suplimentar se poate cumpăra doar după biletul cu acces la workshopuri.', 'base_ticket_required')
+      }
+      if (entitlement.extraPlaces > 0) throw new RequestError(409, 'Biletul tău include deja un workshop suplimentar.', 'extra_place_owned')
+    }
+    if (ticket.workshopAccess && entitlement?.holdsTicket) {
+      throw new RequestError(409, 'Ai deja un bilet cu acces la workshopuri.', 'workshop_ticket_owned')
     }
     const payments = await Payment.find({ clerkId, status: 'completed', ...(ticket.category === 'ball' ? { ticketCategory: 'ball' } : { ticketType: ticket.type }) }).session(session).lean()
     const purchased = payments.reduce((sum, payment) => sum + (payment.quantity || 1), 0)
@@ -75,8 +87,9 @@ async function reserve(clerkId: string, ticketId: string, quantity: number, addO
     let addOn: { ticket: NonNullable<typeof ticket>; amount: number } | null = null
     if (addOnTicketId) {
       const extra = await Ticket.findById(addOnTicketId).session(session).lean()
-      if (!extra || !((extra.extraWorkshops ?? 0) > 0)) throw new RequestError(404, 'Suplimentul nu a fost găsit.')
+      if (!extra || !isAddOnProduct(extra)) throw new RequestError(404, 'Suplimentul nu a fost găsit.')
       if (!ticket.workshopAccess) throw new RequestError(409, 'Suplimentul se poate adăuga doar la un bilet cu acces la workshopuri.', 'base_ticket_required')
+      if (isBundleProduct(ticket)) throw new RequestError(409, 'Biletul include deja un workshop suplimentar.', 'extra_place_owned')
       const extraPaid = await Payment.find({ clerkId, status: 'completed', ticketType: extra.type }).session(session).lean()
       addOn = { ticket: extra, amount: purchasePolicy(extra, 1, settings, extraPaid.reduce((sum, payment) => sum + (payment.quantity || 1), 0)) }
     }

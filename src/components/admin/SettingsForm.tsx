@@ -9,6 +9,7 @@ import { formatBucharestLocal } from '@/lib/bucharest-time'
 
 interface SettingsFormProps {
   initialSettings: AppSettingsPlain
+  offerTickets: { id: string; title: string; price: number; enabled: boolean }[]
 }
 
 // Simple CSS spinner component
@@ -24,7 +25,7 @@ function Spinner() {
 // Dates are edited as Romanian wall-clock time, whatever the browser's zone.
 const formatDateTimeLocal = formatBucharestLocal
 
-export default function SettingsForm({ initialSettings }: SettingsFormProps) {
+export default function SettingsForm({ initialSettings, offerTickets }: SettingsFormProps) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -36,7 +37,11 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
         setError('')
         setSuccess('')
         
-        await updateSettings(formData)
+        const result = await updateSettings(formData)
+        if (!result.success) {
+          setError(result.error ?? 'Setările nu au putut fi actualizate.')
+          return
+        }
         setSuccess('Setările au fost actualizate cu succes!')
         
         // Clear success message after 3 seconds
@@ -76,7 +81,15 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
 
   return (
     <div className="p-4 sm:p-6">
-      <form action={handleSubmit} className="space-y-8">
+      {/* onSubmit, not action: a form action resets every field afterwards,
+          which would throw away the admin's input when validation fails. */}
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          handleSubmit(new FormData(event.currentTarget))
+        }}
+        className="space-y-8"
+      >
         {error && (
           <div
             role="alert"
@@ -139,6 +152,34 @@ export default function SettingsForm({ initialSettings }: SettingsFormProps) {
                 Cu plățile activate, biletele pot fi cumpărate abia de la această oră. Lăsați gol pentru vânzare imediată.
               </p>
             </div>
+
+            <fieldset className="space-y-4 rounded-lg border border-border p-4">
+              <legend className="px-1 text-sm font-medium text-foreground">Ofertă limitată</legend>
+              <p className="text-sm text-muted-foreground">
+                Între cele două ore se vinde doar biletul ales; celelalte bilete de workshop și suplimentele nu se vând. În afara intervalului, biletul ofertei nu se vinde. Alegeți „Fără ofertă” pentru a o opri.
+              </p>
+              <div>
+                <label htmlFor="offerTicketId" className="block text-sm font-medium text-foreground">Biletul ofertei</label>
+                <select id="offerTicketId" name="offerTicketId" defaultValue={initialSettings.offerTicketId ?? ''} className="mt-1 block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm">
+                  <option value="">Fără ofertă</option>
+                  {offerTickets.map(ticket => (
+                    <option key={ticket.id} value={ticket.id}>
+                      {ticket.title} · {ticket.price} RON{ticket.enabled ? '' : ' (dezactivat)'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="offerStartsAt" className="block text-sm font-medium text-foreground">Începe la</label>
+                  <input type="datetime-local" id="offerStartsAt" name="offerStartsAt" defaultValue={formatDateTimeLocal(initialSettings.offerStartsAt)} className="mt-1 block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm" />
+                </div>
+                <div>
+                  <label htmlFor="offerEndsAt" className="block text-sm font-medium text-foreground">Se termină la</label>
+                  <input type="datetime-local" id="offerEndsAt" name="offerEndsAt" defaultValue={formatDateTimeLocal(initialSettings.offerEndsAt)} className="mt-1 block min-h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:text-sm" />
+                </div>
+              </div>
+            </fieldset>
 
             <ToggleSwitch
               name="workshopVisibleToPublic"

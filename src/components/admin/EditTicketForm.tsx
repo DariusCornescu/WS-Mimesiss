@@ -188,7 +188,7 @@ export default function EditTicketForm({ ticket }: EditTicketFormProps) {
 						</label>
 						<input id="extraWorkshops" type="number" name="extraWorkshops" disabled={isPending} min="0" max="5" step="1" defaultValue={ticket.extraWorkshops ?? 0} className="mimesiss-input min-h-12 md:max-w-xs" />
 						<p className="mt-2 text-xs leading-5 text-muted-foreground">
-							Lasă 0 pentru un bilet obișnuit. Peste 0, biletul devine un supliment: se poate cumpăra doar după un bilet cu înscriere la workshopuri și ridică limita de 2 workshopuri cu acest număr.
+							Lasă 0 pentru un bilet obișnuit (2 workshopuri). Peste 0 și fără „Permite înscrierea la workshopuri”, biletul e un supliment: se cumpără doar după biletul de bază. Peste 0 și cu înscriere bifată, e un bilet complet care include direct workshopurile în plus (de exemplu o ofertă cu 3 workshopuri).
 						</p>
 					</div>
 					<label className="mt-5 flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">

@@ -115,6 +115,7 @@ export interface Ticket {
   workshopAccess?: boolean; // Holders may register for workshops
   extraWorkshops?: number; // Add-on: extra workshop places, needs a workshop-access ticket
   requiresBaseTicket?: boolean; // Add-on the current visitor cannot buy yet (payment page only)
+  offerEndsAt?: string | null; // Limited offer ticket: when its sale window closes (payment page only)
   sold?: number; // Paid or held units (admin views only)
   soldOut?: boolean; // No units left to buy
   createdAt?: Date;
